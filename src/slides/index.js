@@ -22,6 +22,8 @@ import AcceleratorArchitecture from './AcceleratorArchitecture.jsx';
 import RegisterMap from './RegisterMap.jsx';
 import ThreeDecisions from './ThreeDecisions.jsx';
 import OptimizationJourney from './OptimizationJourney.jsx';
+import XipCache from './XipCache.jsx';
+import XipPrefetch from './XipPrefetch.jsx';
 import WhatWeBuilt from './WhatWeBuilt.jsx';
 
 export const slideComponents = [
@@ -45,6 +47,8 @@ export const slideComponents = [
   AcceleratorArchitecture,
   RegisterMap,
   ThreeDecisions,
+  XipCache,
+  XipPrefetch,
   OptimizationJourney,
   WhatWeBuilt,
 ];

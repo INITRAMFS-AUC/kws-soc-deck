@@ -816,6 +816,30 @@ h1, h2, h3, h4, p { margin: 0; }
 }
 .siri-caption--show { opacity: 1; transform: none; }
 
+/* ── XIP cache slide ─────────────────────────────────────────────────────── */
+/* Each cell in the line-fill timeline gets a one-shot fill driven by a
+ * delay derived from the word's arrival cycle. The fill stays solid once
+ * complete; the timeline re-keys when the slide step flips so the
+ * animation restarts on each entry. */
+@keyframes xip-cell-fill {
+  0%   { opacity: 0; transform: scaleX(0); transform-origin: left; }
+  60%  { opacity: 1; }
+  100% { opacity: 1; transform: scaleX(1); transform-origin: left; }
+}
+
+/* word_done bitmap pulse — bits flash in a left-to-right ripple. */
+@keyframes xip-bit-flash {
+  0%, 100% { opacity: 0.05; }
+  20%      { opacity: 1;    }
+  40%      { opacity: 0.4;  }
+}
+
+/* XIP prefetch chain — each cell slides in from the left and fades up. */
+@keyframes xip-chain-in {
+  0%   { opacity: 0; transform: translateX(-12px) scale(0.96); }
+  100% { opacity: 1; transform: none;                          }
+}
+
 /* ── Memory map / register table ─────────────────────────────────────────── */
 .memmap { width: 100%; border-collapse: collapse; font-family: var(--font-mono); }
 .memmap th, .memmap td {

@@ -529,6 +529,125 @@ export const slides = [
     },
   },
 
+  // XIP Cache Optimizations ─────────────────────────────────────────────────
+  {
+    id: 'xip-cache',
+    label: 'XIP Cache · CWF',
+    notes: 'A closer look at one of the biggest software wins. All firmware and accelerator weights live in QSPI flash at 0x8000_0000. Without a cache, every fetch pays the full QSPI miss penalty — about 150 cycles per 32-byte line. We sit a read-only direct-mapped 8 KB cache between the AHB-Lite bus and the flash: four masters share it — CPU instruction port, CPU data port, DMAC, and the conv1D accelerator. The flash side runs Quad-IO Read for 4× throughput, and reports a per-word ready bitmap back to the cache — that bitmap is what enables Critical-Word-First. CWF releases the bus the instant the requested word lands instead of waiting for the whole line. Two correctness fixes are mandatory: a stale-bit filter that latches only the rising edges of word_done so a second miss does not republish the previous fetch, and a deferred-miss rescue that catches a parked CPU data phase so a new miss issued during background fill does not deadlock the bus. Measured: −1.23 percent CYCLES_INFER on mel_compact_4blk_ch36; −34 percent stall on the standalone testbench across non-zero word offsets.',
+    content: {
+      kind: 'Optimization',
+      eyebrow: 'XIP cache · ro_cache.v',
+      title: 'Critical-Word-First cache, four masters, one flash.',
+      // Step 0 — cache topology + spec
+      masters: [
+        { name: 'CPU · I-port',  sub: 'instruction fetch' },
+        { name: 'CPU · D-port',  sub: 'data load/store' },
+        { name: 'DMAC',          sub: 'I²S → SRAM' },
+        { name: 'conv1d_accel',  sub: 'weights/inputs' },
+      ],
+      cacheSpec: [
+        { v: '8 KB',          l: 'Total · 256 lines' },
+        { v: '32 B',          l: 'Line size · 8 words' },
+        { v: 'Direct-map',    l: 'RO · 4 masters' },
+        { v: 'Quad-IO 0xEB',  l: '4× SCK throughput' },
+      ],
+      flashNote: 'Per-word ready bitmap word_done[7:0] — bit K rises when word K lands.',
+      // Step 1 — Critical-Word-First timeline
+      cwfHeading: 'Critical-Word-First / Early Restart',
+      cwfSub: 'Return the requested word the moment it lands; finish the line in background.',
+      timeline: [
+        { w: 'w0', t: 10 },
+        { w: 'w1', t: 20 },
+        { w: 'w2', t: 32, requested: true },
+        { w: 'w3', t: 44 },
+        { w: 'w4', t: 56 },
+        { w: 'w5', t: 68 },
+        { w: 'w6', t: 76 },
+        { w: 'w7', t: 84 },
+      ],
+      compare: [
+        { kind: 'naive', cyc: 84, label: 'Naive cache',
+          body: 'bus stalled until t = 84 (full-line fill)' },
+        { kind: 'cwf',   cyc: 32, label: 'CWF cache',
+          body: 'bus released at t = 32 — 52 cyc earlier · remaining words finish in background' },
+      ],
+      fixes: [
+        {
+          tag: 'Fix 01',
+          head: 'Stale-bit filter',
+          body: 'word_done is level — bits stay high after each word lands and only clear on the next start (~3 cyc later).',
+          fix:  'Latch fwv[7:0]; reset on miss-entry; OR-accumulate only the rising edges of word_done.',
+        },
+        {
+          tag: 'Fix 02',
+          head: 'Deferred-miss rescue',
+          body: 'CWF early-restart hands the bus back mid-fetch — CPU may issue a NEW miss before the FSM is back to IDLE.',
+          fix:  'When the fetch finishes, check the parked data phase (cpu_dvalid && !dhit) and start the next miss.',
+        },
+      ],
+      results: [
+        { v: '−1.23 %', l: 'CYCLES_INFER · mel_compact_4blk_ch36' },
+        { v: '−34 %',   l: 'Stall · standalone TB · non-zero offsets' },
+      ],
+    },
+  },
+
+  // XIP Prefetch — adopted vs rejected ─────────────────────────────────────
+  {
+    id: 'xip-prefetch',
+    label: 'XIP Prefetch · Adopted vs Rejected',
+    notes: "Prefetch story. We tried the textbook chained next-line prefetch — on every demand miss, also pull line+1 into the main cache. The standalone testbench passed 54 of 54 cases, but end-to-end every cache size regressed: nine percent slower at NL=256, forty-six percent slower at NL=64, never finishes at NL=32. Mechanism: prefetch evicts a hot line on every miss, the CPU then misses on the evicted line, that triggers another prefetch, eviction cascade. Smaller cache, worse cascade. We reverted that. The version we adopted is gated and default off: NNoM-aware prefetch. The firmware on this SoC always runs NNoM, and each Conv2D call's weight scan is strictly sequential — the accelerator knows the start address and the length the moment it starts. Three new APB registers on conv1d_accel — PREFETCH_BASE, PREFETCH_LEN, PREFETCH_CTRL.EN. When the firmware pulses EN, a side-band into ro_dmc triggers a fetch into a separate single-line victim buffer. The victim buffer never evicts main-cache lines, so the cascade is structurally impossible. MVP fetches the first line per call: minus 1.29 percent CYCLES_INFER. Multi-line walk over the BASE..BASE+LEN range is the next refinement.",
+    content: {
+      kind: 'Optimization',
+      eyebrow: 'XIP prefetch · ro_dmc + conv1d_accel APB',
+      title: 'NNoM-aware prefetch — adopted vs rejected.',
+      sub: "The cache learns about NNoM's predictable weight scans without polluting the main DATA[].",
+      adopted: {
+        tag: 'Adopted',
+        head: 'NNoM-aware victim-buffer prefetch',
+        gateNote: 'Gated · default OFF · KWS_XIP_PREFETCH=1',
+        flow: [
+          { kind: 'firmware', name: 'Firmware',
+            sub: 'accel_conv1d.h · KWS_XIP_PREFETCH=1' },
+          { kind: 'apb',      name: 'conv1d_accel APB',
+            sub: 'PREFETCH_CTRL.EN · PREFETCH_BASE · PREFETCH_LEN' },
+          { kind: 'victim',   name: 'Victim buffer',
+            sub: '1 line — pf_data, pf_tag · never evicts main' },
+          { kind: 'flash',    name: 'QSPI flash',
+            sub: 'single shared resource' },
+        ],
+        flowEdges: [
+          { label: 'weight base + len', from: 0, to: 1 },
+          { label: 'side-band hint',    from: 1, to: 2, accent: true },
+          { label: 'background fetch',  from: 2, to: 3, dashed: true },
+        ],
+        mainCacheNote: 'Main cache · DATA[256] × 32 B · unchanged · victim cannot evict main.',
+        result: { v: '−1.29 %', l: 'CYCLES_INFER · MVP fetches first line per call' },
+        next: 'Next: multi-line walk over [BASE, BASE+LEN).',
+      },
+      rejected: {
+        tag: 'Rejected',
+        head: 'Chained next-line prefetch',
+        sub: 'TB passed 54 / 54 — but end-to-end every cache size regressed.',
+        chain: [
+          { name: 'miss line A',   sub: 'cold demand miss' },
+          { name: 'prefetch A+1',  sub: 'evicts hot line H' },
+          { name: 'miss line H',   sub: 'we just evicted!' },
+          { name: 'prefetch H+1',  sub: 'evicts another hot line…' },
+        ],
+        cascade: {
+          head: 'CASCADE',
+          rows: [
+            { v: '+9 %',  l: 'NL = 256' },
+            { v: '+46 %', l: 'NL = 64'  },
+            { v: '∞',     l: 'NL = 32 — never finishes' },
+          ],
+        },
+        footnote: 'Mechanism: every miss evicts a hot line; smaller cache → worse cascade. The ~3.5 % spatial-locality win never pays for the eviction cost.',
+      },
+    },
+  },
+
   // Optimization Journey ─────────────────────────────────────────────────────
   {
     id: 'optimization-journey',
