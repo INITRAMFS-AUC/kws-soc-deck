@@ -2,11 +2,11 @@ import SlideFrame from '../components/SlideFrame.jsx';
 import Specimen from '../components/Specimen.jsx';
 import { getSlide } from '../content.js';
 
-const c = getSlide('05-constraints').content;
+const c = getSlide('constraints').content;
 
 export default function Constraints() {
   return (
-    <SlideFrame label="05 Constraints" topLeft={c.topLeft} bottomRight={c.pgnum}>
+    <SlideFrame>
       <div style={{ marginTop: 40 }}>
         <div className="eyebrow">{c.eyebrow}</div>
         <h1 className="title" style={{ maxWidth: 1500, marginBottom: 30 }}>{c.title}</h1>

@@ -3,7 +3,7 @@ import SlideFrame from '../components/SlideFrame.jsx';
 import Block from '../components/Block.jsx';
 import { getSlide } from '../content.js';
 
-const c = getSlide('06-soc').content;
+const c = getSlide('soc').content;
 const [conv1d, dma, apb] = c.rowTwo;
 
 // Partial crossbar matrix — see slide 06 docstring in content.js for source.
@@ -98,7 +98,7 @@ export default function SocArchitecture() {
   }, [crossbar]);
 
   return (
-    <SlideFrame label="06 SoC Architecture" topLeft={c.topLeft} bottomRight={c.pgnum}>
+    <SlideFrame>
       <div ref={rootRef} style={{ marginTop: 30 }}>
         <div className="eyebrow">{c.eyebrow}</div>
         <h1 className="title" style={{ marginBottom: 40 }}>{c.title}</h1>

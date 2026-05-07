@@ -2,11 +2,11 @@ import SlideFrame from '../components/SlideFrame.jsx';
 import Block from '../components/Block.jsx';
 import { getSlide } from '../content.js';
 
-const c = getSlide('17-accelerator-architecture').content;
+const c = getSlide('accelerator-architecture').content;
 
 export default function AcceleratorArchitecture() {
   return (
-    <SlideFrame label="17 Accelerator Architecture" topLeft={c.topLeft} bottomRight={c.pgnum}>
+    <SlideFrame>
       <div style={{ marginTop: 30 }}>
         <div className="eyebrow">{c.eyebrow}</div>
         <h1 className="title" style={{ marginBottom: 50, maxWidth: 1700 }}>{c.title}</h1>

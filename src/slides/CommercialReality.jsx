@@ -3,11 +3,11 @@ import Specimen from '../components/Specimen.jsx';
 import Pull from '../components/Pull.jsx';
 import { getSlide } from '../content.js';
 
-const c = getSlide('03-commercial-reality').content;
+const c = getSlide('commercial-reality').content;
 
 export default function CommercialReality() {
   return (
-    <SlideFrame label="03 Commercial Reality" topLeft={c.topLeft} bottomRight={c.pgnum}>
+    <SlideFrame>
       <div style={{ marginTop: 30 }}>
         <div className="eyebrow">{c.eyebrow}</div>
         <h1 className="title" style={{ marginBottom: 50 }}>{c.title}</h1>

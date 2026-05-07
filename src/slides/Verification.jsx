@@ -1,11 +1,11 @@
 import SlideFrame from '../components/SlideFrame.jsx';
 import { getSlide } from '../content.js';
 
-const c = getSlide('08-verification').content;
+const c = getSlide('verification').content;
 
 export default function Verification() {
   return (
-    <SlideFrame label="08 Verification" topLeft={c.topLeft} bottomRight={c.pgnum}>
+    <SlideFrame>
       <div style={{ marginTop: 40 }}>
         <div className="eyebrow">{c.eyebrow}</div>
         <h1 className="title" style={{ marginBottom: 60 }}>{c.title}</h1>

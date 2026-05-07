@@ -2,11 +2,11 @@ import SlideFrame from '../components/SlideFrame.jsx';
 import Callout from '../components/Callout.jsx';
 import { getSlide } from '../content.js';
 
-const c = getSlide('09-pcb').content;
+const c = getSlide('pcb').content;
 
 export default function Pcb() {
   return (
-    <SlideFrame label="09 PCB" topLeft={c.topLeft} bottomRight={c.pgnum}
+    <SlideFrame
                 slideStyle={{ paddingRight: 60 }}>
       <div style={{
         display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 60,

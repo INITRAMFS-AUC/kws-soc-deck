@@ -526,6 +526,17 @@ h1, h2, h3, h4, p { margin: 0; }
   font-style: normal;
 }
 
+.cover-cycler {
+  margin-top: 6px;
+  font-family: var(--font-mono);
+  font-size: var(--type-small);
+  color: var(--on-dark-60);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  min-height: 1em;
+  font-style: normal;
+}
+
 .vx-tw { font-style: inherit; }
 .vx-caret {
   display: inline-block;
@@ -536,6 +547,132 @@ h1, h2, h3, h4, p { margin: 0; }
 }
 .vx-caret--blink { animation: vx-blink 700ms steps(2, end) infinite; opacity: 1; }
 @keyframes vx-blink { 0%, 49% { opacity: 1; } 50%, 100% { opacity: 0; } }
+
+/* ── KWS & NLP slide: Siri orb ───────────────────────────────────────────── */
+.kws-root { position: relative; }
+.kws-grid {
+  display: grid;
+  grid-template-columns: 1fr 520px;
+  gap: 100px;
+  align-items: revert;
+  margin-top: 20px;
+}
+.kws-siri {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 28px;
+}
+.kws-body {
+  max-width: 1100px;
+  font-size: 32px;
+  line-height: 1.45;
+  color: var(--color-ink);
+}
+
+.siri-orb {
+  position: relative;
+  width: 420px;
+  height: 420px;
+  border-radius: 50%;
+  overflow: hidden;
+  background: radial-gradient(circle at 50% 50%, #1a1a1a 0%, #0c0c0c 100%);
+  filter: grayscale(1) saturate(0) contrast(1.05) brightness(0.95);
+  transition: filter 700ms ease, box-shadow 700ms ease, transform 700ms ease;
+  box-shadow:
+    0 24px 60px rgba(0, 0, 0, 0.18),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.06);
+}
+.siri-orb--active {
+  filter: grayscale(0) saturate(1.25) contrast(1.05) brightness(1.05);
+  box-shadow:
+    0 28px 80px rgba(120, 80, 220, 0.35),
+    0 0 0 1px rgba(255, 255, 255, 0.1) inset;
+  transform: scale(1.02);
+}
+.siri-orb-rim {
+  position: absolute; inset: 0;
+  border-radius: 50%;
+  pointer-events: none;
+  box-shadow: inset 0 0 40px rgba(0, 0, 0, 0.55);
+}
+
+.siri-blob {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(36px);
+  opacity: 0.95;
+  mix-blend-mode: screen;
+  will-change: transform;
+}
+.siri-blob--a {
+  width: 280px; height: 280px;
+  left: -30px; top: -20px;
+  background: radial-gradient(circle, #ff4fa3 0%, #ff4fa3 40%, transparent 70%);
+  animation: siri-float-a 7s ease-in-out infinite;
+}
+.siri-blob--b {
+  width: 320px; height: 320px;
+  right: -50px; top: 30px;
+  background: radial-gradient(circle, #6c5cff 0%, #6c5cff 40%, transparent 70%);
+  animation: siri-float-b 9s ease-in-out infinite;
+}
+.siri-blob--c {
+  width: 260px; height: 260px;
+  left: 40px; bottom: -30px;
+  background: radial-gradient(circle, #4ad6ff 0%, #4ad6ff 40%, transparent 70%);
+  animation: siri-float-c 8s ease-in-out infinite;
+}
+.siri-blob--d {
+  width: 220px; height: 220px;
+  right: 30px; bottom: 10px;
+  background: radial-gradient(circle, #ffb84a 0%, #ffb84a 40%, transparent 70%);
+  animation: siri-float-d 6.5s ease-in-out infinite;
+}
+.siri-blob--e {
+  width: 180px; height: 180px;
+  left: 120px; top: 110px;
+  background: radial-gradient(circle, #ffffff 0%, #ffffff 40%, transparent 70%);
+  opacity: 0.45;
+  animation: siri-float-e 5.5s ease-in-out infinite;
+}
+
+@keyframes siri-float-a {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  33%      { transform: translate(60px, 40px) scale(1.12); }
+  66%      { transform: translate(-30px, 70px) scale(0.92); }
+}
+@keyframes siri-float-b {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  40%      { transform: translate(-70px, 40px) scale(1.08); }
+  75%      { transform: translate(20px, -50px) scale(0.95); }
+}
+@keyframes siri-float-c {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  35%      { transform: translate(50px, -50px) scale(1.1); }
+  70%      { transform: translate(-40px, -20px) scale(0.9); }
+}
+@keyframes siri-float-d {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  50%      { transform: translate(-60px, -40px) scale(1.15); }
+}
+@keyframes siri-float-e {
+  0%, 100% { transform: translate(0, 0) scale(1); opacity: 0.45; }
+  50%      { transform: translate(-30px, 30px) scale(1.2); opacity: 0.65; }
+}
+
+.siri-caption {
+  font-family: var(--font-mono);
+  font-size: 30px;
+  letter-spacing: var(--ls-caps-wide);
+  text-transform: none;
+  color: var(--color-ink);
+  opacity: 0;
+  transform: translateY(8px);
+  transition: opacity 500ms ease 250ms, transform 500ms ease 250ms;
+  min-height: 1.2em;
+}
+.siri-caption--show { opacity: 1; transform: none; }
 
 /* ── Memory map / register table ─────────────────────────────────────────── */
 .memmap { width: 100%; border-collapse: collapse; font-family: var(--font-mono); }

@@ -3,11 +3,11 @@ import Stat from '../components/Stat.jsx';
 import OptChart from '../components/OptChart.jsx';
 import { getSlide } from '../content.js';
 
-const c = getSlide('20-optimization-journey').content;
+const c = getSlide('optimization-journey').content;
 
 export default function OptimizationJourney() {
   return (
-    <SlideFrame label="20 Optimization Journey" topLeft={c.topLeft} bottomRight={c.pgnum}>
+    <SlideFrame>
       <div style={{ marginTop: 30 }}>
         <div className="eyebrow">{c.eyebrow}</div>
         <h1 className="title" style={{ marginBottom: 30 }}>{c.title}</h1>

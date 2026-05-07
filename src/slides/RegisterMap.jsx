@@ -2,11 +2,11 @@ import SlideFrame from '../components/SlideFrame.jsx';
 import Memmap from '../components/Memmap.jsx';
 import { getSlide } from '../content.js';
 
-const c = getSlide('18-register-map').content;
+const c = getSlide('register-map').content;
 
 export default function RegisterMap() {
   return (
-    <SlideFrame label="18 Register Map" topLeft={c.topLeft} bottomRight={c.pgnum}>
+    <SlideFrame>
       <div style={{ marginTop: 40 }}>
         <div className="eyebrow">{c.eyebrow}</div>
         <h1 className="title" style={{ marginBottom: 30 }}>{c.title}</h1>

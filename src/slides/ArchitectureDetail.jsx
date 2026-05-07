@@ -3,11 +3,11 @@ import Memmap from '../components/Memmap.jsx';
 import Stat from '../components/Stat.jsx';
 import { getSlide } from '../content.js';
 
-const c = getSlide('12-architecture-detail').content;
+const c = getSlide('architecture-detail').content;
 
 export default function ArchitectureDetail() {
   return (
-    <SlideFrame label="12 Architecture Detail" topLeft={c.topLeft} bottomRight={c.pgnum}>
+    <SlideFrame>
       <div style={{ marginTop: 40 }}>
         <div className="eyebrow">{c.eyebrow}</div>
         <h1 className="title" style={{ marginBottom: 40 }}>{c.title}</h1>

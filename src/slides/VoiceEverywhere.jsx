@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import SlideFrame from '../components/SlideFrame.jsx';
 import { getSlide } from '../content.js';
 
-const c = getSlide('02-voice').content;
+const c = getSlide('voice').content;
 const { stats, chartTitle, series, sourceLabel, sourceUrl } = c.market;
 
 const TITLE_PREFIX = 'Voice command interfaces ';
@@ -130,7 +130,7 @@ export default function VoiceEverywhere() {
   const typing = suffix !== target;
 
   return (
-    <SlideFrame label="02 Voice Everywhere" topLeft={c.topLeft} bottomRight={c.pgnum}>
+    <SlideFrame>
       <div ref={rootRef} className={`vx-root ${reveal ? 'vx-root--chart' : ''}`}>
         <div style={{ marginTop: 60 }}>
           <div className="eyebrow">{c.eyebrow}</div>

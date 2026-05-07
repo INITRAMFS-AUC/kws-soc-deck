@@ -2,11 +2,11 @@ import SlideFrame from '../components/SlideFrame.jsx';
 import Callout from '../components/Callout.jsx';
 import { getSlide } from '../content.js';
 
-const c = getSlide('04-we-did').content;
+const c = getSlide('we-did').content;
 
 export default function WeDid() {
   return (
-    <SlideFrame label="04 We Did" topLeft={c.topLeft} bottomRight={c.pgnum}>
+    <SlideFrame>
       <div style={{ marginTop: 30 }}>
         <div className="eyebrow">{c.eyebrow}</div>
         <h1 className="title" style={{ maxWidth: 1700, marginBottom: 50 }}>{c.title}</h1>

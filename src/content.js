@@ -6,18 +6,23 @@
 //
 // Schema:
 //   slides: Array<{
-//     id:      string         // stable, kebab-case
-//     label:   string         // matches data-label on the <section>
+//     id:      string         // stable, kebab-case (no leading number)
+//     label:   string         // descriptor only — slide number is prepended
+//                             //   automatically by SlideFrame / PivotSlide
 //     notes:   string         // shown in deck-stage's notes panel
-//     content: object         // slide-specific copy, shape depends on slide
+//     content: object         // slide-specific copy. Common fields:
+//       kind?:  string        // top-left descriptor (e.g. 'Context', 'Hardware')
+//                             //   The slide number is prepended automatically.
+//                             //   No pgnum / topLeft fields — derived from
+//                             //   manifest position via slide-meta context.
 //   }>
 // ─────────────────────────────────────────────────────────────────────────────
 
 export const slides = [
-  // 01 ────────────────────────────────────────────────────────────────────────
+  // Cover ─────────────────────────────────────────────────────────────────────
   {
-    id: '01-cover',
-    label: '01 Cover',
+    id: 'cover',
+    label: 'Cover',
     notes: "Good morning. I'm here to defend KWS-SoC — a fully custom keyword-spotting system on chip, built from RTL up. Open RISC-V core, accelerator we designed ourselves, model trained against the exact numerical pipeline the firmware runs, and a custom PCB underneath it all.",
     content: {
       brand: 'InitRamFS · KWS-SoC',
@@ -29,20 +34,28 @@ export const slides = [
         { label: 'Repo',  value: 'github.com/INITRAMFS-AUC/KWS-SoC', mono: true },
         { label: 'Supervisor', value: 'Dr. Mohamed Shalan' },
       ],
+      groupMembers: [
+        'Ahmed Waseem Raslan',
+        'Omar ElFouly',
+        'Ziad Mohamed',
+        'Yousef Mansour',
+        'Bavly Remon',
+        'Ahmed Ali Rostom',
+        'Ahmed Elbarbary',
+      ],
     },
   },
 
-  // 02 ────────────────────────────────────────────────────────────────────────
+  // Voice Everywhere ──────────────────────────────────────────────────────────
   {
-    id: '02-voice',
-    label: '02 Voice Everywhere',
+    id: 'voice',
+    label: 'Voice Everywhere',
     notes: 'Before the technical detail, why anyone should care. Voice is the dominant emerging interface — phones, earbuds, smart speakers, cars, appliances. Behind every one of those interfaces is a tiny always-on classifier called keyword spotting.',
     content: {
-      topLeft: '02 · Context',
+      kind: 'Context',
       eyebrow: '"Hey Siri."\u00A0\u00A0"OK Google."\u00A0\u00A0"Alexa."',
       title: 'Voice command interfaces are everywhere.',
       bodyHTML: 'Phones. Earbuds. Smart speakers. Cars. Appliances. Behind every one of those interfaces is a tiny always-on classifier called <span style="color: var(--accent); font-weight: 500;">keyword spotting</span> — and it has to run within milliwatts, on kilobytes of memory, every second of every day.',
-      pgnum: '02 / 21',
       market: {
         stats: [
           { label: 'Revenue, 2023',       value: '$23.9 B' },
@@ -73,40 +86,53 @@ export const slides = [
     },
   },
 
-  // 03 ────────────────────────────────────────────────────────────────────────
+  // KWS & NLP ────────────────────────────────────────────────────────────────
   {
-    id: '03-commercial-reality',
-    label: '03 Commercial Reality',
+    id: 'kws-nlp',
+    label: 'KWS & NLP',
+    notes: '',
+    content: {
+      kind: 'Context',
+      eyebrow: 'Where KWS sits',
+      title: 'Keyword Spotting & Natural Language Processing.',
+      body: 'Unlike Natural Language Processing, Keyword Spotting is concerned with classifying single words from the user, not the whole speech. Keyword spotting usually aids NLP applications, like Siri, when you say "Hey Siri". And is used in simpler applications like smart home devices as a simpler low-compute alternative to NLP.',
+      wakePhrase: 'Hey Siri',
+    },
+  },
+
+  // Commercial Reality ────────────────────────────────────────────────────────
+  {
+    id: 'commercial-reality',
+    label: 'Commercial Reality',
     notes: "Today's KWS lives in two tiers. Tier one is purpose-built silicon — Syntiant's NDP series, dedicated wake-word chips. Ultra-low power, but proprietary, closed toolchains, locked to vendor frameworks. Tier two is general-purpose MCUs running quantized models through vendor stacks like X-CUBE-AI or eIQ. Familiar, but the chip is still a black box you deploy onto. Either way, you adapt your model to the chip — you don't co-design them. Nobody has built a fully open, end-to-end KWS system from the silicon up.",
     content: {
-      topLeft: '03 · Context',
+      kind: 'Context',
       eyebrow: 'Status quo',
-      title: 'Two tiers, one problem.',
+      title: 'Two Approaches to KWS, & Their Caveats.',
       tiers: [
         {
           head: 'Tier 01',
           lede: 'Purpose-built silicon',
-          body: 'Syntiant NDP series, dedicated wake-word chips. Ultra-low power — proprietary, closed toolchains, locked to vendor frameworks.',
+          body: 'High NRE cost, Locked to vendor frameworks, closed toolchains, only viable for scale.',
         },
         {
           head: 'Tier 02',
           lede: 'General-purpose MCUs',
-          body: 'STM32, NXP, Nordic running quantized models through X-CUBE-AI, eIQ, and friends. Familiar — but the chip is still a black box you deploy onto.',
+          body: 'STM32, NXP, Cortex-M series, eIQ, and friends. Too General of a solution, leaving a lot of optimizations on the table, in HW. Closed Source. ',
         },
       ],
       pull: "You adapt your model to the chip. You don't co-design them.",
       thesis: 'Nobody has built a fully open, end-to-end KWS system from the silicon up.',
-      pgnum: '03 / 21',
     },
   },
 
-  // 04 ────────────────────────────────────────────────────────────────────────
+  // We Did ───────────────────────────────────────────────────────────────────
   {
-    id: '04-we-did',
-    label: '04 We Did',
+    id: 'we-did',
+    label: 'We Did',
     notes: 'We did. KWS-SoC is the first fully open RISC-V SoC built specifically for keyword spotting inference. Open core, custom accelerator, model trained knowing the hardware, custom PCB, single open toolchain. We didn\'t adapt a model to fit a chip — we built the chip to fit the model.',
     content: {
-      topLeft: '04 · Thesis',
+      kind: 'Thesis',
       eyebrow: 'KWS-SoC',
       title: 'The first fully open RISC-V SoC built specifically for keyword spotting inference.',
       pillars: [
@@ -117,17 +143,16 @@ export const slides = [
         { head: '05', lede: 'One open toolchain',   body: 'Nix, Verilator, Yosys, OpenOCD, GDB.' },
       ],
       callout: "We didn't adapt a model to fit a chip. We built the chip to fit the model.",
-      pgnum: '04 / 21',
     },
   },
 
-  // 05 ────────────────────────────────────────────────────────────────────────
+  // Constraints ──────────────────────────────────────────────────────────────
   {
-    id: '05-constraints',
-    label: '05 Constraints',
+    id: 'constraints',
+    label: 'Constraints',
     notes: 'Three constraints frame the work. Hazard3 RV32IMAC at 36 megahertz with no FPU. A 64-kilobyte SRAM budget. And an open toolchain — Nix, Verilator, Yosys, OpenOCD, GDB — reproducible from source.',
     content: {
-      topLeft: '05 · Framing',
+      kind: 'Framing',
       eyebrow: 'The arena',
       title: 'Always-on keyword spotting in kilobytes.',
       subtitle: 'Real deployment-class constraints — not relaxed research targets.',
@@ -136,17 +161,16 @@ export const slides = [
         { head: 'Constraint · 02', lede: '64 KB SRAM budget', body: 'NNoM static buffer fits inside this; weights live in XIP flash.' },
         { head: 'Constraint · 03', lede: 'Open toolchain',    body: 'Nix · Verilator · Yosys · OpenOCD · GDB — reproducible from source.' },
       ],
-      pgnum: '05 / 21',
     },
   },
 
-  // 06 ────────────────────────────────────────────────────────────────────────
+  // SoC Architecture ─────────────────────────────────────────────────────────
   {
-    id: '06-soc',
-    label: '06 SoC Architecture',
+    id: 'soc',
+    label: 'SoC Architecture',
     notes: 'The SoC. Hazard3 sits on an AHB-Lite system bus alongside SRAM, Conv1D accelerator memmory transfer interface, QSPI XIP flash. APB hangs off a bridge for the slow peripherals — UART, RISC-V timer, I²S receiver, and the Conv1D config at 0x4000_C000. Every block is either open-source code we audited or RTL we wrote.',
     content: {
-      topLeft: '06 · Hardware',
+      kind: 'Hardware',
       eyebrow: 'kws_soc.v',
       title: 'SoC block diagram',
       rowOne: [
@@ -170,17 +194,16 @@ export const slides = [
       ],
       footer: 'Every block is either open-source code we audited or RTL we wrote.',
       crossbarFooter: 'A partial crossbar — eight of twelve possible master→slave paths — is the right tradeoff between silicon area and the flexibility of a full mesh.',
-      pgnum: '06 / 21',
     },
   },
 
-  // 07 ────────────────────────────────────────────────────────────────────────
+  // Memory Map ───────────────────────────────────────────────────────────────
   {
-    id: '07-memory-map',
-    label: '07 Memory Map',
+    id: 'memory-map',
+    label: 'Memory Map',
     notes: 'The memory map is the contract between hardware and firmware. SRAM at zero, peripherals at 0x4000_xxxx, XIP flash, DMA and Conv1D on AHBL BUS.',
     content: {
-      topLeft: '07 · Hardware',
+      kind: 'Hardware',
       eyebrow: 'Address space',
       title: 'Memory map',
       headers: [
@@ -200,17 +223,16 @@ export const slides = [
         [{ cls: 'addr', html: '0x6000_0000' }, { cls: 'name', html: 'DMAC regs' },                   { html: 'AHB' },  { cls: 'desc', html: '<span class="mono">MS_DMAC_AHBL</span> · I²S FIFO trigger.' }],
         [{ cls: 'addr', html: '0x8000_0000' }, { cls: 'name', html: 'XIP flash' },                   { html: 'QSPI' }, { cls: 'desc', html: '<span class="mono">_xip</span> binaries link here; weights live here.' }],
       ],
-      pgnum: '07 / 21',
     },
   },
 
-  // 08 ────────────────────────────────────────────────────────────────────────
+  // Verification ─────────────────────────────────────────────────────────────
   {
-    id: '08-verification',
-    label: '08 Verification',
+    id: 'verification',
+    label: 'Verification',
     notes: 'Verification has three rungs and the same firmware binary runs on all three. cxxrtl gives a fast C++ simulation with a JTAG bit-bang wrapper. Verilator catches what cxxrtl misses — internally generated clocks like the I²S SCK. The DE10-Standard is the final rung. Each had to pass before the next design decision was committed.',
     content: {
-      topLeft: '08 · Hardware',
+      kind: 'Hardware',
       eyebrow: 'Three rungs of confidence',
       title: 'Same binary on all three.',
       rungs: [
@@ -219,17 +241,16 @@ export const slides = [
         { head: 'Rung 03 · DE10-Standard', lede: 'Cyclone V FPGA', bodyHTML: 'Same firmware binary, no changes. The final rung before silicon.' },
       ],
       footer: 'Each rung is closer to real silicon. Each had to pass before the next design decision was committed.',
-      pgnum: '08 / 21',
     },
   },
 
-  // 09 ────────────────────────────────────────────────────────────────────────
+  // PCB ──────────────────────────────────────────────────────────────────────
   {
-    id: '09-pcb',
-    label: '09 PCB',
+    id: 'pcb',
+    label: 'PCB',
     notes: 'Real hardware, real noise. When we connected the INMP441 to the DE10\'s GPIO header, the I²S signal was corrupted by power-rail noise. The mic data was wrong. You cannot retrain your way out of physics. So we designed a custom PCB — proper decoupling, clean ground plane, INMP441 correctly housed. When the hardware fails you, you fix the hardware. That\'s what full-stack ownership buys you.',
     content: {
-      topLeft: '09 · Hardware',
+      kind: 'Hardware',
       eyebrow: 'Real hardware, real noise',
       title: 'We designed and fabricated our own board.',
       bodyOneHTML: 'The INMP441 on the DE10-Standard\'s GPIO header was corrupted by power-rail noise. The mic data was wrong. <strong style="color: var(--ink);">You cannot retrain your way out of physics.</strong>',
@@ -237,30 +258,30 @@ export const slides = [
       callout: 'When the hardware fails you, you fix the hardware.',
       imageSrc: '/assets/pcb.svg',
       imageAlt: 'KWS-SoC custom PCB schematic',
-      pgnum: '09 / 21',
     },
   },
 
-  // 10 ────────────────────────────────────────────────────────────────────────
+  // Pivot · Model ────────────────────────────────────────────────────────────
   {
-    id: '10-pivot-model',
-    label: '10 Pivot · Model',
+    id: 'pivot-model',
+    label: 'Pivot · Model',
     notes: 'Pivot. The SoC exists to run one thing. Here\'s how we designed that thing to fit it — and why we started from sound itself.',
     content: {
+      // PivotSlide reads `num` directly (not auto-derived) since pivot top-left
+      // is a custom transition tag, not a numbered descriptor.
       num: 'Pivot · I → II',
       bodyMain: "The SoC exists to run one thing. Here's how we designed that thing to fit it — and ",
       bodyEm: 'why we started from sound itself.',
-      pgnum: '10 / 21',
     },
   },
 
-  // 11 ────────────────────────────────────────────────────────────────────────
+  // The Model ────────────────────────────────────────────────────────────────
   {
-    id: '11-the-model',
-    label: '11 The Model',
+    id: 'the-model',
+    label: 'The Model',
     notes: "Mel-aware Conv1D, directly on the waveform. We don't use a fixed MFCC front-end because a fixed front-end is preprocessing the accelerator can't touch. Our learnable Conv1D learns the spectral decomposition itself — and becomes hardware-friendly because it's just a tensor operation. The first Conv1D layer dominates compute. That's by design — it becomes the accelerator target.",
     content: {
-      topLeft: '11 · Model',
+      kind: 'Model',
       eyebrow: 'build_mel_compact()',
       title: 'Mel-aware Conv1D, directly on the waveform.',
       flow: [
@@ -272,17 +293,16 @@ export const slides = [
       ],
       bodyHTML: "Why raw waveform instead of a fixed spectral front-end? A fixed front-end is preprocessing the accelerator can't touch. Our learnable Conv1D <em>is</em> the spectral decomposition — and it's hardware-friendly because it's just a tensor operation.",
       callout: "The first Conv1D layer dominates compute. That's by design — it becomes the accelerator target.",
-      pgnum: '11 / 21',
     },
   },
 
-  // 12 ────────────────────────────────────────────────────────────────────────
+  // Architecture Detail ──────────────────────────────────────────────────────
   {
-    id: '12-architecture-detail',
-    label: '12 Architecture Detail',
+    id: 'architecture-detail',
+    label: 'Architecture Detail',
     notes: 'The architecture in detail. 8000 int8 samples in. Conv1D mel front-end with 16 filters, kernel 65, stride 16. Four DS-CNN blocks. Global average pool. Dense head, eleven classes out.',
     content: {
-      topLeft: '12 · Model',
+      kind: 'Model',
       eyebrow: 'Layer by layer',
       title: 'Mel-compact architecture',
       headers: [
@@ -304,17 +324,16 @@ export const slides = [
         { value: '0.97 M',      label: 'Total MACs',       size: 56 },
         { value: '0.30 / 1e-4', label: 'Dropout · L2',     size: 56 },
       ],
-      pgnum: '12 / 21',
     },
   },
 
-  // 13 ────────────────────────────────────────────────────────────────────────
+  // Training Closed Loop ─────────────────────────────────────────────────────
   {
-    id: '13-training',
-    label: '13 Training Closed Loop',
+    id: 'training',
+    label: 'Training Closed Loop',
     notes: 'Closed-loop training. The model is trained on what the firmware will give it. Dtype-aware augmentation — same script trains float32, int16, int8, with noise calibrated per dtype. NNoM export gives us a weights.h linked into the harness. One harness, two targets — same C source on host and on SoC.',
     content: {
-      topLeft: '13 · Model',
+      kind: 'Model',
       eyebrow: 'Closed-loop training',
       title: 'Trained on what the firmware will give it.',
       pillars: [
@@ -323,17 +342,16 @@ export const slides = [
         { head: '03 · One harness',     lede: 'Two targets',            bodyHTML: 'Same C source on host and on SoC. Identical inference results, different execution environments.' },
       ],
       footer: "If the firmware does a thing, the trainer simulates it. That's how we avoid the sim-to-real gap most KWS projects hit.",
-      pgnum: '13 / 21',
     },
   },
 
-  // 14 ────────────────────────────────────────────────────────────────────────
+  // Data Gap ─────────────────────────────────────────────────────────────────
   {
-    id: '14-data-gap',
-    label: '14 Data Gap',
+    id: 'data-gap',
+    label: 'Data Gap',
     notes: 'Studio audio is not real audio. A model trained only on Google Speech Commands and dropped onto our INMP441 shows meaningful accuracy degradation. The fix had two parts: we collected real INMP441 data through our own PCB and fine-tuned on it, and we added peak normalization — every clip scaled so the loudest sample reaches 75 percent of int16 full scale, then right-shifted by 8 in firmware to land in a known int8 range. 80.7 percent on Google Speech Commands becomes 95 percent on real mic data.',
     content: {
-      topLeft: '14 · Model',
+      kind: 'Model',
       eyebrow: 'Studio audio is not real audio',
       title: 'The model holds up when the audio gets real.',
       sources: [
@@ -346,17 +364,16 @@ export const slides = [
       arrowLabel: 'no degradation',
       micLabel: 'Real INMP441 mic data',
       micValue: '90 %',
-      pgnum: '14 / 21',
     },
   },
 
-  // 15 ────────────────────────────────────────────────────────────────────────
+  // Live Inference ───────────────────────────────────────────────────────────
   {
-    id: '15-live-inference',
-    label: '15 Live Inference',
+    id: 'live-inference',
+    label: 'Live Inference',
     notes: 'kws_nnom_main is the test harness. kws_bare_main is the real system. Mic into I²S RX FIFO; ISR triggers on half-full; ping-pong buffers — one fills while the other is being processed; Conv1D accel plus NNoM model; DETECT on UART. Inference must complete before the other buffer fills. At 30 milliseconds end-to-end, we have ~970 milliseconds of margin per second of audio. Comfortably real-time.',
     content: {
-      topLeft: '15 · Firmware',
+      kind: 'Firmware',
       eyebrow: 'kws_bare_main.c',
       title: 'Live inference on streaming audio.',
       pipeStart: [
@@ -372,30 +389,28 @@ export const slides = [
       pingpong: '↻ ping-pong: A and B alternate roles every half-second',
       bodyHTML: '<span class="mono">kws_nnom_main</span> is the test harness. <span class="mono">kws_bare_main</span> is the real system. The constraint that closes the loop: inference must complete before the other buffer fills.',
       callout: 'At 30 ms end-to-end, we have ~970 ms of margin per second of audio. Comfortably real-time.',
-      pgnum: '15 / 21',
     },
   },
 
-  // 16 ────────────────────────────────────────────────────────────────────────
+  // Pivot · Accelerator ──────────────────────────────────────────────────────
   {
-    id: '16-pivot-accelerator',
-    label: '16 Pivot · Accelerator',
+    id: 'pivot-accelerator',
+    label: 'Pivot · Accelerator',
     notes: 'Pivot. On software, the first Conv1D layer is the overwhelming majority of inference time. It is also the cleanest target for dedicated logic. We designed the model knowing we would build the accelerator for it.',
     content: {
       num: 'Pivot · II → III',
       bodyMain: 'On software, the first Conv1D layer is the overwhelming majority of inference time. It is also the cleanest target for dedicated logic. ',
       bodyEm: 'We designed the model knowing we would build the accelerator for it.',
-      pgnum: '16 / 21',
     },
   },
 
-  // 17 ────────────────────────────────────────────────────────────────────────
+  // Accelerator Architecture ─────────────────────────────────────────────────
   {
-    id: '17-accelerator-architecture',
-    label: '17 Accelerator Architecture',
+    id: 'accelerator-architecture',
+    label: 'Accelerator Architecture',
     notes: 'Conv1D accelerator. Configured over APB; fetches its own data over AHB-Lite. Seven config registers on the left. Three AHBL data paths on the right — weights from XIP flash, inputs from SRAM, outputs to SRAM. Inside, a 4-MAC int8 datapath into a 32-bit accumulator, bias add, per-channel right-shift, saturate to int8.',
     content: {
-      topLeft: '17 · Accelerator',
+      kind: 'Accelerator',
       eyebrow: 'peris/conv1d_accel',
       title: 'Configured over APB. Fetches its own data over AHBL.',
       apbTag: 'APB · control surface',
@@ -417,17 +432,16 @@ export const slides = [
         { label: '⇒ outputs', sub: 'SRAM' },
       ],
       footer: 'Configuration on APB. Data movement on AHBL. Four MACs per cycle, int8 in, int8 out.',
-      pgnum: '17 / 21',
     },
   },
 
-  // 18 ────────────────────────────────────────────────────────────────────────
+  // Register Map ─────────────────────────────────────────────────────────────
   {
-    id: '18-register-map',
-    label: '18 Register Map',
+    id: 'register-map',
+    label: 'Register Map',
     notes: "Register map. The 7 registers sit at APB offsets — the CPU writes them. But what they hold are addresses into AHBL — pointers the accelerator dereferences itself. That's why it has to be an AHBL master, not a passive APB slave.",
     content: {
-      topLeft: '18 · Accelerator',
+      kind: 'Accelerator',
       eyebrow: 'APB base · 0x4000_C000',
       title: 'The accelerator lives on two buses.',
       subtitleHTML: '7 registers at APB offsets — but what they hold are <em>addresses into AHBL</em>.',
@@ -447,17 +461,16 @@ export const slides = [
         [{ cls: 'addr', html: '0x18' }, { cls: 'name', html: 'CFG1' },        { cls: 'desc', html: 'W_in' },                          { cls: 'desc', html: '—' }],
         [{ cls: 'addr', html: '0x20' }, { cls: 'name', html: 'SHIFT_ADDR' },  { cls: 'desc', html: 'per-channel shift pointer' },    { cls: 'desc', html: 'SRAM' }],
       ],
-      pgnum: '18 / 21',
     },
   },
 
-  // 19 ────────────────────────────────────────────────────────────────────────
+  // Three Decisions ──────────────────────────────────────────────────────────
   {
-    id: '19-three-decisions',
-    label: '19 Three Decisions',
+    id: 'three-decisions',
+    label: 'Three Decisions',
     notes: "Three load-bearing decisions. Loop order — C_out outer, W_out inner — avoids reloading 515 kilobytes of weights from XIP per output position. Mixed HSIZE — byte for unaligned weights, word for aligned inputs — gives 4× input bandwidth. The r_wait skip cycle handles the registered output of synchronous SRAM and the XIP cache. Each decision came from understanding the model's memory layout and the AHBL timing protocol simultaneously.",
     content: {
-      topLeft: '19 · Accelerator',
+      kind: 'Accelerator',
       eyebrow: 'Three load-bearing decisions',
       title: 'What made it work.',
       decisions: [
@@ -478,17 +491,16 @@ export const slides = [
         },
       ],
       footer: "Each decision came from understanding both the model's memory layout and the AHBL timing protocol simultaneously.",
-      pgnum: '19 / 21',
     },
   },
 
-  // 20 ────────────────────────────────────────────────────────────────────────
+  // Optimization Journey ─────────────────────────────────────────────────────
   {
-    id: '20-optimization-journey',
-    label: '20 Optimization Journey',
+    id: 'optimization-journey',
+    label: 'Optimization Journey',
     notes: 'The optimization journey. Eight measured points, log scale. Strided NNoM at 15.6 seconds. Mel front-end at 6.3. Add DMA and unroll, then compiler optimizations, then XIP cache optimizations — that drops us from 15.6 seconds to about one second on software alone. Then the accelerator lands and we\'re at 70 milliseconds. Int8 weights drop us to 38 milliseconds. Conv1D double-buffering — overlapping weight fetch with compute — gets us to 30. End-to-end, 5.43 seconds to 30 milliseconds. Roughly 180×.',
     content: {
-      topLeft: '20 · Results',
+      kind: 'Results',
       eyebrow: 'Measured · csrr mcycle in Verilator',
       title: 'From 15.6 seconds to 30 milliseconds.',
       stats: [
@@ -497,18 +509,18 @@ export const slides = [
         { value: '10 / 11 clips',   label: 'Matches SW baseline',     size: 44 },
         { value: '95 %',            label: 'INMP441 mic accuracy',    size: 56 },
       ],
-      pgnum: '20 / 21',
     },
   },
 
-  // 21 ────────────────────────────────────────────────────────────────────────
+  // What We Built ────────────────────────────────────────────────────────────
   {
-    id: '21-what-we-built',
-    label: '21 What We Built',
+    id: 'what-we-built',
+    label: 'What We Built',
     notes: 'What we built. Every layer owned, every layer verified. Custom PCB, INMP441, I²S RX, ping-pong firmware, mel-compact int8 model, Conv1D accelerator, DETECT output. 180× speedup, 30 ms inference, 95 percent mic accuracy, 100 percent open source. Open for questions.',
     content: {
       brand: 'InitRamFS · KWS-SoC',
-      defenseTag: '21 / 21 · Results · Questions',
+      // defenseTagSuffix is appended after the auto-derived "NN / NN" prefix.
+      defenseTagSuffix: '· Results · Questions',
       eyebrow: 'What we built',
       titleLineOne: 'First fully open',
       titleLineTwo: 'RISC-V KWS SoC.',

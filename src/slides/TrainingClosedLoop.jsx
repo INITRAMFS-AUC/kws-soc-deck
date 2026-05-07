@@ -1,11 +1,11 @@
 import SlideFrame from '../components/SlideFrame.jsx';
 import { getSlide } from '../content.js';
 
-const c = getSlide('13-training').content;
+const c = getSlide('training').content;
 
 export default function TrainingClosedLoop() {
   return (
-    <SlideFrame label="13 Training Closed Loop" topLeft={c.topLeft} bottomRight={c.pgnum}>
+    <SlideFrame>
       <div style={{ marginTop: 40 }}>
         <div className="eyebrow">{c.eyebrow}</div>
         <h1 className="title" style={{ marginBottom: 60 }}>{c.title}</h1>

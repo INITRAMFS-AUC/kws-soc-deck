@@ -2,11 +2,11 @@ import SlideFrame from '../components/SlideFrame.jsx';
 import Specimen from '../components/Specimen.jsx';
 import { getSlide } from '../content.js';
 
-const c = getSlide('14-data-gap').content;
+const c = getSlide('data-gap').content;
 
 export default function DataGap() {
   return (
-    <SlideFrame label="14 Data Gap" topLeft={c.topLeft} bottomRight={c.pgnum}>
+    <SlideFrame>
       <div style={{ marginTop: 40 }}>
         <div className="eyebrow">{c.eyebrow}</div>
         <h1 className="title" style={{ marginBottom: 40, maxWidth: 1700 }}>{c.title}</h1>

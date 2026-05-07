@@ -1,14 +1,20 @@
 import { getSlide } from '../content.js';
+import { useSlideMeta, pad2 } from '../slide-meta.js';
 
-const c = getSlide('21-what-we-built').content;
+const c = getSlide('what-we-built').content;
 
 export default function WhatWeBuilt() {
+  const { num, total, slide } = useSlideMeta();
+  const n = pad2(num);
+  const t = pad2(total);
+  const dataLabel = `${n} ${slide?.label ?? ''}`.trim();
+  const defenseTag = `${n} / ${t} ${c.defenseTagSuffix}`.trim();
   return (
-    <section data-label="21 What We Built">
+    <section data-label={dataLabel}>
       <div className="cover" style={{ justifyContent: 'space-between' }}>
         <div className="top">
           <div className="brand"><span className="brand-mark" /><span>{c.brand}</span></div>
-          <div>{c.defenseTag}</div>
+          <div>{defenseTag}</div>
         </div>
         <div style={{ display: 'grid', gridTemplateColumns: '1.1fr 1fr', gap: 80, alignItems: 'center' }}>
           <div>
