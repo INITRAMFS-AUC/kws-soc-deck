@@ -1,0 +1,110 @@
+/* ─────────────────────────────────────────────────────────────────────────────
+ * tokens.css — single source of truth for the visual language.
+ *
+ * Every color, font, shadow, radius, type size, and spacing value used in the
+ * deck is declared here as a CSS custom property on :root. Other stylesheets,
+ * JSX inline styles, and HTML strings in content.js should reference these
+ * via var(--token-name). To redesign, edit ONE file.
+ *
+ * Convention:
+ *   --color-*    hue palette (warm bg, ink, accent, paper)
+ *   --on-dark-*  alpha tints of the cream foreground used over --color-ink
+ *   --line-*     border / gridline tints
+ *   --font-*     font families
+ *   --fw-*       font weights
+ *   --type-*     type sizes
+ *   --ls-*       letter-spacings
+ *   --shadow-*   drop shadows
+ *   --radius-*   border-radii
+ *   --pad-*      slide-level paddings
+ * ──────────────────────────────────────────────────────────────────────────── */
+
+:root {
+  /* ── Brand palette ─────────────────────────────────────────────────────── */
+  --color-bg:          #f4f1ea;
+  --color-bg-deep:     #ebe6db;
+  --color-paper:       #ffffff;
+  --color-page:        #0d0d0d;            /* HTML letterbox behind the deck */
+
+  --color-ink:         #1a1a1a;
+  --color-ink-soft:    #3a3a3a;
+  --color-ink-mute:    #6a6a66;
+
+  --color-accent:      oklch(0.55 0.15 38);  /* warm — terracotta */
+  --color-accent-cool: oklch(0.45 0.13 255); /* baseline blue       */
+
+  --color-cream:       #f4f1ea;             /* foreground over ink */
+
+  /* Cream tints over ink. Use these instead of writing rgba(244,241,234,…) */
+  --on-dark-85:        rgba(244,241,234,0.85);
+  --on-dark-60:        rgba(244,241,234,0.60);
+  --on-dark-50:        rgba(244,241,234,0.50);
+  --on-dark-45:        rgba(244,241,234,0.45);
+  --on-dark-40:        rgba(244,241,234,0.40);
+  --on-dark-15:        rgba(244,241,234,0.15);
+  --on-dark-12:        rgba(244,241,234,0.12);
+
+  /* Black tints — borders, gridlines, table dividers. */
+  --line-strong:       rgba(0,0,0,0.18);
+  --line-card:         rgba(0,0,0,0.15);
+  --line-soft:         rgba(0,0,0,0.12);
+  --line-faint:        rgba(0,0,0,0.10);
+  --line-grid:         rgba(0,0,0,0.08);
+  --line-hairline:     rgba(0,0,0,0.06);
+
+  /* ── Typography ────────────────────────────────────────────────────────── */
+  --font-sans:         'Inter', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-mono:         'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+
+  --fw-regular:        400;
+  --fw-medium:         500;
+  --fw-semibold:       600;
+  --fw-bold:           700;
+
+  --type-display:      124px;
+  --type-title:        64px;
+  --type-subtitle:     44px;
+  --type-body:         30px;
+  --type-small:        24px;
+  --type-tag:          22px;
+
+  --ls-tight:          -0.035em;   /* display */
+  --ls-snug:           -0.02em;    /* title */
+  --ls-normal:         -0.01em;    /* subtitle */
+  --ls-mono:           0.04em;     /* default mono labels */
+  --ls-caps:           0.08em;     /* eyebrow-ish */
+  --ls-caps-wide:      0.10em;     /* headers */
+  --ls-caps-extra:     0.16em;     /* eyebrow */
+
+  /* ── Slide-level layout ────────────────────────────────────────────────── */
+  --pad-top:           90px;
+  --pad-bottom:        80px;
+  --pad-x:             100px;
+
+  /* ── Shadows ───────────────────────────────────────────────────────────── */
+  --shadow-panel:      0 1px 0 rgba(255,255,255,.5) inset, 0 12px 40px rgba(0,0,0,.18);
+  --shadow-chip:       0 1px 2px rgba(0,0,0,.06);
+  --shadow-chip-hover: 0 4px 10px rgba(0,0,0,.12);
+  --shadow-thumb:      0 1px 3px rgba(0,0,0,.20);
+  --shadow-toggle:     0 1px 2px rgba(0,0,0,.25);
+
+  /* ── Radius ────────────────────────────────────────────────────────────── */
+  --radius-sm:         6px;
+  --radius-md:         7px;
+  --radius-lg:         8px;
+  --radius-panel:      14px;
+
+  /* ── Animation ─────────────────────────────────────────────────────────── */
+  --anim-ease:         cubic-bezier(0.4, 0, 0.2, 1);   /* ease-in-out */
+  --anim-dur:          500ms;                          /* element entrance */
+  --anim-slide-dur:    260ms;                          /* slide-to-slide */
+  --anim-translate:    24px;                           /* ease effect offset */
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --anim-dur:       0ms;
+    --anim-slide-dur: 0ms;
+    --anim-translate: 0px;
+  }
+}

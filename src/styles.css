@@ -1,0 +1,409 @@
+@import './tokens.css';
+
+/* Backwards-compat aliases — older inline styles in slide markup reference
+ * --bg / --ink / --accent / --paper / --bg-deep / --ink-soft / --ink-mute /
+ * --accent-cool. Keep them as aliases of the canonical tokens so editing the
+ * palette in tokens.css still flows through. */
+:root {
+  --bg:           var(--color-bg);
+  --bg-deep:      var(--color-bg-deep);
+  --paper:        var(--color-paper);
+  --ink:          var(--color-ink);
+  --ink-soft:     var(--color-ink-soft);
+  --ink-mute:     var(--color-ink-mute);
+  --accent:       var(--color-accent);
+  --accent-cool: var(--color-accent-cool);
+}
+
+html, body {
+  margin: 0;
+  padding: 0;
+  background: var(--color-page);
+  font-family: var(--font-sans);
+  color: var(--color-ink);
+  -webkit-font-smoothing: antialiased;
+}
+
+deck-stage > section {
+  background: var(--color-bg);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  overflow: hidden;
+  position: relative;
+  transition: opacity var(--anim-slide-dur) var(--anim-ease);
+}
+
+/* ── Per-element entrance animations ─────────────────────────────────────────
+ * Wrap any element with className="anim" (or use the <Animated/> component, or
+ * pass animate="fade"|"ease" to a layout component). The element starts hidden
+ * and animates in once its slide section gets [data-deck-active]. Use
+ * style={{ transitionDelay: '120ms' }} to stagger.
+ *
+ *   .anim          — hidden base state
+ *   .anim-fade     — pure opacity fade (default)
+ *   .anim-ease     — opacity + slight upward slide
+ *   .no-anim       — opt out (always visible)
+ * ──────────────────────────────────────────────────────────────────────────── */
+.anim {
+  opacity: 0;
+  transition:
+    opacity   var(--anim-dur) var(--anim-ease),
+    transform var(--anim-dur) var(--anim-ease);
+  will-change: opacity, transform;
+}
+.anim-ease { transform: translateY(var(--anim-translate)); }
+
+[data-deck-active] .anim {
+  opacity: 1;
+  transform: none;
+}
+
+.no-anim, .no-anim .anim {
+  opacity: 1 !important;
+  transform: none !important;
+  transition: none !important;
+}
+
+/* Default fade for standard slide header text. Each slide's eyebrow/title/
+ * subtitle fades in with a small stagger when the slide activates. Override
+ * by adding .no-anim on the element. */
+deck-stage > section .eyebrow,
+deck-stage > section .title,
+deck-stage > section .subtitle {
+  opacity: 0;
+  transition: opacity var(--anim-dur) var(--anim-ease);
+}
+deck-stage > section .title    { transition-delay: 80ms; }
+deck-stage > section .subtitle { transition-delay: 160ms; }
+
+[data-deck-active] .eyebrow,
+[data-deck-active] .title,
+[data-deck-active] .subtitle {
+  opacity: 1;
+}
+
+.slide {
+  padding: var(--pad-top) var(--pad-x) var(--pad-bottom);
+  box-sizing: border-box;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.chrome-top, .chrome-bottom {
+  position: absolute;
+  left: var(--pad-x);
+  right: var(--pad-x);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-family: var(--font-mono);
+  font-size: var(--type-small);
+  letter-spacing: var(--ls-mono);
+  color: var(--color-ink-mute);
+  text-transform: uppercase;
+}
+.chrome-top    { top: 44px; }
+.chrome-bottom { bottom: 44px; }
+
+h1, h2, h3, h4, p { margin: 0; }
+
+/* ── Type roles ──────────────────────────────────────────────────────────── */
+.eyebrow {
+  font-family: var(--font-mono);
+  font-size: var(--type-small);
+  letter-spacing: var(--ls-caps-extra);
+  text-transform: uppercase;
+  color: var(--color-accent);
+  font-weight: var(--fw-medium);
+  margin-bottom: 18px;
+}
+.title {
+  font-size: var(--type-title);
+  font-weight: var(--fw-semibold);
+  letter-spacing: var(--ls-snug);
+  line-height: 1.04;
+  color: var(--color-ink);
+}
+.subtitle {
+  font-size: var(--type-subtitle);
+  font-weight: var(--fw-regular);
+  letter-spacing: var(--ls-normal);
+  line-height: 1.15;
+  color: var(--color-ink-soft);
+}
+.body {
+  font-size: var(--type-body);
+  font-weight: var(--fw-regular);
+  line-height: 1.42;
+  color: var(--color-ink-soft);
+  text-wrap: pretty;
+}
+.small {
+  font-size: var(--type-small);
+  line-height: 1.45;
+  color: var(--color-ink-mute);
+}
+.mono { font-family: var(--font-mono); }
+.tag {
+  font-family: var(--font-mono);
+  font-size: var(--type-tag);
+  letter-spacing: var(--ls-caps);
+  text-transform: uppercase;
+  color: var(--color-ink-mute);
+}
+
+/* ── Grid utilities ──────────────────────────────────────────────────────── */
+.col-2 { display: grid; grid-template-columns: 1fr 1fr;             gap: 70px; }
+.col-3 { display: grid; grid-template-columns: 1fr 1fr 1fr;         gap: 40px; }
+.col-4 { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr;     gap: 32px; }
+.col-5 { display: grid; grid-template-columns: repeat(5, 1fr);      gap: 24px; }
+
+/* ── Cover template ──────────────────────────────────────────────────────── */
+.cover {
+  background: var(--color-ink);
+  color: var(--color-cream);
+  padding: var(--pad-top) var(--pad-x) var(--pad-bottom);
+  box-sizing: border-box;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+.cover .top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  font-family: var(--font-mono);
+  font-size: var(--type-small);
+  color: var(--on-dark-60);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.cover .brand {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  font-weight: var(--fw-medium);
+  color: var(--color-cream);
+}
+.cover .brand-mark {
+  width: 22px;
+  height: 22px;
+  background: var(--color-accent);
+}
+.cover .display {
+  font-size: var(--type-display);
+  font-weight: var(--fw-semibold);
+  line-height: 0.98;
+  letter-spacing: var(--ls-tight);
+  color: var(--color-cream);
+}
+.cover .display em {
+  font-style: normal;
+  color: var(--color-accent);
+}
+.cover .meta {
+  display: grid;
+  grid-template-columns: repeat(3, auto);
+  gap: 80px;
+  align-items: end;
+}
+.cover .meta .label {
+  font-family: var(--font-mono);
+  font-size: var(--type-small);
+  text-transform: uppercase;
+  letter-spacing: var(--ls-caps-wide);
+  color: var(--on-dark-50);
+  margin-bottom: 12px;
+}
+.cover .meta .val {
+  font-size: 28px;
+  color: var(--color-cream);
+  font-weight: var(--fw-regular);
+  line-height: 1.3;
+}
+
+/* ── Pivot template ──────────────────────────────────────────────────────── */
+.pivot {
+  background: var(--color-ink);
+  color: var(--color-cream);
+  padding: 100px 140px;
+  box-sizing: border-box;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  position: relative;
+}
+.pivot .num {
+  position: absolute;
+  top: 60px;
+  left: 140px;
+  font-family: var(--font-mono);
+  font-size: var(--type-small);
+  color: var(--color-accent);
+  letter-spacing: var(--ls-caps-extra);
+  text-transform: uppercase;
+}
+.pivot .pgnum {
+  position: absolute;
+  bottom: 60px;
+  right: 140px;
+  font-family: var(--font-mono);
+  font-size: var(--type-small);
+  color: var(--on-dark-40);
+  letter-spacing: var(--ls-caps-wide);
+}
+.pivot blockquote {
+  margin: 0;
+  font-size: 76px;
+  font-weight: var(--fw-medium);
+  line-height: 1.08;
+  letter-spacing: var(--ls-snug);
+  color: var(--color-cream);
+  max-width: 1500px;
+}
+.pivot blockquote em {
+  font-style: normal;
+  color: var(--color-accent);
+}
+
+/* ── Specimen card ───────────────────────────────────────────────────────── */
+.specimen {
+  background: var(--color-paper);
+  border: 1px solid var(--line-faint);
+  padding: 28px 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.specimen .head {
+  font-family: var(--font-mono);
+  font-size: var(--type-tag);
+  letter-spacing: var(--ls-caps-wide);
+  text-transform: uppercase;
+  color: var(--color-ink-mute);
+}
+.specimen .lede {
+  font-size: 28px;
+  font-weight: var(--fw-medium);
+  letter-spacing: var(--ls-normal);
+  line-height: 1.25;
+  color: var(--color-ink);
+}
+.specimen p {
+  font-size: var(--type-tag);
+  line-height: 1.45;
+  color: var(--color-ink-soft);
+}
+
+/* ── Block / .blk diagram cards ──────────────────────────────────────────── */
+.blk {
+  border: 2px solid var(--color-ink);
+  background: var(--color-paper);
+  padding: 14px 20px;
+  font-family: var(--font-mono);
+  font-size: var(--type-tag);
+  color: var(--color-ink);
+  text-align: center;
+  line-height: 1.25;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+.blk.accent { background: var(--color-accent); color: #fff; border-color: var(--color-accent); }
+.blk.muted  { background: var(--color-bg-deep); }
+.blk .sub   { font-size: 16px; color: var(--color-ink-mute); font-weight: var(--fw-regular); margin-top: 4px; }
+.blk.accent .sub { color: rgba(255,255,255,0.8); }
+
+/* ── Memory map / register table ─────────────────────────────────────────── */
+.memmap { width: 100%; border-collapse: collapse; font-family: var(--font-mono); }
+.memmap th, .memmap td {
+  text-align: left;
+  padding: 16px 22px;
+  border-bottom: 1px solid var(--line-soft);
+  font-size: var(--type-small);
+}
+.memmap th {
+  font-size: 18px;
+  text-transform: uppercase;
+  letter-spacing: var(--ls-caps-wide);
+  color: var(--color-ink-mute);
+  font-weight: var(--fw-medium);
+  padding-bottom: 12px;
+  padding-top: 0;
+  border-bottom: 2px solid var(--color-ink);
+}
+.memmap .addr { color: var(--color-accent); }
+.memmap .name { color: var(--color-ink); font-weight: var(--fw-medium); }
+.memmap .desc { color: var(--color-ink-soft); font-family: var(--font-sans); font-size: var(--type-tag); }
+
+/* ── Stat callouts ───────────────────────────────────────────────────────── */
+.stat .v {
+  font-family: var(--font-mono);
+  font-size: 88px;
+  font-weight: var(--fw-medium);
+  letter-spacing: -0.03em;
+  color: var(--color-ink);
+  line-height: 0.9;
+}
+.stat .v small { font-size: 28px; color: var(--color-ink-mute); margin-left: 4px; }
+.stat .l {
+  font-size: var(--type-tag);
+  font-family: var(--font-mono);
+  text-transform: uppercase;
+  letter-spacing: var(--ls-caps);
+  color: var(--color-ink-mute);
+  margin-top: 14px;
+}
+
+/* ── Step card (verification rungs) ──────────────────────────────────────── */
+.step {
+  background: var(--color-paper);
+  border: 1px solid var(--line-card);
+  padding: 22px 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-height: 200px;
+}
+.step .stage {
+  font-family: var(--font-mono);
+  font-size: 18px;
+  letter-spacing: var(--ls-caps-wide);
+  text-transform: uppercase;
+  color: var(--color-accent);
+}
+.step .head   { font-size: var(--type-tag); font-weight: var(--fw-semibold); color: var(--color-ink); line-height: 1.2; }
+.step .body-s { font-size: 18px; line-height: 1.4; color: var(--color-ink-soft); }
+
+/* ── Pull quote ──────────────────────────────────────────────────────────── */
+.pull {
+  background: var(--color-paper);
+  border-left: 4px solid var(--color-accent);
+  padding: 28px 36px;
+  font-size: 32px;
+  line-height: 1.3;
+  font-style: italic;
+  color: var(--color-ink);
+  font-weight: var(--fw-regular);
+  letter-spacing: var(--ls-normal);
+}
+.pull::before { content: '\201C'; font-family: var(--font-sans); color: var(--color-accent); margin-right: 6px; }
+.pull::after  { content: '\201D'; font-family: var(--font-sans); color: var(--color-accent); }
+
+/* ── Callout strip ───────────────────────────────────────────────────────── */
+.callout {
+  background: var(--color-ink);
+  color: var(--color-cream);
+  padding: 24px 32px;
+  font-size: 26px;
+  font-weight: var(--fw-medium);
+  line-height: 1.3;
+  letter-spacing: -0.005em;
+  border-left: 6px solid var(--color-accent);
+}
