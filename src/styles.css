@@ -446,14 +446,18 @@ h1, h2, h3, h4, p { margin: 0; }
     transform var(--anim-dur) var(--anim-ease);
   will-change: opacity, transform;
 }
-.vx-body    { opacity: 1; transform: none; }
+.vx-body    { 
+  display: grid;
+  opacity: 1; 
+  transform: none; 
+}
 .vx-market  { opacity: 0; transform: translateY(18px); pointer-events: none; }
 .vx-root--chart .vx-body   { opacity: 0; transform: translateY(-18px); pointer-events: none; }
 .vx-root--chart .vx-market { opacity: 1; transform: none;             pointer-events: auto; }
 
 .vx-stats {
   display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px;
-  max-width: 1700px; margin-bottom: 22px;
+  width: 100%; margin-bottom: 22px;
 }
 .vx-stat {
   border: 1px solid rgba(0,0,0,0.12);

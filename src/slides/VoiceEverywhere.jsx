@@ -141,8 +141,40 @@ export default function VoiceEverywhere() {
         </div>
 
         <div className="vx-panes">
-          <p className="body vx-body" style={{ maxWidth: 1500, fontSize: 36, lineHeight: 1.4 }}
-             dangerouslySetInnerHTML={{ __html: c.bodyHTML }} />
+          <div className="vx-body" style={{
+            display: 'grid', gridTemplateColumns: '1fr 520px',
+            gap: 60, alignItems: 'start',
+          }}>
+            <p className="body" style={{ maxWidth: 1100, fontSize: 36, lineHeight: 1.4 }}
+               dangerouslySetInnerHTML={{ __html: c.bodyHTML }} />
+            <div className="sketchfab-embed-wrapper" style={{
+              display: 'flex', flexDirection: 'column', alignItems: 'stretch',
+            }}>
+              <iframe
+                title="Google Home"
+                frameBorder="0"
+                allowFullScreen
+                mozallowfullscreen="true"
+                webkitallowfullscreen="true"
+                allow="autoplay; fullscreen; xr-spatial-tracking"
+                src="https://sketchfab.com/models/c546250b4d4b4e0cb82f5903c489b245/embed?autospin=1&autostart=1&preload=1&transparent=1&dnt=1"
+                style={{ width: '100%', height: 520, border: 0, background: 'transparent' }}
+              />
+              <p style={{ fontSize: 13, fontWeight: 'normal', margin: '6px 2px 0', color: '#4A4A4A' }}>
+                <a href="https://sketchfab.com/3d-models/google-home-c546250b4d4b4e0cb82f5903c489b245?utm_medium=embed&utm_campaign=share-popup&utm_content=c546250b4d4b4e0cb82f5903c489b245"
+                   target="_blank" rel="nofollow noreferrer"
+                   style={{ fontWeight: 'bold', color: '#1CAAD9' }}>Google Home</a>
+                {' '}by{' '}
+                <a href="https://sketchfab.com/vaidanshi?utm_medium=embed&utm_campaign=share-popup&utm_content=c546250b4d4b4e0cb82f5903c489b245"
+                   target="_blank" rel="nofollow noreferrer"
+                   style={{ fontWeight: 'bold', color: '#1CAAD9' }}>Vaidanshi</a>
+                {' '}on{' '}
+                <a href="https://sketchfab.com?utm_medium=embed&utm_campaign=share-popup&utm_content=c546250b4d4b4e0cb82f5903c489b245"
+                   target="_blank" rel="nofollow noreferrer"
+                   style={{ fontWeight: 'bold', color: '#1CAAD9' }}>Sketchfab</a>
+              </p>
+            </div>
+          </div>
 
           <div className="vx-market">
             <div className="vx-stats">

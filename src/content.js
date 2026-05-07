@@ -113,16 +113,51 @@ export const slides = [
         {
           head: 'Tier 01',
           lede: 'Purpose-built silicon',
-          body: 'High NRE cost, Locked to vendor frameworks, closed toolchains, only viable for scale.',
+          bullets: [
+            'High NRE cost.',
+            'Locked to vendor frameworks.',
+            'Closed toolchains.',
+            'Only viable at scale.',
+          ],
+          imageSrc: 'assets/si-layout.jpg',
+          imageAlt: 'Silicon layout of a purpose-built KWS chip',
         },
         {
           head: 'Tier 02',
           lede: 'General-purpose MCUs',
-          body: 'STM32, NXP, Cortex-M series, eIQ, and friends. Too General of a solution, leaving a lot of optimizations on the table, in HW. Closed Source. ',
+          bullets: [
+            'STM32, NXP, Cortex-M series, eIQ, and friends.',
+            'Too general — leaves HW optimizations on the table.',
+            'Closed source.',
+          ],
+          comparison: {
+            tableTitle: 'Cortex-M7 — what you pay for',
+            headers: ['Metric', 'Cortex-M7'],
+            rows: [
+              ['Core-only dynamic power', '18.5–58.5 µW/MHz minimum cacheless'],
+              ['Unit cost', '$16'],
+            ],
+            featuresTitle: 'Included features',
+            features: [
+              'Dual core',
+              'AXI bus',
+              'DSP extension',
+              'Instruction cache',
+              'Data cache',
+              'Instruction TCM',
+            ],
+            sources: [
+              {
+                label: 'Digi-Key · STM32H753VIH6',
+                url: 'https://www.digikey.com/en/products/detail/stmicroelectronics/STM32H753VIH6/10326801',
+              },
+              { label: 'Arm Cortex-M Processor Comparison Table' },
+            ],
+          },
         },
       ],
       pull: "You adapt your model to the chip. You don't co-design them.",
-      thesis: 'Nobody has built a fully open, end-to-end KWS system from the silicon up.',
+      thesis: 'Most of the time you pay for things you do not need',
     },
   },
 
