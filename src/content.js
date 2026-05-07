@@ -27,7 +27,7 @@ export const slides = [
       displayAccent: '.',
       meta: [
         { label: 'Repo',  value: 'github.com/INITRAMFS-AUC/KWS-SoC', mono: true },
-        { label: 'Stack', value: 'Hazard3 · NNoM int8 · Conv1D accel · Custom PCB' },
+        { label: 'Supervisor', value: 'Dr. Mohamed Shalan' },
       ],
     },
   },
