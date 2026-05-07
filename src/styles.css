@@ -20,6 +20,7 @@ html, body {
   padding: 0;
   background: var(--color-page);
   font-family: var(--font-sans);
+  font-style: var(--font-sans-style);
   color: var(--color-ink);
   -webkit-font-smoothing: antialiased;
 }
@@ -28,10 +29,25 @@ deck-stage > section {
   background: var(--color-bg);
   color: var(--color-ink);
   font-family: var(--font-sans);
+  font-style: var(--font-sans-style);
   overflow: hidden;
   position: relative;
   transition: opacity var(--anim-slide-dur) var(--anim-ease);
 }
+
+/* Mono surfaces stay upright — italic is sans-only.
+ * Covers both inline JSX styles (style="font-family:var(--font-mono)") and
+ * the CSS classes that set mono in styles.css. Add new selectors here when
+ * you introduce another mono surface. */
+[style*="--font-mono"],
+.mono, .tag, .eyebrow, .memmap,
+.chrome-top, .chrome-bottom,
+.cover .meta .label,
+.specimen .head,
+.blk, .blk .sub,
+.stat .v, .stat .l,
+.step .stage,
+code, kbd, samp { font-style: normal; }
 
 /* ── Per-element entrance animations ─────────────────────────────────────────
  * Wrap any element with className="anim" (or use the <Animated/> component, or

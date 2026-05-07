@@ -1,9 +1,12 @@
 {
+  "homepage": "https://initramfs-auc.github.io/kws-soc-deck",
   "name": "kws-soc-thesis-deck",
   "private": true,
   "version": "0.1.0",
   "type": "module",
   "scripts": {
+    "predeploy": "npm run build",
+    "deploy": "gh-pages -d build",
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview --host 127.0.0.1 --port 5173"
@@ -14,6 +17,7 @@
   },
   "devDependencies": {
     "@vitejs/plugin-react": "^4.3.4",
+    "gh-pages": "^6.3.0",
     "vite": "^5.4.10"
   }
 }

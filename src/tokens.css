@@ -53,7 +53,8 @@
   --line-hairline:     rgba(0,0,0,0.06);
 
   /* ── Typography ────────────────────────────────────────────────────────── */
-  --font-sans:         'Inter', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-sans:         'Neuton', Georgia, 'Times New Roman', serif;
+  --font-sans-style:   italic;   /* applied to body + section copy */
   --font-mono:         'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
 
   --fw-regular:        400;
