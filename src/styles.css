@@ -431,6 +431,112 @@ h1, h2, h3, h4, p { margin: 0; }
 .soc-grid--crossbar .xbar-dot { transform: scale(1); }
 /* Stagger the dots in by index — set via inline transition-delay. */
 
+/* ── Slide 02: Voice Everywhere — body ↔ market chart cross-fade ─────────── */
+.vx-root { position: relative; }
+.vx-title { font-size: 96px; max-width: 1500px; margin-bottom: 60px; }
+.vx-panes {
+  position: relative;
+  min-height: 660px;
+}
+.vx-body, .vx-market {
+  position: absolute;
+  inset: 0;
+  transition:
+    opacity   var(--anim-dur) var(--anim-ease),
+    transform var(--anim-dur) var(--anim-ease);
+  will-change: opacity, transform;
+}
+.vx-body    { opacity: 1; transform: none; }
+.vx-market  { opacity: 0; transform: translateY(18px); pointer-events: none; }
+.vx-root--chart .vx-body   { opacity: 0; transform: translateY(-18px); pointer-events: none; }
+.vx-root--chart .vx-market { opacity: 1; transform: none;             pointer-events: auto; }
+
+.vx-stats {
+  display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px;
+  max-width: 1700px; margin-bottom: 22px;
+}
+.vx-stat {
+  border: 1px solid rgba(0,0,0,0.12);
+  background: var(--paper);
+  padding: 16px 22px;
+  opacity: 0;
+  transform: translateY(14px);
+  transition:
+    opacity   420ms var(--anim-ease),
+    transform 420ms var(--anim-ease);
+}
+.vx-stat-label {
+  font-family: var(--font-mono); font-size: 14px;
+  letter-spacing: var(--ls-caps); text-transform: uppercase;
+  color: var(--color-ink-mute); margin-bottom: 6px;
+  font-style: normal;
+}
+.vx-stat-value {
+  font-size: 44px; font-weight: 600; line-height: 1.05;
+  color: var(--color-ink); font-style: normal;
+}
+.vx-chart {
+  background: var(--paper);
+  border: 1px solid rgba(0,0,0,0.12);
+  padding: 18px 24px 8px;
+  max-width: 1700px;
+  opacity: 0;
+  transform: translateY(14px);
+  transition:
+    opacity   480ms var(--anim-ease),
+    transform 480ms var(--anim-ease);
+}
+.vx-chart-title {
+  font-family: var(--font-mono); font-size: 14px;
+  letter-spacing: var(--ls-caps); text-transform: uppercase;
+  color: var(--color-ink-mute); margin-bottom: 6px;
+  font-style: normal;
+}
+.vx-bar {
+  opacity: 0;
+  transform: scaleY(0);
+  transform-box: fill-box;
+  transition:
+    opacity   360ms var(--anim-ease),
+    transform 480ms var(--anim-ease);
+}
+.vx-source {
+  margin-top: 14px; max-width: 1700px;
+  font-style: normal;
+  opacity: 0;
+  transform: translateY(8px);
+  transition:
+    opacity   320ms var(--anim-ease),
+    transform 320ms var(--anim-ease);
+}
+.vx-source a { color: var(--color-accent); text-decoration: none; }
+
+.vx-root--chart .vx-stat,
+.vx-root--chart .vx-chart,
+.vx-root--chart .vx-source {
+  opacity: 1; transform: none;
+}
+.vx-root--chart .vx-bar { opacity: 1; transform: scaleY(1); }
+
+.vx-hint {
+  position: absolute; right: 0; bottom: -40px;
+  font-family: var(--font-mono); font-size: 13px;
+  letter-spacing: var(--ls-caps); text-transform: uppercase;
+  color: var(--color-ink-mute);
+  font-style: normal;
+}
+
+.vx-tw { font-style: inherit; }
+.vx-caret {
+  display: inline-block;
+  margin-left: 2px;
+  color: var(--color-accent);
+  font-weight: var(--fw-regular);
+  opacity: 0.55;
+}
+.vx-caret--blink { animation: vx-blink 700ms steps(2, end) infinite; opacity: 1; }
+@keyframes vx-blink { 0%, 49% { opacity: 1; } 50%, 100% { opacity: 0; } }
+
 /* ── Memory map / register table ─────────────────────────────────────────── */
 .memmap { width: 100%; border-collapse: collapse; font-family: var(--font-mono); }
 .memmap th, .memmap td {

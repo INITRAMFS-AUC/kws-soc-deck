@@ -43,6 +43,33 @@ export const slides = [
       title: 'Voice command interfaces are everywhere.',
       bodyHTML: 'Phones. Earbuds. Smart speakers. Cars. Appliances. Behind every one of those interfaces is a tiny always-on classifier called <span style="color: var(--accent); font-weight: 500;">keyword spotting</span> — and it has to run within milliwatts, on kilobytes of memory, every second of every day.',
       pgnum: '02 / 21',
+      market: {
+        stats: [
+          { label: 'Revenue, 2023',       value: '$23.9 B' },
+          { label: 'Forecast, 2030',      value: '$92.4 B' },
+          { label: 'CAGR, 2024 – 2030',   value: '21.3%'   },
+        ],
+        chartTitle: 'Global voice user interface market, 2017 – 2030 (US$ M)',
+        // Grand View Research, Voice User Interface Market report
+        series: [
+          { y: 2017, v:  6900 },
+          { y: 2018, v:  9000 },
+          { y: 2019, v: 11000 },
+          { y: 2020, v: 13500 },
+          { y: 2021, v: 16200 },
+          { y: 2022, v: 19500 },
+          { y: 2023, v: 23941 },
+          { y: 2024, v: 29000 },
+          { y: 2025, v: 35000 },
+          { y: 2026, v: 42500 },
+          { y: 2027, v: 51500 },
+          { y: 2028, v: 62500 },
+          { y: 2029, v: 76000 },
+          { y: 2030, v: 92410 },
+        ],
+        sourceLabel: 'Source · Grand View Research, Voice User Interface Market Report',
+        sourceUrl: 'https://www.grandviewresearch.com/industry-analysis/voice-user-interface-market-report',
+      },
     },
   },
 
