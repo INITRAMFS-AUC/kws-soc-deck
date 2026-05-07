@@ -132,47 +132,85 @@ export default function VoiceEverywhere() {
   return (
     <SlideFrame>
       <div ref={rootRef} className={`vx-root ${reveal ? 'vx-root--chart' : ''}`}>
-        <div style={{ marginTop: 60 }}>
+        {/* Full-bleed bedroom backdrop — escapes .slide padding so the photo
+            covers the whole 1920×1080 section. Fades out when reveal=true. */}
+        <div aria-hidden style={{
+          position: 'absolute',
+          top: 'calc(-1 * var(--pad-top))',
+          bottom: 'calc(-1 * var(--pad-bottom))',
+          left: 'calc(-1 * var(--pad-x))',
+          right: 'calc(-1 * var(--pad-x))',
+          opacity: reveal ? 0 : 1,
+          transition: 'opacity var(--anim-slide-dur) var(--anim-ease)',
+          pointerEvents: 'none',
+          zIndex: 0,
+        }}>
+          <div style={{
+            position: 'absolute', inset: 0,
+            backgroundImage: "url('https://images.unsplash.com/photo-1540518614846-7eded433c457?w=1920&q=80')",
+            backgroundSize: 'cover', backgroundPosition: 'center',
+            filter: 'saturate(0.85) contrast(1.1)',
+            opacity: 0.65,
+          }} />
+          <div style={{
+            position: 'absolute', inset: 0,
+            background: 'linear-gradient(90deg, rgba(0,0,0,0.78) 0%, rgba(0,0,0,0.45) 40%, rgba(0,0,0,0.35) 70%, rgba(0,0,0,0.6) 100%)',
+          }} />
+          <div style={{
+            position: 'absolute', inset: 0,
+            background: 'linear-gradient(180deg, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0.2) 30%, rgba(0,0,0,0.78) 100%)',
+          }} />
+        </div>
+
+        <div style={{
+          marginTop: 60, position: 'relative', zIndex: 1,
+          color: reveal ? 'var(--color-ink)' : '#f4f1ea',
+          transition: 'color var(--anim-slide-dur) var(--anim-ease)',
+        }}>
           <div className="eyebrow">{c.eyebrow}</div>
-          <h1 className="title vx-title">
+          <h1 className="title vx-title" style={{
+            color: 'inherit',
+            textShadow: reveal ? 'none' : '0 4px 30px rgba(0,0,0,0.5)',
+            transition: 'text-shadow var(--anim-slide-dur) var(--anim-ease)',
+          }}>
             {TITLE_PREFIX}<span className="vx-tw">{suffix}</span>
             <span className={`vx-caret ${typing ? 'vx-caret--blink' : ''}`} aria-hidden>|</span>
           </h1>
         </div>
 
-        <div className="vx-panes">
-          <div className="vx-body" style={{
-            display: 'grid', gridTemplateColumns: '1fr 520px',
-            gap: 60, alignItems: 'start',
-          }}>
-            <p className="body" style={{ maxWidth: 1100, fontSize: 36, lineHeight: 1.4 }}
-               dangerouslySetInnerHTML={{ __html: c.bodyHTML }} />
-            <div className="sketchfab-embed-wrapper" style={{
-              display: 'flex', flexDirection: 'column', alignItems: 'stretch',
+        <div className="vx-panes" style={{ position: 'relative', zIndex: 1 }}>
+          <div className="vx-body">
+            <div style={{
+              display: 'grid', gridTemplateColumns: '1fr 1fr',
+              gap: 60, alignItems: 'center', height: '100%',
             }}>
-              <iframe
-                title="Google Home"
-                frameBorder="0"
-                allowFullScreen
-                mozallowfullscreen="true"
-                webkitallowfullscreen="true"
-                allow="autoplay; fullscreen; xr-spatial-tracking"
-                src="https://sketchfab.com/models/c546250b4d4b4e0cb82f5903c489b245/embed?autospin=1&autostart=1&preload=1&transparent=1&dnt=1"
-                style={{ width: '100%', height: 520, border: 0, background: 'transparent' }}
-              />
-              <p style={{ fontSize: 13, fontWeight: 'normal', margin: '6px 2px 0', color: '#4A4A4A' }}>
-                <a href="https://sketchfab.com/3d-models/google-home-c546250b4d4b4e0cb82f5903c489b245?utm_medium=embed&utm_campaign=share-popup&utm_content=c546250b4d4b4e0cb82f5903c489b245"
-                   target="_blank" rel="nofollow noreferrer"
-                   style={{ fontWeight: 'bold', color: '#1CAAD9' }}>Google Home</a>
-                {' '}by{' '}
-                <a href="https://sketchfab.com/vaidanshi?utm_medium=embed&utm_campaign=share-popup&utm_content=c546250b4d4b4e0cb82f5903c489b245"
-                   target="_blank" rel="nofollow noreferrer"
-                   style={{ fontWeight: 'bold', color: '#1CAAD9' }}>Vaidanshi</a>
-                {' '}on{' '}
-                <a href="https://sketchfab.com?utm_medium=embed&utm_campaign=share-popup&utm_content=c546250b4d4b4e0cb82f5903c489b245"
-                   target="_blank" rel="nofollow noreferrer"
-                   style={{ fontWeight: 'bold', color: '#1CAAD9' }}>Sketchfab</a>
-              </p>
+              <p className="body" style={{
+                maxWidth: 1000, fontSize: 32, lineHeight: 1.4,
+                color: 'rgba(244,241,234,0.92)',
+                textShadow: '0 2px 12px rgba(0,0,0,0.55)',
+              }}
+                 dangerouslySetInnerHTML={{ __html: c.bodyHTML }} />
+
+              <div style={{ textAlign: 'right' }}>
+                <div style={{
+                  fontFamily: 'var(--font-mono)', fontSize: 18,
+                  letterSpacing: '0.18em', color: 'var(--color-accent)',
+                  marginBottom: 16, textTransform: 'uppercase',
+                  textShadow: '0 2px 8px rgba(0,0,0,0.5)',
+                }}>◉ Always listening for one word</div>
+                <div style={{
+                  fontFamily: 'var(--font-sans)', fontSize: 110,
+                  lineHeight: 1.0, fontWeight: 600, letterSpacing: '-0.03em',
+                  color: '#f4f1ea',
+                  textShadow: '0 4px 40px rgba(0,0,0,0.6)',
+                }}>"Alexa."</div>
+                <div style={{
+                  fontFamily: 'var(--font-mono)', fontSize: 18,
+                  letterSpacing: '0.12em', color: 'rgba(244,241,234,0.65)',
+                  marginTop: 28, textTransform: 'uppercase',
+                  textShadow: '0 2px 8px rgba(0,0,0,0.5)',
+                }}>— overheard at 11:48&nbsp;PM</div>
+              </div>
             </div>
           </div>
 
@@ -196,7 +234,12 @@ export default function VoiceEverywhere() {
           </div>
         </div>
 
-        <div className="vx-hint" aria-hidden>
+        <div className="vx-hint" aria-hidden style={{
+          zIndex: 1,
+          color: reveal ? 'var(--color-ink-mute)' : 'rgba(244,241,234,0.7)',
+          textShadow: reveal ? 'none' : '0 2px 8px rgba(0,0,0,0.5)',
+          transition: 'color var(--anim-slide-dur) var(--anim-ease)',
+        }}>
           {reveal ? '← back   ·   → next slide' : '→ market data'}
         </div>
       </div>
