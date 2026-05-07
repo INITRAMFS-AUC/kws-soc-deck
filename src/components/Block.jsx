@@ -4,8 +4,9 @@ export default function Block({
   variant, style, children, sub,
   animate = 'fade', delay = 0, className = '',
 }) {
-  const variantCls = variant === 'accent' ? 'blk accent'
-                   : variant === 'muted'  ? 'blk muted'
+  const variantCls = variant === 'accent'       ? 'blk accent'
+                   : variant === 'accent-light' ? 'blk accent-light'
+                   : variant === 'muted'        ? 'blk muted'
                    : 'blk';
   const a = animProps(animate, delay);
   const merged = a.style ? { ...style, ...a.style } : style;

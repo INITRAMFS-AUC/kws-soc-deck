@@ -1,3 +1,4 @@
+import { useEffect, useRef, useState } from 'react';
 import { useTweaks, TweaksPanel, TweakSection, TweakRadio, TweakToggle } from './tweaks/index.js';
 
 const STEPS = [
@@ -109,10 +110,31 @@ function Chart({ tw }) {
 
 export default function OptChart() {
   const [tw, setTweak] = useTweaks(DEFAULT_TWEAKS);
+  const [tweaksOpen, setTweaksOpen] = useState(false);
+  const ref = useRef(null);
+
+  // Toggle the tweaks panel with 'S' — only when this slide is the active one,
+  // so pressing S elsewhere in the deck doesn't pop a panel from a hidden slide.
+  useEffect(() => {
+    const onKey = (e) => {
+      if (e.key !== 's' && e.key !== 'S') return;
+      if (e.metaKey || e.ctrlKey || e.altKey) return;
+      const tag = e.target?.tagName;
+      if (tag === 'INPUT' || tag === 'TEXTAREA' || e.target?.isContentEditable) return;
+      const section = ref.current?.closest('section');
+      if (!section?.hasAttribute('data-deck-active')) return;
+      e.preventDefault();
+      setTweaksOpen((o) => !o);
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, []);
+
   return (
-    <>
+    <div ref={ref}>
       <Chart tw={tw} />
-      <TweaksPanel title="Tweaks">
+      <TweaksPanel title="Tweaks · press S to toggle"
+                   open={tweaksOpen} onClose={() => setTweaksOpen(false)}>
         <TweakSection label="Optimization chart">
           <TweakRadio label="Y-axis scale" value={tw.scale}
                       onChange={(v) => setTweak('scale', v)}
@@ -123,6 +145,6 @@ export default function OptChart() {
                        onChange={(v) => setTweak('showBaseline', v)} />
         </TweakSection>
       </TweaksPanel>
-    </>
+    </div>
   );
 }

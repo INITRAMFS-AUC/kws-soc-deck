@@ -54,8 +54,8 @@
 
   /* ── Typography ────────────────────────────────────────────────────────── */
   --font-sans:         'Neuton', Georgia, 'Times New Roman', serif;
-  --font-sans-style:   italic;   /* applied to body + section copy */
-  --font-mono:         'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+  --font-sans-style:   normal;   /* default upright; <em> and .italic flip italic */
+  --font-mono:         'DM Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
 
   --fw-regular:        400;
   --fw-medium:         500;

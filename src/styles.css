@@ -35,19 +35,7 @@ deck-stage > section {
   transition: opacity var(--anim-slide-dur) var(--anim-ease);
 }
 
-/* Mono surfaces stay upright — italic is sans-only.
- * Covers both inline JSX styles (style="font-family:var(--font-mono)") and
- * the CSS classes that set mono in styles.css. Add new selectors here when
- * you introduce another mono surface. */
-[style*="--font-mono"],
-.mono, .tag, .eyebrow, .memmap,
-.chrome-top, .chrome-bottom,
-.cover .meta .label,
-.specimen .head,
-.blk, .blk .sub,
-.stat .v, .stat .l,
-.step .stage,
-code, kbd, samp { font-style: normal; }
+em, .italic { font-style: italic; }
 
 /* ── Per-element entrance animations ─────────────────────────────────────────
  * Wrap any element with className="anim" (or use the <Animated/> component, or
@@ -284,7 +272,6 @@ h1, h2, h3, h4, p { margin: 0; }
   max-width: 1500px;
 }
 .pivot blockquote em {
-  font-style: normal;
   color: var(--color-accent);
 }
 
@@ -332,9 +319,117 @@ h1, h2, h3, h4, p { margin: 0; }
   justify-content: center;
 }
 .blk.accent { background: var(--color-accent); color: #fff; border-color: var(--color-accent); }
+.blk.accent-light {
+  background: color-mix(in oklch, var(--color-accent) 55%, var(--color-bg));
+  color: #fff;
+  border-color: color-mix(in oklch, var(--color-accent) 55%, var(--color-bg));
+}
 .blk.muted  { background: var(--color-bg-deep); }
 .blk .sub   { font-size: 16px; color: var(--color-ink-mute); font-weight: var(--fw-regular); margin-top: 4px; }
-.blk.accent .sub { color: rgba(255,255,255,0.8); }
+.blk.accent .sub,
+.blk.accent-light .sub { color: rgba(255,255,255,0.85); }
+
+/* Hover lift + highlight on SoC blocks. The base .anim transition already
+ * covers transform; we add box-shadow + background transitions here. */
+.blk {
+  transition:
+    opacity   var(--anim-dur)  var(--anim-ease),
+    transform var(--anim-dur)  var(--anim-ease),
+    box-shadow 200ms ease,
+    background-color 200ms ease,
+    border-color 200ms ease;
+}
+[data-deck-active] .blk:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-chip-hover);
+  z-index: 1;
+}
+[data-deck-active] .blk:not(.accent):not(.muted):hover {
+  border-color: var(--color-accent);
+}
+[data-deck-active] .blk.muted:hover {
+  background: var(--color-bg);
+  border-color: var(--color-accent);
+}
+[data-deck-active] .blk.accent:hover,
+[data-deck-active] .blk.accent-light:hover {
+  filter: brightness(1.06);
+}
+
+/* ── Slide 06: SoC diagram + crossbar expansion ──────────────────────────── */
+.soc-grid {
+  --block-h: 110px;
+  --bus-h: 56px;
+  --sub-opacity: 1;
+  --sub-h: auto;
+}
+.soc-grid--crossbar {
+  --block-h: 42px;
+  --bus-h: 330px;
+  --sub-opacity: 0;
+  --sub-h: 0;
+}
+.soc-grid .blk:not(.bus) {
+  height: var(--block-h);
+  transition:
+    height            var(--anim-dur) var(--anim-ease),
+    opacity           var(--anim-dur) var(--anim-ease),
+    transform         var(--anim-dur) var(--anim-ease),
+    box-shadow        200ms ease,
+    background-color  200ms ease,
+    border-color      200ms ease;
+}
+.soc-grid .blk .sub {
+  opacity: var(--sub-opacity);
+  max-height: var(--sub-h);
+  overflow: hidden;
+  transition: opacity 220ms ease, max-height var(--anim-dur) var(--anim-ease);
+}
+.soc-grid .bus {
+  height: var(--bus-h);
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+  user-select: none;
+  transition:
+    height           var(--anim-dur) var(--anim-ease),
+    background-color 200ms ease,
+    border-color     200ms ease;
+}
+.bus:hover { background: var(--color-bg); border-color: var(--color-accent); }
+.bus-content { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; }
+.bus-label {
+  display: flex; align-items: center; gap: 14px;
+  font-family: var(--font-mono); font-size: var(--type-tag);
+  transition: opacity 220ms ease;
+}
+.bus-label .hint {
+  font-size: 14px; color: var(--color-ink-mute); letter-spacing: var(--ls-caps);
+  text-transform: uppercase;
+}
+.bus-crossbar {
+  position: absolute; inset: 14px 18px;
+  opacity: 0; transform: scale(0.985);
+  transition: opacity 280ms var(--anim-ease) 90ms,
+              transform var(--anim-dur) var(--anim-ease);
+  pointer-events: none;
+}
+.soc-grid--crossbar .bus { cursor: default; pointer-events: none; }
+.soc-grid--crossbar .bus-label    { opacity: 0; }
+.soc-grid--crossbar .bus-crossbar { opacity: 1; transform: none; }
+
+.xbar-stroke { stroke: var(--line-strong); }
+.xbar-dot {
+  fill: var(--color-accent);
+  stroke: var(--color-ink);
+  stroke-width: 2;
+  transform-box: fill-box;
+  transform-origin: center;
+  transform: scale(0);
+  transition: transform 320ms var(--anim-ease);
+}
+.soc-grid--crossbar .xbar-dot { transform: scale(1); }
+/* Stagger the dots in by index — set via inline transition-delay. */
 
 /* ── Memory map / register table ─────────────────────────────────────────── */
 .memmap { width: 100%; border-collapse: collapse; font-family: var(--font-mono); }
