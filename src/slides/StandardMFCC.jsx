@@ -2,7 +2,7 @@ import SlideFrame from '../components/SlideFrame.jsx';
 
 export default function StandardMFCC() {
   return (
-    <SlideFrame topLeft="11B · Model">
+    <SlideFrame topLeft="11 · Model">
       <div style={{ marginTop: 0 }}>
         <div className="eyebrow" style={{ marginBottom: 6 }}>Industry baseline</div>
         <h1 className="title" style={{ fontSize: 48, marginBottom: 8 }}>

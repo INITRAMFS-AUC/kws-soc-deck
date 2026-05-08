@@ -11,7 +11,6 @@ import MemoryMap from './MemoryMap.jsx';
 import Verification from './Verification.jsx';
 import Pcb from './Pcb.jsx';
 import PivotModel from './PivotModel.jsx';
-import TheModel from './TheModel.jsx';
 import StandardMFCC from './StandardMFCC.jsx';
 import NoMFCC from './NoMFCC.jsx';
 import Conv1DMelFrontEnd from './Conv1DMelFrontEnd.jsx';
@@ -43,7 +42,6 @@ export const slideComponents = [
   Verification,
   Pcb,
   PivotModel,
-  TheModel,
   StandardMFCC,
   NoMFCC,
   Conv1DMelFrontEnd,

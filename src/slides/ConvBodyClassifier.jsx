@@ -18,7 +18,7 @@ export default function ConvBodyClassifier() {
   ));
 
   return (
-    <SlideFrame topLeft="13 · Model">
+    <SlideFrame topLeft="14 · Model">
       <div style={{ marginTop: 40 }}>
         <div className="eyebrow">From mel features to a class</div>
         <h1 className="title" style={{ marginBottom: 14 }}>Three plain 1D conv blocks, then collapse.</h1>

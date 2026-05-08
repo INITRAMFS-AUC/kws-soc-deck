@@ -21,7 +21,7 @@ export default function Conv1DMelFrontEnd() {
   });
 
   return (
-    <SlideFrame topLeft="12 · Model">
+    <SlideFrame topLeft="13 · Model">
       <div style={{ marginTop: 0 }}>
         <div className="eyebrow" style={{ marginBottom: 6 }}>★ Accelerator target</div>
         <h1 className="title" style={{ fontSize: 48, marginBottom: 8 }}>Learnable sinc filterbank — the front-end <em>is</em> a Conv1D.</h1>

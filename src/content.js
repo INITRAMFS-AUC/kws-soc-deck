@@ -338,27 +338,6 @@ export const slides = [
     },
   },
 
-  // The Model ────────────────────────────────────────────────────────────────
-  {
-    id: 'the-model',
-    label: 'The Model',
-    notes: "Mel-aware Conv1D directly on the waveform. Rather than a separate MFCC stage, we use a learnable Conv1D that performs spectral decomposition as part of the model itself. The result is a single unified pipeline — one datatype, one compute path. The first Conv1D layer dominates MACs at 53%. That's by design: it becomes the accelerator target.",
-    content: {
-      kind: 'Model',
-      eyebrow: 'build_mel_compact()',
-      title: 'Mel-aware Conv1D, directly on the waveform.',
-      flow: [
-        { label: 'Waveform',    sub: '8000 × 1 int8 PCM' },
-        { label: 'Conv1D mel',  sub: '16 · K=65 · s=16<br/>mel-spaced bandpass init', variant: 'accent' },
-        { label: 'DS-CNN ×4',   sub: 'depthwise + pointwise' },
-        { label: 'Dense 16',    sub: 'L2 = 1e-4' },
-        { label: '11 classes',  sub: 'softmax' },
-      ],
-      bodyHTML: "Why raw waveform instead of a fixed spectral front-end? A fixed front-end is preprocessing the accelerator can't touch. Our learnable Conv1D <em>is</em> the spectral decomposition — and it's hardware-friendly because it's just a tensor operation.",
-      callout: "The first Conv1D layer dominates compute. That's by design — it becomes the accelerator target.",
-    },
-  },
-
   // Standard MFCC ───────────────────────────────────────────────────────────
   {
     id: 'standard-mfcc',

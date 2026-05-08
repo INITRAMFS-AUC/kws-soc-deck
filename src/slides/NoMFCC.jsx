@@ -1,129 +1,129 @@
 import SlideFrame from '../components/SlideFrame.jsx';
 
 export default function NoMFCC() {
-  const rowBase = {
-    display: 'grid',
-    gridTemplateColumns: '26px 1fr 110px',
-    gap: 10,
-    alignItems: 'center',
-    padding: '5px 8px',
-  };
-
   return (
-    <SlideFrame topLeft="11C · Model">
+    <SlideFrame topLeft="12 · Model">
       <div style={{ marginTop: 0 }}>
         <div className="eyebrow" style={{ marginBottom: 4 }}>Design decision · cost analysis</div>
-        <h1 className="title" style={{ fontSize: 48, marginBottom: 4 }}>We fuse front-end and body — one unified, lower-cost pipeline.</h1>
-        <p className="subtitle" style={{ fontSize: 32, maxWidth: 1700, marginBottom: 10 }}>
-          MFCC is a proven front-end — but it adds a separate compute stage that shares the CPU on a bare RISC-V core. A learnable Conv1D merges spectral analysis directly into the model, reducing total system MACs.
+        <h1 className="title" style={{ fontSize: 48, marginBottom: 4 }}>
+          We merge front-end and body — one unified, lower-cost pipeline.
+        </h1>
+        <p className="subtitle" style={{ fontSize: 32, maxWidth: 1700, marginBottom: 14 }}>
+          MFCC is a proven front-end. We skip it — a learnable Conv1D performs the spectral decomposition
+          as part of the model itself, cutting total system MACs from ~7 M down to 0.97 M.
         </p>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 10 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 12 }}>
 
-        {/* Standard MFCC pipeline */}
-        <div style={{ border: '1px solid var(--ink)', padding: '12px 18px', background: 'var(--paper)' }}>
-          <div style={{ fontFamily: 'var(--font-mono)', fontSize: 16, color: 'var(--ink-mute)', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 4 }}>
-            Reference pipeline · Zhang et al., 2017
+        {/* ── Left: compact MFCC recap — no animation, immediately visible, links to previous slide ── */}
+        <div style={{ border: '1px solid var(--ink)', padding: '14px 18px', background: 'rgba(26,26,26,0.04)' }}>
+          <div style={{ fontFamily: 'var(--font-mono)', fontSize: 14, color: 'var(--ink-mute)', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 8 }}>
+            Standard approach · two stages
           </div>
-          <div style={{ fontFamily: 'var(--font-sans)', fontSize: 26, fontWeight: 600, marginBottom: 10 }}>PCM → MFCC → CNN</div>
+          <div style={{ fontFamily: 'var(--font-sans)', fontSize: 24, fontWeight: 600, marginBottom: 12 }}>MFCC + DS-CNN</div>
 
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 4, fontFamily: 'var(--font-mono)', fontSize: 18 }}>
-            <div style={{ ...rowBase, background: 'rgba(26,26,26,0.04)' }}>
-              <span style={{ color: 'var(--ink-mute)', fontSize: 14 }}>01</span>
-              <span style={{ color: 'var(--ink)' }}>Frame · window 25 ms / hop 10 ms</span>
-              <span style={{ color: 'var(--ink-mute)', textAlign: 'right' }}>100 frames</span>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginBottom: 12 }}>
+            {/* Stage 1 */}
+            <div style={{ padding: '10px 14px', border: '1px solid rgba(26,26,26,0.15)', background: 'var(--paper)' }}>
+              <div style={{ fontFamily: 'var(--font-mono)', fontSize: 13, color: 'var(--ink-mute)', textTransform: 'uppercase', marginBottom: 3 }}>
+                Stage 1 · fixed front-end
+              </div>
+              <div style={{ fontFamily: 'var(--font-mono)', fontSize: 22, fontWeight: 500 }}>~1.6 M ops · CPU</div>
+              <div style={{ fontFamily: 'var(--font-mono)', fontSize: 13, color: 'var(--ink-mute)', marginTop: 3 }}>
+                Frame → FFT → Mel → log → DCT
+              </div>
             </div>
-            <div style={{ ...rowBase, background: 'rgba(26,26,26,0.04)' }}>
-              <span style={{ color: 'var(--ink-mute)', fontSize: 14 }}>02</span>
-              <span style={{ color: 'var(--ink)' }}>FFT 512-pt</span>
-              <span style={{ color: 'var(--ink)', fontWeight: 500, textAlign: 'right' }}>~ 460 K ops</span>
-            </div>
-            <div style={{ ...rowBase, background: 'rgba(26,26,26,0.04)' }}>
-              <span style={{ color: 'var(--ink-mute)', fontSize: 14 }}>03</span>
-              <span style={{ color: 'var(--ink)' }}>Power spectrum |·|²</span>
-              <span style={{ color: 'var(--ink-mute)', textAlign: 'right' }}>~ 26 K ops</span>
-            </div>
-            <div style={{ ...rowBase, background: 'rgba(26,26,26,0.04)' }}>
-              <span style={{ color: 'var(--ink-mute)', fontSize: 14 }}>04</span>
-              <span style={{ color: 'var(--ink)' }}>Mel triangular filterbank · 40 bands</span>
-              <span style={{ color: 'var(--ink)', fontWeight: 500, textAlign: 'right' }}>~ 1.0 M MACs</span>
-            </div>
-            <div style={{ ...rowBase, background: 'rgba(26,26,26,0.04)' }}>
-              <span style={{ color: 'var(--ink-mute)', fontSize: 14 }}>05</span>
-              <span style={{ color: 'var(--ink)' }}>Log compression · ln(·)</span>
-              <span style={{ color: 'var(--ink-mute)', textAlign: 'right' }}>~ 4 K ops</span>
-            </div>
-            <div style={{ ...rowBase, background: 'rgba(26,26,26,0.04)' }}>
-              <span style={{ color: 'var(--ink-mute)', fontSize: 14 }}>06</span>
-              <span style={{ color: 'var(--ink)' }}>DCT-II → MFCC features</span>
-              <span style={{ color: 'var(--ink)', fontWeight: 500, textAlign: 'right' }}>~ 130 K ops</span>
-            </div>
-            <div style={{ ...rowBase, background: 'var(--ink)', color: '#f4f1ea', marginTop: 6 }}>
-              <span style={{ color: 'rgba(244,241,234,0.5)', fontSize: 14 }}>07</span>
-              <span style={{ color: '#f4f1ea' }}>DS-CNN body (reported separately)</span>
-              <span style={{ color: 'var(--accent)', fontWeight: 600, textAlign: 'right' }}>~ 5.4 M MACs</span>
+
+            <div style={{ textAlign: 'center', fontFamily: 'var(--font-mono)', fontSize: 18, color: 'var(--ink-mute)' }}>↓</div>
+
+            {/* Stage 2 */}
+            <div style={{ padding: '10px 14px', border: '2px solid var(--ink)', background: 'var(--paper)' }}>
+              <div style={{ fontFamily: 'var(--font-mono)', fontSize: 13, color: 'var(--ink-mute)', textTransform: 'uppercase', marginBottom: 3 }}>
+                Stage 2 · network (reported MACs)
+              </div>
+              <div style={{ fontFamily: 'var(--font-mono)', fontSize: 22, fontWeight: 500 }}>~5.4 M MACs</div>
+              <div style={{ fontFamily: 'var(--font-mono)', fontSize: 13, color: 'var(--ink-mute)', marginTop: 3 }}>
+                DS-CNN-S · 94.4% · Zhang et al., 2017
+              </div>
             </div>
           </div>
 
-          <div style={{ marginTop: 10, padding: '8px 12px', background: 'rgba(26,26,26,0.05)', border: '1px solid rgba(26,26,26,0.15)' }}>
-            <div style={{ fontFamily: 'var(--font-mono)', fontSize: 14, color: 'var(--ink-mute)', letterSpacing: '0.08em', textTransform: 'uppercase', fontWeight: 600 }}>Preprocessing cost</div>
-            <div style={{ fontFamily: 'var(--font-mono)', fontSize: 24, color: 'var(--ink)', fontWeight: 500, marginTop: 3 }}>~ 1.6 M ops · runs before the network</div>
-            <div style={{ fontFamily: 'var(--font-sans)', fontSize: 16, color: 'var(--ink-mute)', marginTop: 3 }}>Runs on the CPU ahead of the network — adds to total system latency and power.</div>
+          {/* Proportional bar */}
+          <div style={{ display: 'flex', height: 28, border: '1px solid var(--ink)', marginBottom: 8 }}>
+            <div style={{
+              flex: '0 0 23%',
+              background: 'rgba(26,26,26,0.35)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              fontFamily: 'var(--font-mono)', fontSize: 12, color: '#f4f1ea',
+            }}>MFCC</div>
+            <div style={{
+              flex: '1 1 auto',
+              background: 'var(--ink)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              fontFamily: 'var(--font-mono)', fontSize: 12, color: '#f4f1ea',
+            }}>DS-CNN  ·  5.4 M</div>
+          </div>
+
+          <div style={{ padding: '8px 12px', background: 'rgba(26,26,26,0.08)', border: '1px solid rgba(26,26,26,0.12)' }}>
+            <div style={{ fontFamily: 'var(--font-mono)', fontSize: 13, color: 'var(--ink-mute)', textTransform: 'uppercase' }}>Total system ops</div>
+            <div style={{ fontFamily: 'var(--font-mono)', fontSize: 26, fontWeight: 500 }}>~7.0 M</div>
           </div>
         </div>
 
-        {/* Our pipeline */}
-        <div style={{ border: '2px solid var(--accent)', padding: '12px 18px', background: '#fff7f2' }}>
-          <div style={{ fontFamily: 'var(--font-mono)', fontSize: 16, color: 'var(--accent)', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 4, fontWeight: 600 }}>
-            ★ Our pipeline · front-end is the model
+        {/* ── Right: our pipeline — animates in when slide becomes active ── */}
+        <div className="anim anim-ease" style={{ border: '2px solid var(--accent)', padding: '14px 18px', background: '#fff7f2' }}>
+          <div style={{ fontFamily: 'var(--font-mono)', fontSize: 14, color: 'var(--accent)', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 8, fontWeight: 600 }}>
+            ★ Our approach · unified pipeline
           </div>
-          <div style={{ fontFamily: 'var(--font-sans)', fontSize: 26, fontWeight: 600, marginBottom: 10 }}>PCM → Conv1D → CNN</div>
+          <div style={{ fontFamily: 'var(--font-sans)', fontSize: 24, fontWeight: 600, marginBottom: 12 }}>Conv1D → CNN</div>
 
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 4, fontFamily: 'var(--font-mono)', fontSize: 18 }}>
-            <div style={{ ...rowBase, background: 'rgba(217,119,87,0.08)' }}>
-              <span style={{ color: 'var(--accent)', fontSize: 14 }}>01</span>
-              <span style={{ color: 'var(--ink)' }}>Raw int8 PCM · zero preprocessing</span>
-              <span style={{ color: 'var(--accent)', textAlign: 'right' }}>0 ops</span>
+          {/* Single unified stage */}
+          <div style={{ padding: '10px 14px', border: '2px solid var(--accent)', background: 'rgba(217,119,87,0.08)', marginBottom: 12 }}>
+            <div style={{ fontFamily: 'var(--font-mono)', fontSize: 13, color: 'var(--accent)', textTransform: 'uppercase', marginBottom: 6 }}>
+              One stage · front-end + body
             </div>
-            <div style={{ ...rowBase, background: 'rgba(217,119,87,0.08)' }}>
-              <span style={{ color: 'var(--accent)', fontSize: 14 }}>02</span>
-              <span style={{ color: 'var(--ink)' }}>conv1d_mel · 16 sinc filters · stride 16</span>
-              <span style={{ color: 'var(--ink)', fontWeight: 500, textAlign: 'right' }}>~ 516 K MACs</span>
-            </div>
-            <div style={{ ...rowBase, background: 'rgba(217,119,87,0.08)' }}>
-              <span style={{ color: 'var(--accent)', fontSize: 14 }}>03</span>
-              <span style={{ color: 'var(--ink)' }}>BN · ReLU · MaxPool ÷4</span>
-              <span style={{ color: 'var(--ink-mute)', textAlign: 'right' }}>— folded —</span>
-            </div>
-            <div style={{ ...rowBase, background: 'var(--accent)', color: '#fff', marginTop: 6 }}>
-              <span style={{ color: 'rgba(255,255,255,0.65)', fontSize: 14 }}>04</span>
-              <span style={{ color: '#fff' }}>CNN body · 3 conv blocks</span>
-              <span style={{ color: '#fff', fontWeight: 600, textAlign: 'right' }}>~ 451 K MACs</span>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 4, fontFamily: 'var(--font-mono)', fontSize: 15 }}>
+              <div><span style={{ color: 'var(--accent)' }}>→</span> conv1d_mel · learns spectral decomposition  <span style={{ float: 'right', color: 'var(--ink)', fontWeight: 500 }}>~516 K MACs</span></div>
+              <div style={{ color: 'var(--ink-mute)' }}><span style={{ color: 'var(--accent)' }}>→</span> BN · ReLU · MaxPool ÷4  <span style={{ float: 'right' }}>folded</span></div>
+              <div><span style={{ color: 'var(--accent)' }}>→</span> 3× Conv1D blocks  <span style={{ float: 'right', color: 'var(--ink)', fontWeight: 500 }}>~451 K MACs</span></div>
+              <div style={{ color: 'var(--ink-mute)' }}><span style={{ color: 'var(--accent)' }}>→</span> GAP → Dense 16 → Softmax</div>
             </div>
           </div>
 
-          <div style={{ marginTop: 10, padding: '8px 12px', background: 'var(--ink)', color: '#f4f1ea' }}>
-            <div style={{ fontFamily: 'var(--font-mono)', fontSize: 14, color: 'var(--accent)', letterSpacing: '0.08em', textTransform: 'uppercase', fontWeight: 600 }}>Total system cost</div>
-            <div style={{ fontFamily: 'var(--font-mono)', fontSize: 24, color: '#f4f1ea', fontWeight: 500, marginTop: 3 }}>0.97 M MACs · all int8 · single pipeline</div>
-            <div style={{ fontFamily: 'var(--font-sans)', fontSize: 16, color: 'rgba(244,241,234,0.7)', marginTop: 3 }}>Front-end and body share the same acceleratable datapath — nothing runs outside the model.</div>
+          {/* Bar: single block */}
+          <div style={{ display: 'flex', height: 28, border: '1px solid var(--accent)', marginBottom: 8 }}>
+            <div style={{
+              width: '100%',
+              background: 'var(--accent)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              fontFamily: 'var(--font-mono)', fontSize: 12, color: '#fff',
+            }}>unified pipeline  ·  0.97 M MACs</div>
+          </div>
+
+          <div style={{ padding: '8px 12px', background: 'var(--ink)', color: '#f4f1ea' }}>
+            <div style={{ fontFamily: 'var(--font-mono)', fontSize: 13, color: 'rgba(244,241,234,0.6)', textTransform: 'uppercase' }}>Total system MACs</div>
+            <div style={{ fontFamily: 'var(--font-mono)', fontSize: 26, fontWeight: 500 }}>0.97 M</div>
+            <div style={{ fontFamily: 'var(--font-sans)', fontSize: 15, color: 'rgba(244,241,234,0.7)', marginTop: 4 }}>
+              Front-end and body share the same datapath — nothing runs outside the model.
+            </div>
           </div>
         </div>
       </div>
 
-      {/* Punchline strip */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 10 }}>
+      {/* ── Punchline strip — animates in after right column ── */}
+      <div className="anim anim-ease" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 10, transitionDelay: '220ms' }}>
         <div style={{ background: 'var(--paper)', border: '1px solid var(--ink)', padding: '10px 14px' }}>
-          <div style={{ fontFamily: 'var(--font-mono)', fontSize: 14, color: 'var(--ink-mute)', letterSpacing: '0.08em', textTransform: 'uppercase', fontWeight: 600, marginBottom: 4 }}>Standard approach · Zhang et al., 2017</div>
-          <div style={{ fontFamily: 'var(--font-sans)', fontSize: 20, color: 'var(--ink)', lineHeight: 1.4 }}>DS-CNN-S: 94.4% accuracy, ~5.4 M network MACs. Front-end preprocessing counted separately.</div>
+          <div style={{ fontFamily: 'var(--font-mono)', fontSize: 13, color: 'var(--ink-mute)', letterSpacing: '0.08em', textTransform: 'uppercase', fontWeight: 600, marginBottom: 4 }}>Standard · Zhang et al., 2017</div>
+          <div style={{ fontFamily: 'var(--font-sans)', fontSize: 19, color: 'var(--ink)', lineHeight: 1.4 }}>DS-CNN-S: 94.4% top-1, ~5.4 M network MACs. Front-end counted separately.</div>
         </div>
         <div style={{ background: 'var(--paper)', border: '1px solid var(--ink)', padding: '10px 14px' }}>
-          <div style={{ fontFamily: 'var(--font-mono)', fontSize: 14, color: 'var(--ink-mute)', letterSpacing: '0.08em', textTransform: 'uppercase', fontWeight: 600, marginBottom: 4 }}>Full system cost</div>
-          <div style={{ fontFamily: 'var(--font-sans)', fontSize: 20, color: 'var(--ink)', lineHeight: 1.4 }}>~5.4 M network MACs <strong>+ ~1.6 M preprocessing ops</strong> = ~7.0 M total system ops.</div>
+          <div style={{ fontFamily: 'var(--font-mono)', fontSize: 13, color: 'var(--ink-mute)', letterSpacing: '0.08em', textTransform: 'uppercase', fontWeight: 600, marginBottom: 4 }}>Full system cost</div>
+          <div style={{ fontFamily: 'var(--font-sans)', fontSize: 19, color: 'var(--ink)', lineHeight: 1.4 }}>~5.4 M network MACs <strong>+ ~1.6 M preprocessing</strong> = ~7.0 M total system ops.</div>
         </div>
         <div style={{ background: 'var(--accent)', color: '#fff', padding: '10px 14px' }}>
-          <div style={{ fontFamily: 'var(--font-mono)', fontSize: 14, color: 'rgba(255,255,255,0.8)', letterSpacing: '0.08em', textTransform: 'uppercase', fontWeight: 600, marginBottom: 4 }}>★ Our approach</div>
-          <div style={{ fontFamily: 'var(--font-sans)', fontSize: 20, color: '#fff', lineHeight: 1.4 }}><strong>0.97 M MACs total.</strong> Front-end fused into the model — no separate preprocessing stage.</div>
+          <div style={{ fontFamily: 'var(--font-mono)', fontSize: 13, color: 'rgba(255,255,255,0.8)', letterSpacing: '0.08em', textTransform: 'uppercase', fontWeight: 600, marginBottom: 4 }}>★ Our approach</div>
+          <div style={{ fontFamily: 'var(--font-sans)', fontSize: 19, color: '#fff', lineHeight: 1.4 }}><strong>0.97 M MACs total.</strong> Front-end fused into the model — no separate preprocessing stage.</div>
         </div>
       </div>
     </SlideFrame>
