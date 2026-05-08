@@ -7,7 +7,6 @@ import KwsNlp from './KwsNlp.jsx';
 import CommercialReality from './CommercialReality.jsx';
 import WeDid from './WeDid.jsx';
 import SocArchitecture from './SocArchitecture.jsx';
-import MemoryMap from './MemoryMap.jsx';
 import I2sDatapath from './I2sDatapath.jsx';
 import Pcb from './Pcb.jsx';
 import PivotModel from './PivotModel.jsx';
@@ -19,7 +18,6 @@ import DataGap from './DataGap.jsx';
 import PivotAccelerator from './PivotAccelerator.jsx';
 import AcceleratorArchitecture from './AcceleratorArchitecture.jsx';
 import RegisterMap from './RegisterMap.jsx';
-import ThreeDecisions from './ThreeDecisions.jsx';
 import OptimizationJourney from './OptimizationJourney.jsx';
 import XipCache from './XipCache.jsx';
 import XipPrefetch from './XipPrefetch.jsx';
@@ -32,7 +30,6 @@ export const slideComponents = [
   CommercialReality,
   WeDid,
   SocArchitecture,
-  MemoryMap,
   Pcb,
   I2sDatapath,
   PivotModel,
@@ -44,7 +41,6 @@ export const slideComponents = [
   PivotAccelerator,
   AcceleratorArchitecture,
   RegisterMap,
-  ThreeDecisions,
   XipCache,
   XipPrefetch,
   OptimizationJourney,
