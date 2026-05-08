@@ -604,6 +604,41 @@ export const slides = [
     },
   },
 
+  // Empowerment ──────────────────────────────────────────────────────────────
+  {
+    id: 'empowerment',
+    label: 'Empowerment',
+    notes: 'Beyond the chip itself. KWS-SoC is built to be picked up by the next student, the next lab, the next community team. Three pillars: a community-deployed SoC anyone can fab, end-to-end documentation that explains every block, and a Verilator VPI we wrote on top of Hazard3 that drops simulation compile times by ~10× and lets the testbench run multithreaded. The toolchain we wished existed when we started.',
+    content: {
+      kind: 'Outcome',
+      eyebrow: 'Beyond the chip',
+      title: 'Empowerment Outcome: An Open Platform Built for Audio Inference.',
+      pillars: [
+        {
+          tag: '01 · Community',
+          head: 'Community-deployed SoC',
+          body: 'Open RTL, open PCB, open firmware. Reproducible from a fresh clone — fab it, flash it, talk to it.',
+        },
+        {
+          tag: '02 · Documentation',
+          head: 'Documented end-to-end',
+          body: 'Every peripheral, every register, every FSM. Block diagrams, memory maps, and the model\'s training pipeline live next to the code.',
+        },
+        {
+          tag: '03 · Toolchain',
+          head: 'Hazard3 · Verilator VPI',
+          body: 'A VPI shim on top of the Hazard3 SoC testbench: ~10× faster sim builds and runtime multithreading. Iteration that used to take minutes now takes seconds.',
+          stats: [
+            { value: '~10×',   label: 'sim compile' },
+            { value: '~100×',   label: 'Smaller Waveform Size, by utilizing FST format Dump' },
+            { value: 'multi-threaded',  label: 'runtime threads' },
+          ],
+        },
+      ],
+      callout: 'The deliverable is not just a chip — it is a starting point.',
+    },
+  },
+
   // What We Built ────────────────────────────────────────────────────────────
   {
     id: 'what-we-built',
@@ -614,7 +649,7 @@ export const slides = [
       // defenseTagSuffix is appended after the auto-derived "NN / NN" prefix.
       defenseTagSuffix: '· Results · Questions',
       eyebrow: 'What we built',
-      titleLineOne: 'First fully open',
+      titleLineOne: 'Fully open',
       titleLineTwo: 'RISC-V KWS SoC.',
       stack: [
         { num: '07', label: 'DETECT output',           accent: true },
