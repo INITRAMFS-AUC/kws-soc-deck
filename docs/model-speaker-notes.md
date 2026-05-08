@@ -1,636 +1,329 @@
-# Model Section · Speaker Notes & Backup Detail
+# Model Section · Speaker Notes
 
-Slides 11 → 20 of the deck. Each entry contains the on-screen content, the
-script to deliver, and **deep detail** to keep here when content gets pulled
-off the slide later. When you trim a slide, lift the trimmed material into the
-"Deep detail" or "If asked" sections below — nothing should be lost.
+Slides **10 → 16** of the deck. Mirrors the `notes` field of each entry in
+`src/content.js` — if the slides drift, this file is regenerated, not edited
+by hand.
 
-Numbers are normative — if a slide ever drifts, this file is the source of
-truth and the slide is wrong.
+Slide ordering and labels match the deployed deck (`src/slides/index.js`).
 
 ---
 
-## Slide 11 — Standard MFCC Pipeline (industry baseline)
+## Slide 10 · Standard MFCC vs Mel Compact
 
-**topLeft:** `11 · Model` · file: `src/slides/StandardMFCC.jsx`
+Eight-phase walk on one slide. The whole architecture story lives here — each
+press of → advances a phase. Take it slowly; the packet animation does most
+of the work for you on the early phases.
 
-### What's on screen
-A 3-panel pipeline: `Raw PCM` → `Stage 1: MFCC` → `Stage 2: DS-CNN`. Six MFCC
-steps with their op counts. Three framing cards beneath. Citation footer to
-Zhang et al., 2017.
+**P0 — Industry baseline.** Three boxes: Input (raw PCM, 8 000 samples at
+8 kHz), MFCC pipeline (six rows: Frame + Hamming, FFT 512-pt, Power spectrum,
+Mel filterbank, log compression, DCT-II), and DS-CNN body. The dark "packet"
+walks through each step in turn so the audience sees the dataflow, not just
+the boxes. This is Zhang et al.'s *Hello Edge* pipeline (arXiv:1711.07128,
+2017) — MFCC at ~1.6 M ops feeding a depthwise-separable 2-D CNN at ~5.4 M
+MACs. ~7 M total system ops. Reference number on Speech Commands: 94.4 %
+(DS-CNN-S).
 
-### Script (≈ 60–75 s)
-> "Before I tell you what *we* did, here is what almost everyone else does on
-> Google Speech Commands — including the paper most embedded-KWS work cites,
-> *Hello Edge* by Zhang et al. in 2017."
->
-> "The standard pipeline is two stages. Stage one is a fixed front-end called
-> MFCC — Mel-frequency cepstral coefficients. You take a 1-second audio
-> window, slice it into 25-millisecond frames every 10 milliseconds, run an
-> FFT on each frame, take the power spectrum, project that onto a 40-band
-> Mel filterbank, take a log, and finally a discrete cosine transform. That
-> gives you a 100-by-40 feature matrix per second. Stage two is a small
-> convolutional network — DS-CNN-S — that consumes those features and
-> classifies the keyword."
->
-> "Add up the front-end work: about 1.6 million ops per inference. The
-> network on top is around 5.4 million MACs. Together, ~7 million ops per
-> second of audio. The network number is what gets reported in the paper.
-> The 1.6 million for MFCC is preprocessing — usually counted separately or
-> not at all."
->
-> "This is a *good* design. MFCC has decades of speech-processing research
-> behind it; on chips with a dedicated DSP it runs in parallel for free. I'm
-> not here to call it bad. I'm here to explain why we chose differently —
-> because on a bare RV32IMAC core without DSP extensions, both stages share
-> the same CPU."
+**P1 — Side by side.** Both stacks reduced to big-number summary cards.
+Standard approach: ~7 M ops total, two stages, MFCC + DS-CNN. Our approach
+(Mel Compact): 0.97 M MACs total, unified Conv1D pipeline. The point of the
+slide: roughly an order of magnitude less compute, one acceleratable op
+throughout.
 
-### Key facts (memorize)
-| Step | Cost |
-|------|------|
-| Frame · 25 ms / 10 ms hop | 100 frames per 1-s window |
-| FFT 512-pt | ~460 K mults |
-| Power spectrum |·|² | ~26 K ops |
-| Mel filterbank · 40 bands | ~1.0 M MACs |
-| log compression | ~4 K ops |
-| DCT-II → MFCCs | ~130 K ops |
-| **MFCC subtotal** | **~1.6 M ops** |
-| DS-CNN-S body | ~5.4 M MACs · 94.4% top-1 |
-| **Total system** | **~7.0 M ops** |
+**P2 — Our model takes over.** Three component cards: Front-end · Body ·
+Head. Each card carries its share of the MAC budget (~516 K · 53 % / ~451 K
+· 47 % / ~656 · <0.1 %). Structural overview before we zoom into each one.
 
-Citation: **Y. Zhang et al., "Hello Edge: Keyword Spotting on Microcontrollers,"** arXiv:1711.07128, 2017.
+**P3 — Front-end zoom.** The Conv1D mel front-end rendered as 16
+sinc-bandpass kernel waveforms, plus the sliding window viz: 8 000 samples
+in, 496 frames out, 124 after 4× pool. K=65, stride 16, 1 056 params.
+~516 K MACs — 53 % of the total. **This is the layer the accelerator
+targets.**
 
-### Deep detail (move material here when slimming the slide)
-- MFCC is float by default. Fixed-point implementations exist (e.g.
-  CMSIS-DSP `arm_mfcc_q15`) but trade accuracy for area.
-- The "40 Mel bands" choice is conventional after Davis & Mermelstein 1980;
-  Hello Edge picks 40 because the authors swept 10–40 and 40 was the knee.
-- Frame size = 25 ms because that's the largest window over which speech is
-  approximately stationary (phoneme timescale 30–100 ms).
-- The 10 ms hop = 60% overlap, standard since HTK.
-- Hello Edge is on 16 kHz; we run 8 kHz for a tighter compute budget.
-  Re-derived for 8 kHz: same frame/hop in seconds, same band count, ~½ the
-  FFT cost. Numbers above are scaled to 8 kHz.
-- DCT-II preserves energy and decorrelates the Mel bins so the first ~13
-  coefficients carry the spectral envelope — the rest are pitch.
+**P4 — Back to the three-component overview.** Brief re-orient before the
+next zoom.
 
-### If asked
-- *"Why not use an MFCC accelerator?"* → "We could buy one off the shelf — a
-  Cortex-M4F with the DSP extension, or a Syntiant NDP. That's exactly the
-  industry path we're trying to compare against. Our SoC is 36 MHz Hazard3,
-  no FPU, no DSP — adding an MFCC block costs area we'd rather spend on the
-  conv accelerator that already covers our model end-to-end."
-- *"Are these op counts standard?"* → "Yes — these are the textbook
-  estimates. CMSIS-DSP profiles within ±20% of these numbers."
+**P5 — Body zoom.** Three plain Conv1D blocks (NOT depthwise-separable —
+deliberately simpler than DS-CNN). 36 channels each, K=3, BN + ReLU +
+MaxPool. Output shapes 31×36 → 15×36 → 15×36. Pool 4× then 2× then ×1
+(block 3 is two stacked convs, no pool). ~451 K MACs.
+
+**P6 — Back to overview.** Same re-orient beat.
+
+**P7 — Head zoom.** GAP collapses the time axis (15×36 → 36). Dense 16
+with ReLU + dropout p=0.3 (L2 = 1e-4). Softmax to 11 classes: *yes, no, up,
+down, left, right, on, off, stop, go, _unknown_*. Argmax → keyword. Whole
+head is ~16 K params total but only ~656 MACs (<0.1 %).
+
+**Bridge to next slide:** with our model defined, time to place it against
+the literature. Closest related work — sinc-based and raw-waveform
+classifiers — is next.
 
 ---
 
-## Slide 12 — Unified Pipeline (our design decision)
+## Slide 11 · vs Literature (sinc / raw-waveform papers)
 
-**topLeft:** `12 · Model` · file: `src/slides/NoMFCC.jsx`
+Bridge slide — big numbers on screen, prose in the talk. Don't re-read the
+cards; explain what each paper does and what we change.
 
-### What's on screen
-On entry from slide 11 the "Standard approach" box visually flies in from the
-right (where the slide-11 MFCC box was) and lands at the left column position.
-The slide-11 step list fades out, and big summary numbers pop in: **~7.0 M
-total**, **1.6 M MFCC**, **5.4 M DS-CNN**. Right column — our pipeline at
-**0.97 M MACs**. Punchline strip below. MacShareBar at the very bottom
-introducing the 53 / 47 split.
+The standard-KWS comparison (DS-CNN, MobileNet on log-mel spectrograms) is
+already covered by the previous slide. Here we narrow in on the
+**learnable-front-end family on raw audio** — three closely related papers,
+then ours.
 
-### Script (≈ 60–75 s)
-> "Our model skips MFCC. Instead, the very first layer of the network *is*
-> the spectral front-end — a learnable 1-D convolution with 16 sinc-bandpass
-> kernels initialised on a Mel scale, stride 16. It does the same job MFCC
-> does — give the network a frequency-resolved view of the waveform — but
-> it's a tensor operation, so it runs on the same accelerator as the rest of
-> the network."
->
-> "The accounting changes too. Instead of 1.6 M of preprocessing plus 5.4 M
-> for the network — about 7 million ops total — we land at **0.97 M MACs**
-> for the whole pipeline. Same task, same accuracy class, ~7× less compute.
-> Front-end and body share one datapath. There is no second stage that has
-> to run somewhere else."
->
-> "And the bar at the bottom — that 53 / 47 split — is the next two slides.
-> conv1d_mel is 53% of all our MACs. The three conv blocks behind it are
-> 47%. Each of the next two slides zooms into one of those segments."
+**SincNet (Ravanelli & Bengio, 2018).** Sinc bandpass filters as the first
+conv layer — only two learnable cutoffs per filter. Built for speaker ID,
+runs at full waveform resolution and pools downstream. ~22 M total
+parameters in the standard config. Float throughout, no stride fusion, no
+INT8 deployment story. Same idea as us at the front-end, very different
+deployment target.
 
-### Key facts
-| Step | Cost |
-|------|------|
-| conv1d_mel (16 sinc-bandpass, K=65, s=16) | ~516 K MACs · 53.3% |
-| BN · ReLU · MaxPool ÷4 | folded into adjacent ops |
-| 3 × Conv1D blocks | ~451 K MACs · 46.6% |
-| GAP → Dense 16 → Dense 5 | ~656 MACs · <0.1% |
-| **Total system** | **0.97 M MACs · all int8** |
+**LEAF (Zeghidour et al., Google, 2021).** Gabor filters with learnable
+centre and bandwidth, plus a fully learnable per-channel pooling layer
+(PCEN-style). Aimed at general audio understanding. ~80 K front-end
+parameters alone. Heavier compute and float-only — the learnable pooling is
+not cleanly INT8-quantisable, which kills it for our chip.
 
-Per-layer MAC breakdown (precise):
-- conv1d_mel : 515 840  (53.3%)
-- Block 1 (conv1d_2) : 214 272  (22.1%)
-- Block 2 (conv1d_3) : 120 528  (12.5%)
-- Block 3 conv1 (conv1d_4) :  58 320  (6.0%)
-- Block 3 conv2 (conv1d_5) :  58 320  (6.0%)
-- dense_fc :   576  (0.1%)
-- dense_out :   80  (<0.1%)
-- **Total : 967 936 ≈ 0.97 M**
+**M5 / M11 (Dai et al., 2017).** Pure 1D conv stack on raw audio — no fixed
+front-end at all, the model learns the whole thing from scratch. K=80
+first-layer kernels, 5–11 conv blocks. ~558 K parameters for M5, ~1.79 M
+for M11. No INT8 deployment story. We give the same family a strong
+inductive bias (sinc init) and end up two orders of magnitude smaller.
 
-### Deep detail
-- The 7× reduction is system-level, not network-level. Comparing apples to
-  apples: 5.4 M (their network) vs 0.97 M (our network including front-end).
-  ~5.5× there alone. The other ~1.6 M is preprocessing avoided.
-- "Folded" BN/ReLU/Pool: BatchNorm absorbs into the preceding conv weights
-  at deploy time; ReLU is a sign mask; MaxPool ÷4 just selects 1 of 4.
-  None of these contribute MACs.
-- The 53 / 47 split is *deliberate*. The first conv at full 496-frame
-  resolution dominates because the pool happens *after* it. We picked stride
-  16 specifically so the front-end isn't 90% of the budget.
+**Ours (the orange strip at the bottom).** Stride 16 fused into the sinc
+kernel — one op gives both the bandpass *and* the 16× downsample, hence the
+"16× compute saving up front" claim. Plain MaxPool, plain BN,
+NNoM-quantisable INT8 end-to-end. ~16 K total parameters — ~35× smaller
+than M5, three orders of magnitude smaller than SincNet. Built for a 36 MHz
+RV32IMAC.
 
-### If asked
-- *"Why count Conv1D MACs but not log/DCT ops?"* → "Same currency. A MAC is
-  a MAC whether it's in a conv layer or in DCT-II. The 1.6 M MFCC number is
-  total ops including non-MAC operations like log, which is why we say *ops*
-  not *MACs*."
-- *"Isn't your network just MFCC with extra steps?"* → "It's MFCC's spirit
-  — a frequency-resolved decomposition — but it's *learnable*. The kernels
-  start mel-spaced and end up wherever the loss takes them."
+**Bridge to next slide:** enough qualitative comparison. Next: how we score
+against the general KWS leaderboard quantitatively — accuracy, params, MACs.
 
 ---
 
-## Slide 13 — Conv1D Mel Front-End
+## Slide 12 · vs Other Models (leaderboard)
 
-**topLeft:** `13 · Model` · file: `src/slides/Conv1DMelFrontEnd.jsx`
+Mel Compact at **93.5 % float on Google Speech Commands**, at a fraction of
+the params and MACs of the published baselines. Bars animate on entry,
+staggered top-down (140 ms per row, +60 ms between columns within a row) —
+let the animation finish before you start talking, the eye reads it
+left-to-right.
 
-### What's on screen
-Left card: 4×4 grid of the 16 sinc kernels, low-frequency to high-frequency
-bottom-right. Right card: a sliding-window animation, K=65 with stride 16,
-plus three big stats — 8000 samples in, 496 → 124 frames after 4× pool, 1056
-parameters. MacShareBar at bottom with the **53% segment** foregrounded.
+The leaderboard, in descending accuracy:
 
-### Script (≈ 75–90 s)
-> "Here is the 53%. The first layer is a 1-D convolution with 16 filters,
-> kernel size 65 samples, stride 16. The 8 kHz, 1-second waveform is 8 000
-> samples; the layer slides this 65-sample kernel across that, producing
-> 496 frames per filter. After a 4× max-pool, we hand 124 frames per filter
-> to the rest of the network."
->
-> "The kernels are *initialised* as Hamming-windowed sinc band-passes
-> spaced on the Mel scale from 50 Hz to 4 kHz. You can see the low-frequency
-> kernels at the top-left of the grid — slow oscillations — and the
-> high-frequency ones at the bottom-right. After training, the kernels
-> *adapt* — they don't have to stay perfectly band-pass. We freeze nothing."
->
-> "The total parameter count is 16 filters × 65 taps + 16 biases = 1056
-> parameters. That is the entire learnable spectral front-end."
->
-> "Stride 16 is the lever. At stride 1 this layer would be 8 M MACs alone,
-> bigger than the whole DS-CNN baseline. At stride 16 we get a 2-millisecond
-> frame shift fused into the filter — same effective hop as MFCC's 10 ms,
-> roughly — and the layer drops to 516 K MACs."
+- **MatchboxNet** · Majumdar 2020 — 97.5 % · ~140 K params · 7.4 M MACs
+- **TC-ResNet8** · Choi 2019 — 96.6 % · ~66 K params · 6.0 M MACs
+- **DS-CNN small** · Zhang 2018 — 94.4 % · ~38 K params · 5.4 M MACs
+- ★ **Mel Compact · ours** — **93.5 %** · ~16 K params · 0.97 M MACs (float baseline on GSC)
 
-### Key facts
-- 16 filters · K=65 · stride=16
-- 1056 parameters (16 × 65 + 16)
-- 515 840 MACs (= 16 · 65 · 496)
-- Mel-init range: 50 Hz – 4 kHz (Nyquist at 8 kHz fs)
-- Output shape: [124, 16] after MaxPool ÷4
+The accent divider between DS-CNN and us is deliberate: **DS-CNN is the
+anchor**. We sit immediately under it, 0.9 pts behind, with 2.4× fewer
+parameters and 5.6× fewer MACs. That is the headline — sub-one-point
+accuracy delta for half the model and a fifth of the compute.
 
-### Deep detail
-- Sinc-bandpass kernel formula (initialisation):
-  ```
-  h_i(n) = [sinc(2 f_h n) − sinc(2 f_l n)] · hamming(n)
-  ```
-  where `f_l, f_h` are the lower / upper edges of the i-th Mel band,
-  normalised to fs.
-- After init, the kernels are *not* parameterised by `f_l, f_h` — they're
-  free Conv1D weights. SincNet (Ravanelli 2018) keeps them parameterised;
-  we don't, because INT8 quantisation is cleaner on raw weights.
-- K=65 was chosen so the receptive field at fs=8 kHz covers ~8 ms — long
-  enough to resolve a 125 Hz tone (one full period) and still fit in the
-  TCM cache lines we use on chip.
-- After-training, the trained kernels still resemble band-passes by eye,
-  but with phase shifts and minor sidelobe asymmetries the loss prefers.
+Banbury *TinyConv* 2021 was previously here at 87.6 % but was removed; it
+sat far below the cluster and the comparison read as "we beat the smallest
+one" instead of the more honest "we land just under the strongest small
+model."
 
-### If asked
-- *"Why 16 filters and not 40 like MFCC?"* → "We swept; 16 was the smallest
-  count that didn't lose accuracy. MFCC uses 40 because it's a fixed
-  transform with no downstream learning; we have learning, and the
-  downstream conv blocks recover whatever spectral resolution we need."
-- *"Why Hamming and not Hann?"* → "Hamming has lower sidelobes (~−43 dB vs
-  −31 dB). Doesn't matter much after training, but the init starts cleaner."
-- *"Did you try learnable Mel cutoff frequencies (SincNet style)?"* → "Yes
-  — accuracy was indistinguishable, INT8 quantisation was harder. Free
-  weights win on the deploy side."
+**Callouts on the slide:**
+
+- vs MatchboxNet — 8.8× fewer params, 7.6× fewer MACs, **−4.0 pts** accuracy
+- vs DS-CNN — 2.4× fewer params, 5.6× fewer MACs, **−0.9 pts** accuracy
+- Footprint — ~16 K params · 0.97 M MACs · runs on a 36 MHz RV32IMAC
+
+**Bridge to next slide:** 93.5 % is FLOAT on GSC. Everything past this
+slide is int8 on our chip, and the question is what runtime executes that
+int8. Next: NNoM.
 
 ---
 
-## Slide 14 — Conv Body + Classifier
+## Slide 13 · Why NNoM
 
-**topLeft:** `14 · Model` · file: `src/slides/ConvBodyClassifier.jsx`
+NNoM stands for **Neural Network on Microcontroller** — a lightweight,
+high-level inference library for MCUs. We hand it a trained Keras model,
+one Python call (`nnom_generate_model`) emits a single `weights.h`, and we
+link that straight into `kws_nnom_main.c`. Same source compiles for the
+host harness and for the SoC firmware — bit-identical inference both
+places.
 
-### What's on screen
-3D-stacked block visualisation of the three Conv1D blocks (shrinking
-horizontally as the time axis pools). GAP → Dense-16 dot grids. Softmax bar
-chart with `yes` at 0.92. MacShareBar at bottom — **47% segment**
-foregrounded.
+The slide answers one question: of all the embedded inference runtimes out
+there, why this one for our chip? Three properties matter, one per card.
 
-### Script (≈ 75–90 s)
-> "Here is the 47%. Three plain 1-D convolution blocks, each 36 channels,
-> kernel 3, BN-ReLU-MaxPool. Block 1 pools 4× — that's where most of the
-> time-axis collapse happens. Block 2 pools 2×. Block 3 doesn't pool but
-> runs the conv twice."
->
-> "After the third block, global average pool collapses the 15-by-36
-> activation map into 36 numbers — one per channel — and a tiny dense layer
-> takes that down to 16, dropout 30%, then dense to 11 logits, softmax."
->
-> "Eleven classes: the standard 10 Speech Commands keywords — `yes`, `no`,
-> `up`, `down`, `left`, `right`, `on`, `off`, `stop`, `go` — plus an
-> `_unknown_` bucket. The `_unknown_` bucket carries everything else from
-> Speech Commands and silence — it has to, otherwise the model will
-> confidently mis-classify the 20+ other words it wasn't trained on as one
-> of the ten real keywords."
->
-> "The whole back half — body, GAP, dense, softmax — is plain 1-D INT8.
-> Deliberately simpler than DS-CNN. Standard KWS uses depthwise-separable
-> 2-D convs over a spectrogram; we stay 1-D, NNoM-quantisable, ~16 K params
-> total."
+**INT8 only.** Hazard3 has no FPU. Every float op would be a soft-float
+helper call into libgcc — large, slow, hard to reason about cycle-wise.
+NNoM does everything in int8 weights, int8 activations, int32 accumulators,
+and constrains the requantization scale per layer to a power of two. So
+requantize collapses to a single arithmetic shift instead of an idiv. No
+FPU, no soft-float, no surprise division latency. *(NNoM can also
+accelerate on top of ARM CMSIS-NN for Cortex-M cores. We are RISC-V so we
+don't use that path, but it is part of the runtime's reputation.)*
 
-### Key facts
-- Block 1 : 31 × 36 · pool ÷4 (after pool: 31 frames)  · 214 272 MACs
-- Block 2 : 15 × 36 · pool ÷2                          · 120 528 MACs
-- Block 3 : 15 × 36 · 2× conv, no pool                 · 116 640 MACs
-- GAP : 15×36 → 36 (no MACs, just averaging)
-- Dense 16 + Dropout 0.3 (training only)               ·   576 MACs
-- Dense 5 (softmax logits)                             ·   80 MACs
-- ~16 K parameters total
+**Ping-pong buffer.** This is the property that lets NNoM live in 64 KB.
+At codegen time NNoM analyses the network, finds the largest activation
+pair, and allocates exactly **two** static buffers sized for that worst
+case. Every layer reads from one and writes the other, then swaps. No
+malloc, no C runtime, no tensor-arena to grow at runtime. What the linker
+reports is exactly what runs — no surprise OOM mid-inference, no
+fragmentation. Weights live in XIP flash and are streamed by the cache
+prefetcher (covered later).
 
-### Deep detail
-- Why plain 1-D not depthwise-separable? Two reasons. (1) NNoM int8 support
-  for depthwise-separable was patchier when we picked the framework; plain
-  Conv1D had fewer surprises on the deploy side. (2) Our channel count is
-  small (36) — the parameter savings from depthwise-separable kick in
-  around 64+ channels.
-- Why 36 channels? Knee-of-the-curve from the sweep: 24 ch lost ~1.5%, 48
-  ch gained nothing measurable. 36 was the smallest count without
-  sacrificing accuracy.
-- Dropout 0.3 only at training time. NNoM exports without dropout (it's
-  identity at inference).
-- L2 = 1e-4 on the dense layer to keep activations bounded for INT8.
+**Codegen, not interpret.** NNoM does not parse a model file at boot. The
+model topology is baked into C at build time, so there is zero interpreter
+overhead at runtime and timing is deterministic. NNoM also natively
+supports more complex topologies — Inception, ResNet, DenseNet, RNN / GRU /
+LSTM — which we don't use for our plain Conv1D Mel Compact, but means the
+runtime is not the constraint if the model ever grows.
 
-### If asked
-- *"Why softmax instead of sigmoid per class?"* → "Mutually-exclusive label
-  per window. Softmax. If we wanted overlapping wake-words we'd switch."
-- *"How does `_unknown_` get supervised?"* → "Negative samples: any
-  Speech-Commands word not in our 4-class set, plus silence + background
-  noise clips, sampled at the same rate as positives during training."
+**Why NNoM and not CMSIS-NN, TFLite-Micro, X-CUBE-AI?** Open source. Small
+enough that we could read every line. No Cortex-M dependencies (we are
+RISC-V). And we needed to patch the cache prefetcher to know about NNoM's
+exact weight layout — not something a closed runtime would let us do.
+
+**Bridge to next slide:** NNoM gives us the runtime. But the model is only
+as good as the data it trains on — and Google Speech Commands alone is
+studio audio. Next: the dataset we recorded ourselves on the real mic.
 
 ---
 
-## Slide 15 — Architecture Detail
+## Slide 14 · Our Dataset (4 000 samples on the real mic)
 
-**topLeft:** `15 · Model` · file: `src/slides/ArchitectureDetail.jsx`
+NNoM gives us the runtime. The model that runs on it is only as good as the
+data it trained on — and Google Speech Commands alone is studio audio:
+clean headset mic, controlled levels, near-field, no ambient noise. Real
+deployment is none of those. So we recorded our own.
 
-### What's on screen
-8-row layer-by-layer table: Layer · Detail · Output · Params. Plus 4 stat
-boxes: ~15.9 K params, 0.97 M MACs, 11 classes, 1-D throughout.
+**4 000 samples on the INMP441 we ship** — same mic, same PCB, same analog
+path the firmware reads from. Whatever distortion, noise floor, or DC bias
+that path adds, the model already sees in training and learns to live with.
 
-### Script (≈ 45–60 s)
-> "Layer-by-layer table for the record. 1-D throughout. Plain operations
-> only. About 15 900 parameters total — small enough that the int8 weights
-> file is 16 KB. 0.97 M MACs per inference. Five output classes."
->
-> "Notice the parameter distribution: the 16 K is dominated by the three
-> conv blocks at 36 channels each — about 4 K each. The dense layers are
-> tiny by comparison. The front-end conv is only 1 K parameters but does
-> 53% of the MACs because it runs at 496-frame resolution."
+We diversified on three axes deliberately, one per card on screen.
 
-### Key facts (table content)
+**Different people.** Multiple speakers, different voices, accents, ages,
+distances from the mic. No single-speaker overfit; the model has to handle
+the next person walking up to the mic, not just whoever recorded most of
+the corpus.
 
-| Layer | Detail | Output | Params |
-|-------|--------|--------|--------|
-| Input | 8000 samples · int8 | [8000, 1] | 0 |
-| conv1d_mel | 16 · K=65 · s=16 | [496, 16] | 1 056 |
-| → BN · ReLU · MaxPool ÷4 | folded | [124, 16] | folded |
-| Block 1 (Conv1D 36 ch · K=3 · pool ÷4) | | [31, 36] | ~3.9 K |
-| Block 2 (Conv1D 36 ch · K=3 · pool ÷2) | | [15, 36] | ~3.9 K |
-| Block 3 (Conv1D 36 ch · K=3 · 2× conv) | | [15, 36] | ~7.8 K |
-| Global Average Pool | over time axis | [36] | 0 |
-| Dense 16 · ReLU · Dropout 0.3 | | [16] | 592 |
-| Dense 5 (logits) → Softmax | | [5] | 85 |
-| **Total** | | | **~15.9 K** |
+**Different environments.** Quiet rooms, noisy rooms, near-field, far-field.
+The acoustics in training span the conditions the model will hear in the
+field. We weren't trying to be exhaustive, just diverse enough that no
+specific room is the dominant signal.
 
-### If asked
-- *"Where do the 15.9 K params live in flash?"* → "All in `weights.h`,
-  linked into XIP flash. Total weights file is ~16 KB after int8 packing."
-- *"Why count BN as folded?"* → "After PTQ we fold the scale and shift into
-  the preceding conv weights and biases. The deployed graph doesn't have a
-  separate BN node."
+**Same hardware path.** Every sample comes through the deployed INMP441 and
+PCB, not a high-quality reference mic. Whatever the analog path adds is
+already in training, not a surprise on deployment.
+
+**Note for the audience:** we are not quantifying the diversity. No "10
+speakers, 5 rooms" claim on the slide. The point is the principle, not the
+count — without diverse training data, the int8 model that NNoM runs can't
+generalize past the conditions it saw, and on-device accuracy collapses.
+The Data Gap slide later shows what that collapse looks like when we
+deliberately skip the diverse-data step.
+
+**Bridge to next slide:** this richer dataset is what we calibrate the int8
+quantization on. Post-training quantization, KL-divergence calibrated — no
+QAT, no fine-tune — is next.
 
 ---
 
-## Slide 16 — Literature Comparison (architectural family)
+## Slide 15 · Quantization (PTQ · KL-divergence)
 
-**topLeft:** `16 · Model` · file: `src/slides/LiteratureComparison.jsx`
+Post-training quantization, KL-divergence calibrated. **11 classes** — same
+Mel Compact head we just walked through. No QAT, no fine-tune. Train
+float32, calibrate on a held-out batch of 1 024 samples drawn from the
+dataset on the previous slide, ship int8.
 
-### What's on screen
-7-row comparison table (Aspect · Standard KWS · This model). Plus a 3-card
-strip: SincNet · LEAF · This model.
+**Five-step pipeline (left of the slide), in order:**
 
-### Script (≈ 60 s)
-> "How this model fits in the literature. The closest published work is
-> SincNet — Ravanelli 2018. Same idea: learnable sinc filters in the first
-> layer. Difference: SincNet keeps the filter parameterised by the lower
-> and upper cutoff frequencies and learns those two scalars. We initialise
-> as sinc, then let the weights drift freely — easier to quantise."
->
-> "LEAF — Google 2021 — is the heavier cousin: Gabor filters with learnable
-> pooling and per-channel compression. Beautiful work, not cleanly INT8."
->
-> "Our delta from both: stride 16 baked into the front-end conv. SincNet
-> runs at full resolution and pools afterwards — burns 16× the front-end
-> compute. We pay the stride upfront and the rest of the model never sees
-> the cost."
+1. Train the float32 model in Keras.
+2. Collect activation histograms on calibration samples.
+3. For each tensor, **KL-divergence threshold search** — sweep candidate
+   clip thresholds and pick the one that minimises *D_KL* between the
+   float histogram and the int8 requantised histogram.
+4. Per-tensor int8 quantization with power-of-2 scales, BN folded into the
+   preceding conv, bias kept int32.
+5. Emit `weights.h` via `nnom_generate_model` and link it into firmware.
 
-### Key facts (table content)
+**The why-KLD callout:** min-max calibration is the naive baseline — pick
+min and max as the int8 endpoints. One fat outlier collapses the dynamic
+range for everyone else. KLD finds the threshold that preserves the SHAPE
+of the distribution and accepts saturation on the tail, which is the right
+trade for activation distributions that are roughly bell-shaped.
 
-| Aspect | Standard KWS | This model |
-|--------|--------------|------------|
-| Input | log-mel spectrogram | raw 8 kHz int8 PCM |
-| Front-end | fixed (MFCC / log-mel) | learnable Conv1D |
-| Body | 2-D depthwise-separable conv | 1-D plain conv |
-| Datatype | float32 mostly | int8 throughout |
-| Front-end MACs | counted separately | counted in network |
-| Total MACs | ~5–7 M (with FE) | 0.97 M |
-| Quantisation | post-hoc | designed-for INT8 |
+**GSC test top-1 numbers (the bars on the right):**
 
-### Deep detail (move here when slide is trimmed)
-- **SincNet (Ravanelli & Bengio, ICASSP 2018):** parameterised
-  band-pass filters; only learns 2 scalars per filter (low + high cutoff).
-  Achieves ~88% on Speech Commands v1 with ~22 K params and a much heavier
-  back-end. We borrowed the *initialisation* but not the parameterisation.
-- **LEAF (Zeghidour et al., ICLR 2021):** "LEAF: a Learnable Frontend for
-  Audio Classification." Gabor filters, per-channel learnable PCEN-style
-  compression, learnable Gaussian pooling. SOTA on AudioSet small-scale
-  but uses float, not aimed at MCUs.
-- **DS-CNN-S (Zhang 2017):** baseline. Depthwise-separable 2-D conv over
-  log-mel spectrogram, ~38 K params, ~5.4 M network MACs, +~1.6 M MFCC.
-  94.4% top-1.
+| Calibration         | GSC top-1 |
+| ------------------- | --------- |
+| float32 baseline    | **93.5 %** |
+| int8 min-max (naive) | 84.0 %    |
+| int8 KLD (we ship)   | **90.0 %** |
 
-### If asked
-- *"Why not just cite SincNet and use it as-is?"* → "We did at first. The
-  parameterised filters are float by construction — the cutoffs are
-  continuous. Quantising those to int8 inserts an extra step. Free weights
-  give us a one-pass int8 quantise."
-- *"How is your front-end different from a STFT magnitude?"* → "An STFT is
-  band-pass with rectangular passbands and zero phase response. Our sinc
-  init is similar but Hamming-windowed (better sidelobes), and after
-  training the filters can deviate from band-pass entirely — they're free."
+KLD recovers ~6 pts over naive min-max for free — no retraining, no
+fine-tune, just a better calibration heuristic. **Net float→int8 drop is
+3.5 pts.** That is the price of running on int8 silicon with no FP unit.
+
+The takeaway box at the bottom-right makes that explicit: 3.5 pts is the
+cost of int8 on a no-FP chip, and KLD pays for ~6 of the pts that a naive
+quantizer would have lost.
+
+**Bridge to next slide:** 90 % int8 KLD is what the model scores on GSC.
+The next slide is what happens when we run that same int8 model on a real
+INMP441.
 
 ---
 
-## Slide 17 — vs Other Models (parameter / MAC comparison)
+## Slide 16 · Data Gap (INMP441 transfer + frequency response)
 
-**topLeft:** `17 · Model` · file: `src/slides/VsOtherModels.jsx`
+Three-phase reveal — each press of → advances a phase. **Every accuracy on
+this slide is INT8** (the deployed model). Bar labels say *"GSC int8"* /
+*"INMP441 int8"* explicitly so the audience never confuses these with the
+float baseline on the leaderboard slide.
 
-### What's on screen
-5-row horizontal-bar comparison: DS-CNN, TC-ResNet8, MatchboxNet, This work,
-TinyConv. Plus 3 callouts: 8.8× fewer params than MatchboxNet, 4.1× fewer
-than TC-ResNet8, our footprint.
+### P0 (default view) — just the top two before/after panels, BIG
 
-### Script (≈ 45–60 s)
-> "Quantitative comparison on Google Speech Commands v1. DS-CNN-S is 94.4%
-> with 38 K parameters and 5.4 M network MACs. TC-ResNet8 is 96.6% with
-> 66 K params. MatchboxNet — NVIDIA's deep separable 1-D model — is 97.5%
-> with 140 K params."
->
-> "We're at 90.0% top-1 — three to seven points behind — with **16 K params
-> and 0.97 M MACs**. 8.8× fewer parameters than MatchboxNet, 4.1× fewer
-> than TC-ResNet8. The trade is conscious: every published model in this
-> chart assumes a 32-bit float-capable host. We don't have one. Our budget
-> is RV32IMAC at 36 MHz with no FPU."
+Bars animate left→right on slide entry, staggered by ~180 ms.
 
-### Key facts
+- **Before** panel: GSC int8 = 90 %, **INMP441 int8 = 62 %**. The deployed
+  int8 model loses 28 pts when we drop it onto a real INMP441 —
+  distribution shift the model never saw on GSC.
+- **After** panel: GSC int8 = 90 %, INMP441 int8 = 90 %. Same int8 weights,
+  just calibrated to the new audio source. Zero degradation between
+  domains.
 
-| Model | Params | Network MACs | Top-1 | FE | Notes |
-|-------|--------|--------------|-------|----|-----|
-| DS-CNN-S | 38.6 K | 5.4 M | 94.4% | MFCC | Zhang 2017 baseline |
-| TC-ResNet8 | 66 K | 11 M | 96.6% | MFCC | Choi 2019 |
-| MatchboxNet 3×1×64 | 140 K | 33 M | 97.5% | MFCC | NVIDIA Majumdar 2020 |
-| TinyConv | 21 K | 2.7 M | 92.7% | MFCC | TFLite tutorial baseline |
-| **This work** | **~16 K** | **0.97 M** | **90.0%** | **learned** | our SoC budget |
+### P1 (press →) — top panels shrink; two fix specimen cards fade in
 
-### Deep detail
-- TC-ResNet8 = "Temporal Convolutional ResNet, 8 layers." Full citation:
-  Choi et al., "Temporal Convolution for Real-time Keyword Spotting on
-  Mobile Devices," Interspeech 2019.
-- MatchboxNet citation: Majumdar & Ginsburg, "MatchboxNet: 1D Time-Channel
-  Separable Convolutional Neural Network Architecture for Speech Commands
-  Recognition," Interspeech 2020.
-- All comparisons exclude front-end MACs for the published models — they
-  always run on a host with a free MFCC accelerator. Adding ~1.6 M
-  preprocessing to each of those would only widen the gap.
-- Our 90.0% is the int8 KLD-calibrated number from slide 19. Float32 is
-  92.4%.
+The top panels transition smoothly down to a compact size to make room.
 
-### If asked
-- *"Why is your accuracy lower?"* → "Three reasons: (1) we're INT8
-  end-to-end, the others are float at evaluation; (2) we have ~10× fewer
-  parameters; (3) we trained at 8 kHz on the INMP441 dataset we collected,
-  not the curated 16 kHz Speech Commands. Re-evaluating on 16 kHz Speech
-  Commands at float, we hit 92.4%."
-- *"Could you scale up to match MatchboxNet?"* → "On a faster host, yes.
-  On 36 MHz Hazard3 we'd run out of cycle budget per inference. Our model
-  is sized to fit a 100-ms inference budget, not a benchmark."
+- **Fix 01 — peak normalization.** Divide every waveform by its peak
+  absolute value before training and on device. Removes microphone gain
+  variation. Free — no extra params, no extra ops. Implementation is one
+  line: `x ← x / max(|x|)`.
+- **Fix 02 — domain fine-tuning.** Record ~50 utterances per class with
+  the INMP441 through our own PCB, mix 10 % into the training set, three
+  fine-tune epochs on the blended corpus. Int8 accuracy recovers to the
+  GSC baseline of 90 %.
+
+### P2 (press → again) — fix cards cross-fade out, frequency-response box takes their place
+
+The right side of that box shows the actual measured INMP441 frequency-
+response curve from the datasheet — flat to **±2 dB across the speech
+band**, well past our 4 kHz Nyquist.
+
+The point of P2: the deeper reason the gap closes so cleanly is **hardware
+choice**. The INMP441 is well-behaved across our 8 kHz operating band —
+there is no spectral distortion to fix. What the two fixes above actually
+patch is a **level shift** (gain mismatch between corpora), not a
+frequency-dependent one. The mic isn't doing anything weird to the
+spectrum, so peak-norm + a tiny fine-tune is enough.
+
+**Bridge to next section:** the model side is done. Same int8 weights,
+same NNoM runtime, working on real audio at 90 %. The remaining slides are
+about the firmware, the accelerator, and the cache that keep this running
+at 30 ms inference on a 36 MHz core.
 
 ---
 
-## Slide 18 — Training Closed Loop
-
-**topLeft:** `18 · Model` · file: `src/slides/TrainingClosedLoop.jsx`
-
-### What's on screen
-Closed-loop diagram: training script → INT8 weights.h → C harness → linked
-into both host and SoC builds. Same source, two targets. Dtype-aware
-augmentation in the loop.
-
-### Script (≈ 60 s)
-> "Closed-loop training. The model is trained against the *exact* numerical
-> pipeline the firmware runs. Dtype-aware augmentation: the same training
-> script trains at float32 for the reference, int16 for an intermediate
-> sanity check, and int8 for deployment. Noise floor is calibrated per
-> dtype — int8 sees more aggressive noise because the quantisation
-> already chews through the SNR margin."
->
-> "After training, NNoM exports a `weights.h` file. That header is linked
-> into a single C harness — the same harness compiles for the host and for
-> the SoC. One source of truth. If accuracy on the host doesn't match
-> accuracy on chip, that's a real bug, not a tooling artefact."
-
-### Key facts
-- Augmentation: time shift ±100 ms, background noise SNR 0–30 dB,
-  vol jitter ±6 dB, peak-normalised then quantised
-- NNoM v0.4.x for the export (header-only INT8 inference)
-- Training: TF 2.x → NNoM converter → `weights.h`
-- One C harness, two compile targets (host gcc-x86 + riscv32-unknown-elf-gcc)
-
-### Deep detail
-- Why a single C harness? Because the alternative — Python on host, C on
-  chip — means accuracy regressions can come from either side and you
-  can't bisect. With one source, every divergence is real silicon vs
-  silicon-emulated.
-- Dtype-aware augmentation: noise scale follows the dtype's quantisation
-  step (1/255 for int8, 1/65535 for int16). Without this, int8 trained
-  with float-style noise ends up too clean and falls off a cliff at
-  inference.
-- The "two targets" are bit-exact for ~99% of inputs. The remaining
-  ~1% are saturation edge cases in the int32 accumulator that differ in
-  rounding mode.
-
-### If asked
-- *"Why not QAT (quantisation-aware training)?"* → "Tried it. Marginal
-  gain over PTQ-with-KLD. PTQ keeps the training loop simple — same
-  graph for all dtypes."
-- *"Can you re-train on a new keyword set?"* → "Yes. The pipeline takes
-  an hour on a single GPU. Re-export, re-link, re-flash."
-
----
-
-## Slide 19 — Quantization (PTQ + KLD)
-
-**topLeft:** `19 · Model` · file: `src/slides/Quantization.jsx`
-
-### What's on screen
-Left: 5-step PTQ pipeline (Train float → collect histograms → KLD threshold
-search → per-tensor int8 → emit `weights.h`). KLD note panel.
-Right: accuracy bars — float32 92.4%, int8 min-max 86.1%, int8 KLD 90.0%.
-
-### Script (≈ 60–75 s)
-> "Quantisation strategy: **post-training quantisation, KL-divergence
-> calibrated**. No QAT, no fine-tune. Train in float, calibrate on a
-> held-out batch of 1024 samples, ship int8."
->
-> "The naive thing — min-max quantisation — clips at the activation's
-> observed min and max. That gives you 86.1% int8 accuracy. The smart
-> thing — KLD calibration — picks the clip threshold that minimises the
-> Kullback-Leibler divergence between the float histogram and the
-> requantised histogram. That preserves the *shape* of the distribution
-> at the cost of some outliers. 90.0%. Almost 4 points back."
->
-> "The reference float32 number is 92.4%. The 2.4-point drop from float
-> to int8-KLD is the price of int8 silicon with no FP unit. We pay it
-> consciously."
-
-### Key facts
-- Reference float32 : **92.4%**
-- int8 min-max PTQ : **86.1%**  (−6.3 pp)
-- int8 KLD-calibrated : **90.0%**  (−2.4 pp from float)
-- Calibration set: 1024 held-out samples
-- Per-tensor scales (not per-channel); NNoM convention
-
-### Deep detail
-- KLD threshold search algorithm (TensorRT-style):
-  1. Collect activation histogram with 2048 bins per tensor.
-  2. For each candidate threshold T from min..max, requantise: bins
-     beyond T merged into the last bin.
-  3. Compute D_KL(P_float || P_requantised).
-  4. Pick T that minimises D_KL.
-- Why per-tensor and not per-channel? NNoM's int8 kernel only supports
-  per-tensor scales. Per-channel would gain ~0.5pp but break the kernel
-  contract.
-- Why 1024 calibration samples? Empirical knee — 256 was noisy, 4096
-  didn't change anything.
-
-### If asked
-- *"Why not QAT?"* → "Marginal. We tried QAT with the same architecture
-  and got 90.4% — 0.4 pp better than PTQ-KLD. Not worth the training-loop
-  complexity for our deployment cadence."
-- *"What's the per-layer accuracy contribution?"* → "Most of the loss is
-  in the front-end conv1d_mel where the activations have a long tail.
-  KLD specifically helps there."
-
----
-
-## Slide 20 — Data Gap (sim-to-real)
-
-**topLeft:** `20 · Model` · file: `src/slides/DataGap.jsx`
-
-### What's on screen
-Two-column before/after: left (Speech Commands, INMP441 board) — accuracy
-drops from 90% to 62% out-of-the-box. Right — after our two fixes — 90%
-match between Speech Commands and INMP441.
-
-### Script (≈ 60 s)
-> "Two things kept the accuracy from collapsing on real-world audio. Out
-> of the box, training on Google Speech Commands and deploying through
-> the INMP441 MEMS microphone on our PCB drops accuracy from 90% to 62%.
-> Different mic, different room, different SNR floor."
->
-> "Fix one: we collected our own dataset through the INMP441 — same
-> hardware, same room characteristics — and fine-tuned the last layers.
-> Closes most of the gap."
->
-> "Fix two: peak normalisation. Every clip is scaled so its loudest
-> sample reaches 75% of int16 full scale, then right-shifted by 8 in
-> firmware to land in a known int8 range. The hardware constraint —
-> int8 dynamic range — made visible inside the training pipeline."
-
-### Key facts
-- Out-of-box (Speech Commands → INMP441) : 90% → **62%**  (−28 pp)
-- After INMP441 fine-tune : 62% → ~85%
-- After peak normalisation pipeline : ~85% → **90%**  (matches reference)
-- INMP441 dataset size: ~3 K clips, 5 keywords, in-house recorded
-- Peak-norm target: 75% of int16 full-scale (= 24 576 / 32 767)
-
-### Deep detail
-- Why 75% and not 100%? Headroom for transients. At 100% you clip on
-  plosives ('p', 't' word-onsets).
-- Why right-shift by 8 in firmware? Take the 16-bit peak-normalised
-  value, drop the low byte, hand the high byte to the network as int8.
-  No multiply needed.
-- Why fine-tune only the last layers? Front-end + early conv generalise
-  across mics; the late blocks specialise to the noise floor + tone of
-  the actual hardware.
-- The 28 pp drop without these fixes is *typical* for sim-to-real KWS.
-  Most papers don't report it because they evaluate on the same source
-  they trained on.
-
-### If asked
-- *"Why INMP441?"* → "Industry-standard digital MEMS, I²S out, ~$1.50.
-  Same family that ships in Amazon Echo Dot v2 and similar."
-- *"How much data did you record?"* → "About 3 000 clips across 5
-  keywords + unknown. Two volunteers, two rooms, three sessions. Small
-  on purpose — we want fine-tune, not from-scratch."
-- *"What's the per-keyword accuracy?"* → "Yes / no near 95%; up / down
-  closer to 87%; unknown ~92% on confusable phonemes."
-
----
-
-## Section Q&A — beyond the individual slides
-
-### "Why design your own model instead of using DS-CNN?"
-Three constraints simultaneously: int8 throughout (no FPU on chip), front-end
-must run on the same accelerator as the body (no separate DSP), and total
-MACs has to fit a 100-ms inference budget at 36 MHz Hazard3. DS-CNN
-violates two of three: it expects MFCC outside the network and float
-internally.
-
-### "What's the killer comparison number?"
-**0.97 M MACs vs 7 M for the DS-CNN system, end-to-end.** 7× system-level
-reduction at the cost of ~4 percentage points of accuracy.
-
-### "What couldn't you optimise?"
-Memory bandwidth. The int8 weights are in XIP flash; the activations are in
-SRAM. Each conv layer reads its weights from flash through the cache. We
-can't compress the weights below int8 without re-architecting the network.
-Future work: 4-bit weights for the dense layers, where saturation matters
-less.
-
-### "How long to retrain on new keywords?"
-~1 hour single GPU for the full pipeline (train float → calibrate KLD →
-NNoM export). Adding a new keyword needs ~500 clips per keyword to match
-the dataset balance.
-
-### "What's the inference time on chip?"
-~38 ms per 1-second window at 36 MHz, dominated by conv1d_mel. With the
-accelerator engaged, ~6 ms. The remaining 32 ms / 6 ms is accelerator
-saved cycles — see the accelerator section.
+*Generated from `src/content.js` notes blocks for the seven model-section
+entries (`standard-mfcc`, `lit-comparison`, `vs-models`, `why-nnom`,
+`our-data`, `quantization`, `data-gap`). If you change either, regenerate
+this file from content.js — content.js is the source of truth.*
