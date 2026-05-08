@@ -182,23 +182,23 @@ export default function StandardMFCC() {
       sub:     'Their two-stage system: ~7 M ops. Our unified pipeline: 0.97 M MACs.',
     };
     if (phase === 3) return {
-      eyebrow: '★ Our model · Front-end zoom',
+      eyebrow: '★ Mel Compact · Front-end zoom',
       title:   'Learnable sinc filterbank — the front-end is a Conv1D.',
       sub:     '16 sinc-bandpass kernels · K=65 · stride 16 · 1 056 params · ~516 K MACs (53 % of total).',
     };
     if (phase === 5) return {
-      eyebrow: '★ Our model · Body zoom',
+      eyebrow: '★ Mel Compact · Body zoom',
       title:   'Three plain 1D conv blocks — feature extractor.',
       sub:     '36 channels · K=3 · BN · ReLU · MaxPool. Pool 4× then 2× then ×1. ~451 K MACs (47 % of total).',
     };
     if (phase === 7) return {
-      eyebrow: '★ Our model · Head zoom',
+      eyebrow: '★ Mel Compact · Head zoom',
       title:   'GAP → Dense 16 → Softmax over 11 keywords.',
       sub:     '36 GAP outputs collapse the time axis · Dense 16 with dropout p=0.3 · Softmax to 11 logits · ~656 MACs.',
     };
     /* P2, P4, P6 — three components overview */
     return {
-      eyebrow: '★ Our model',
+      eyebrow: '★ Mel Compact',
       title:   'One unified pipeline — three components.',
       sub:     '0.97 M MACs total, all int8, one acceleratable datapath.',
     };
@@ -207,7 +207,7 @@ export default function StandardMFCC() {
   const pos = cardPositions(phase);
 
   return (
-    <SlideFrame topLeft="11 · Model">
+    <SlideFrame topLeft="10 · Model">
       <div ref={rootRef} style={{ marginTop: 0 }}>
         <div className="eyebrow" style={{ marginBottom: 6 }}>{heading.eyebrow}</div>
         <h1 className="title" style={{ fontSize: 42, marginBottom: 6 }}>{heading.title}</h1>
@@ -269,8 +269,8 @@ export default function StandardMFCC() {
         }}>
           <FadeView active={phase === 1}>
             <SummaryCard
-              eyebrow="★ Our model · unified pipeline"
-              headline="Conv1D → CNN"
+              eyebrow="★ Our approach · unified pipeline"
+              headline="Mel Compact"
               bigNumber="0.97 M"
               bigLabel="total system MACs"
               breakdown={[
@@ -322,7 +322,7 @@ function ThreeCardsLayer({ phase, pos }) {
       boxSizing: 'border-box',
     }}>
       <div style={{ fontFamily: 'var(--font-mono)', fontSize: 13, color: 'var(--accent)', letterSpacing: '0.08em', textTransform: 'uppercase', fontWeight: 600, marginBottom: 4 }}>
-        ★ Our model · unified pipeline · 0.97 M MACs total
+        ★ Mel Compact · unified pipeline · 0.97 M MACs total
       </div>
 
       <div style={{ position: 'relative', flex: 1, height: 'calc(100% - 30px)' }}>

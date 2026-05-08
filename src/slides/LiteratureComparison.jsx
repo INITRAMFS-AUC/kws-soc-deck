@@ -33,7 +33,7 @@ const WORKS = [
 
 export default function LiteratureComparison() {
   return (
-    <SlideFrame topLeft="12 · Model">
+    <SlideFrame topLeft="11 · Model">
       <div style={{ marginTop: 36 }}>
         <div className="eyebrow">Closest related work · by the numbers</div>
         <h1 className="title" style={{ marginBottom: 10 }}>The learnable-front-end family on raw audio.</h1>
@@ -75,7 +75,7 @@ export default function LiteratureComparison() {
         alignItems: 'center',
       }}>
         <div>
-          <div style={{ fontFamily: 'var(--font-mono)', fontSize: 14, color: 'rgba(255,255,255,0.85)', letterSpacing: '0.1em', textTransform: 'uppercase', fontWeight: 600, marginBottom: 4 }}>★ Ours</div>
+          <div style={{ fontFamily: 'var(--font-mono)', fontSize: 14, color: 'rgba(255,255,255,0.85)', letterSpacing: '0.1em', textTransform: 'uppercase', fontWeight: 600, marginBottom: 4 }}>★ Ours · Mel Compact</div>
           <div style={{ fontFamily: 'var(--font-sans)', fontSize: 32, fontWeight: 600 }}>Stride-fused sinc</div>
         </div>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, auto)', gap: 36, justifyContent: 'center' }}>

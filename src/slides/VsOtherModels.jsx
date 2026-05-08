@@ -33,7 +33,7 @@ const models = [
     macsM: 5.4, macsLabel: '5.4 M',
   },
   {
-    name: '★ This work · ours',
+    name: '★ Mel Compact · ours',
     acc: 90.0, accLabel: '90.0 %',
     paramsK: 16, paramsLabel: '~16 K',
     macsM: 0.97, macsLabel: '0.97 M',
@@ -60,7 +60,7 @@ export default function VsOtherModels() {
   }, []);
 
   return (
-    <SlideFrame topLeft="13 · Model">
+    <SlideFrame topLeft="12 · Model">
       <div ref={rootRef} style={{ marginTop: 36 }}>
         <div className="eyebrow">Where we land · accuracy vs parameters</div>
         <h1 className="title" style={{ marginBottom: 12 }}>90 % accuracy at a fraction of the parameter count.</h1>

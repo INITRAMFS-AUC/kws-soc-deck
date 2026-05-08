@@ -2,7 +2,7 @@ import SlideFrame from '../components/SlideFrame.jsx';
 
 export default function DataGap() {
   return (
-    <SlideFrame topLeft="15 · Model">
+    <SlideFrame topLeft="14 · Model">
       <div style={{ marginTop: 40 }}>
         <div className="eyebrow">The real-world gap</div>
         <h1 className="title" style={{ marginBottom: 20, maxWidth: 1700 }}>
