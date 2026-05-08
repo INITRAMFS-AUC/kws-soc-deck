@@ -306,20 +306,20 @@ function FrequencyResponseBox() {
     <div style={{
       border: '2px solid var(--accent)',
       background: '#fff7f2',
-      padding: '18px 24px',
+      padding: '16px 22px',
       display: 'grid',
-      gridTemplateColumns: '1fr 360px',
-      gap: 32,
+      gridTemplateColumns: '1fr 340px',
+      gap: 28,
       alignItems: 'center',
     }}>
       <div>
         <div style={{ fontFamily: 'var(--font-mono)', fontSize: 15, color: 'var(--accent)', letterSpacing: '0.08em', textTransform: 'uppercase', fontWeight: 600, marginBottom: 6 }}>
           ★ Frequency response · INMP441
         </div>
-        <div style={{ fontFamily: 'var(--font-sans)', fontSize: 28, fontWeight: 600, color: 'var(--ink)', marginBottom: 8 }}>
+        <div style={{ fontFamily: 'var(--font-sans)', fontSize: 26, fontWeight: 600, color: 'var(--ink)', marginBottom: 8 }}>
           Our mic is flat across the 8 kHz band.
         </div>
-        <div style={{ fontFamily: 'var(--font-sans)', fontSize: 19, color: 'var(--ink)', lineHeight: 1.4 }}>
+        <div style={{ fontFamily: 'var(--font-sans)', fontSize: 18, color: 'var(--ink)', lineHeight: 1.4 }}>
           We checked the datasheet. Flat to ±2 dB from 100 Hz to ~10 kHz — well past our 4 kHz Nyquist. No spectral distortion at 8 kHz; the two fixes above patch a level shift, not a frequency-dependent one.
         </div>
       </div>
@@ -328,7 +328,7 @@ function FrequencyResponseBox() {
         <img
           src={`${import.meta.env.BASE_URL}assets/inmp441-frequency-response.png`}
           alt="Measured INMP441 frequency response — flat to ±2 dB from 100 Hz to ~10 kHz"
-          style={{ width: '100%', height: 'auto', display: 'block' }}
+          style={{ width: '100%', maxHeight: 220, height: 'auto', objectFit: 'contain', display: 'block' }}
         />
       </div>
     </div>
