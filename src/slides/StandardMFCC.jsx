@@ -48,6 +48,16 @@ const MFCC_ROWS = [
   ['DCT-II',                 '→ MFCC features',    '~130 K ops'],
 ];
 
+/* DS-CNN-S layers from Zhang et al., 2017 — sized for the comparison
+   slide. The "Predict" packet overlays the LAST row so the data flow
+   (MFCC → DS-CNN → logits) reads as one continuous ribbon. */
+const DSCNN_ROWS = [
+  ['Conv2D · 64 · 10×4', 'BN · ReLU'],
+  ['DS-Conv block ×4',   '64 ch · 3×3 + 1×1'],
+  ['Global AvgPool',     '49×10×64 → 64'],
+  ['Dense → Softmax',    '64 → 11'],
+];
+
 const SOFTMAX_CLASSES = [
   { label: 'yes',       w: '92%',  prob: '.92',  accent: true },
   { label: 'no',        w: '4.0%', prob: '.04' },
@@ -416,22 +426,76 @@ function InputContent({ active }) {
   );
 }
 
-/* ───────── DS-CNN panel ───────── */
+/* ───────── DS-CNN panel — text rows like MFCC. The predict packet
+   overlays the LAST row (Dense → Softmax) so its position is meaningful
+   instead of floating in dead space. ───────── */
 function CnnContent({ active }) {
+  const lastRowRef = useRef(null);
+  const [rowMetric, setRowMetric] = useState(null);
+
+  useLayoutEffect(() => {
+    const el = lastRowRef.current;
+    if (!el) return;
+    const next = { top: el.offsetTop, height: el.offsetHeight };
+    setRowMetric(prev => {
+      if (prev && prev.top === next.top && prev.height === next.height) return prev;
+      return next;
+    });
+  });
+
   return (
     <div style={{ position: 'relative', height: '100%', border: '2px solid var(--ink)', padding: '20px 22px', background: 'var(--paper)', boxSizing: 'border-box' }}>
       <div style={{ fontFamily: 'var(--font-mono)', fontSize: 16, color: 'var(--ink-mute)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 10 }}>Stage 2 · Network</div>
-      <div style={{ fontFamily: 'var(--font-sans)', fontSize: 30, fontWeight: 600, marginBottom: 12 }}>DS-CNN</div>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginBottom: 14 }}>
-        {[100, 78, 60, 46].map((w, i) => (
-          <div key={i} style={{ width: `${w}%`, height: 14, background: 'var(--ink)' }} />
-        ))}
+      <div style={{ fontFamily: 'var(--font-sans)', fontSize: 30, fontWeight: 600, marginBottom: 14 }}>DS-CNN</div>
+
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 5, marginBottom: 14 }}>
+        {DSCNN_ROWS.map(([a, b], i) => {
+          const isLast = i === DSCNN_ROWS.length - 1;
+          return (
+            <div key={i} ref={isLast ? lastRowRef : null} style={{
+              display: 'grid', gridTemplateColumns: '1fr auto',
+              gap: 8, padding: '6px 10px',
+              background: 'rgba(26,26,26,0.05)',
+              fontFamily: 'var(--font-mono)', fontSize: 15,
+            }}>
+              <span style={{ color: 'var(--ink)' }}>{a}</span>
+              <span style={{ color: 'var(--ink-mute)', textAlign: 'right' }}>{b}</span>
+            </div>
+          );
+        })}
       </div>
-      <div style={{ fontFamily: 'var(--font-mono)', fontSize: 17, color: 'var(--ink-mute)', lineHeight: 1.7 }}>
-        <div>Learned 2-D conv</div>
-        <div>over Mel features</div>
+
+      <div style={{ fontFamily: 'var(--font-mono)', fontSize: 14, color: 'var(--ink-mute)', lineHeight: 1.55 }}>
+        Depthwise-separable 2-D conv<br />over Mel features · ~5.4 M MACs
       </div>
-      <CenterPacket data={active} />
+
+      {/* Predict packet — overlays the last row when DS-CNN is the active stop. */}
+      <div style={{
+        position: 'absolute',
+        left: 22,
+        right: 22,
+        top: rowMetric ? rowMetric.top : 0,
+        height: rowMetric ? rowMetric.height : 0,
+        opacity: active && rowMetric ? 1 : 0,
+        transition: `opacity ${PACKET_FADE_MS}ms ${PHASE_EASE}`,
+        background: 'var(--ink)',
+        color: '#f4f1ea',
+        boxShadow: '0 6px 18px rgba(0,0,0,0.28)',
+        zIndex: 4,
+        display: 'flex',
+        alignItems: 'center',
+        gap: 16,
+        padding: '0 14px',
+        pointerEvents: 'none',
+      }}>
+        {active && (
+          <>
+            <span style={{ fontFamily: 'var(--font-mono)', fontSize: 12, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--accent)', fontWeight: 600, minWidth: 80 }}>{active.label}</span>
+            <span style={{ fontFamily: 'var(--font-mono)', fontSize: 16, fontWeight: 500, flex: 1 }}>{active.shape}</span>
+            <span style={{ fontFamily: 'var(--font-mono)', fontSize: 13, color: 'rgba(244,241,234,0.65)' }}>{active.detail}</span>
+          </>
+        )}
+      </div>
     </div>
   );
 }
