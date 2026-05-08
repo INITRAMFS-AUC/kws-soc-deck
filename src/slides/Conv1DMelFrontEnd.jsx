@@ -1,0 +1,121 @@
+import SlideFrame from '../components/SlideFrame.jsx';
+
+function generateKernelPath(i) {
+  const freq = 1 + i * 0.6;
+  const amp = 16 - i * 0.4;
+  let path = '';
+  for (let k = 0; k < 65; k++) {
+    const x = (k / 64) * 100;
+    const env = Math.exp(-Math.pow((k - 32) / 22, 2));
+    const y = 24 - Math.sin(k * 0.5 * freq) * env * amp;
+    path += (k === 0 ? 'M' : 'L') + x.toFixed(1) + ',' + y.toFixed(1) + ' ';
+  }
+  return path.trim();
+}
+
+export default function Conv1DMelFrontEnd() {
+  const kernels = Array.from({ length: 16 }, (_, i) => {
+    const label = 'k' + (i < 10 ? '0' + i : String(i));
+    const path = generateKernelPath(i);
+    return { label, path };
+  });
+
+  return (
+    <SlideFrame topLeft="12 · Model">
+      <div style={{ marginTop: 0 }}>
+        <div className="eyebrow" style={{ marginBottom: 6 }}>★ Accelerator target</div>
+        <h1 className="title" style={{ fontSize: 48, marginBottom: 8 }}>Learnable sinc filterbank — the front-end <em>is</em> a Conv1D.</h1>
+        <p className="subtitle" style={{ maxWidth: 1700, marginBottom: 14 }}>
+          16 sinc-bandpass kernels, Hamming-windowed, mel-initialized 50 Hz–4 kHz. K=65, stride=16 — a 2 ms frame shift fused into the filter.
+        </p>
+      </div>
+
+      <div style={{ display: 'grid', gridTemplateColumns: '1.05fr 1.2fr', gap: 28, alignItems: 'start' }}>
+
+        {/* Left: kernel grid */}
+        <div>
+          <div style={{ fontFamily: 'var(--font-mono)', fontSize: 20, color: 'var(--ink-mute)', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 8 }}>
+            What the 16 kernels look like
+          </div>
+          <div style={{ border: '1px solid var(--ink)', background: 'var(--paper)', padding: '14px 18px' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '10px 16px' }}>
+              {kernels.map(({ label, path }) => (
+                <div key={label} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3 }}>
+                  <svg viewBox="0 0 100 48" style={{ width: '100%', height: 44 }}>
+                    <path d={path} fill="none" stroke="var(--ink)" strokeWidth="1.4" />
+                  </svg>
+                  <div style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--ink-mute)', letterSpacing: '0.04em' }}>{label}</div>
+                </div>
+              ))}
+            </div>
+            <div style={{ fontFamily: 'var(--font-mono)', fontSize: 16, color: 'var(--ink-mute)', marginTop: 10, textAlign: 'center', letterSpacing: '0.04em' }}>
+              low frequency ← mel scale → high frequency
+            </div>
+          </div>
+          <p style={{ marginTop: 10, fontSize: 22, lineHeight: 1.42, color: 'var(--ink-soft)' }}>
+            Each kernel is initialized as a Hamming-windowed sinc bandpass:{' '}
+            <span style={{ fontFamily: 'var(--font-mono)' }}>h_i(n) = [sinc(2 f_h n) − sinc(2 f_l n)] · hamming(n)</span>,
+            where f_l, f_h are the mel-band edges. The filters then adapt freely during training.
+          </p>
+        </div>
+
+        {/* Right: sliding window + stats */}
+        <div>
+          <div style={{ fontFamily: 'var(--font-mono)', fontSize: 20, color: 'var(--ink-mute)', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 8 }}>
+            Sliding K=65, stride 16
+          </div>
+          <div style={{ border: '1px solid var(--ink)', background: 'var(--paper)', padding: '14px 24px 14px 24px' }}>
+            <svg viewBox="0 0 600 130" style={{ width: '100%', height: 120 }}>
+              <defs>
+                <marker id="arrow12" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+                  <path d="M 0 0 L 10 5 L 0 10 Z" fill="var(--accent)" />
+                </marker>
+              </defs>
+              <path
+                d="M0,80 Q15,55 30,90 T70,75 Q90,40 110,100 T160,60 Q180,30 200,100 T260,70 Q290,40 320,95 T380,75 Q410,55 440,90 T500,75 Q540,65 600,80"
+                fill="none" stroke="var(--ink)" strokeWidth="1.2"
+              />
+              <rect x="20" y="35" width="80" height="70" fill="var(--accent)" opacity="0.18" stroke="var(--accent)" strokeWidth="1.2" />
+              <text x="60" y="125" textAnchor="middle" fontFamily="JetBrains Mono, monospace" fontSize="12" fill="var(--ink-mute)">t = 0</text>
+              <rect x="40" y="35" width="80" height="70" fill="var(--accent)" opacity="0.12" stroke="var(--accent)" strokeWidth="0.8" strokeDasharray="3 3" />
+              <text x="80" y="125" textAnchor="middle" fontFamily="JetBrains Mono, monospace" fontSize="12" fill="var(--ink-mute)">+16</text>
+              <rect x="60" y="35" width="80" height="70" fill="var(--accent)" opacity="0.08" stroke="var(--accent)" strokeWidth="0.6" strokeDasharray="3 3" />
+              <text x="100" y="125" textAnchor="middle" fontFamily="JetBrains Mono, monospace" fontSize="12" fill="var(--ink-mute)">+32</text>
+              <line x1="20" y1="20" x2="100" y2="20" stroke="var(--accent)" strokeWidth="1.5" markerEnd="url(#arrow12)" />
+              <text x="60" y="14" textAnchor="middle" fontFamily="JetBrains Mono, monospace" fontSize="13" fill="var(--accent)" fontWeight="600">window slides</text>
+            </svg>
+
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 10, marginTop: 8, paddingTop: 10, borderTop: '1px solid rgba(26,26,26,0.12)' }}>
+              <div>
+                <div style={{ fontFamily: 'var(--font-mono)', fontSize: 32, fontWeight: 500, color: 'var(--ink)', letterSpacing: '-0.02em' }}>8000</div>
+                <div style={{ fontFamily: 'var(--font-mono)', fontSize: 14, color: 'var(--ink-mute)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>samples in</div>
+              </div>
+              <div>
+                <div style={{ fontFamily: 'var(--font-mono)', fontSize: 32, fontWeight: 500, color: 'var(--ink)', letterSpacing: '-0.02em' }}>496 → 124</div>
+                <div style={{ fontFamily: 'var(--font-mono)', fontSize: 14, color: 'var(--ink-mute)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>frames · after pool 4×</div>
+              </div>
+              <div>
+                <div style={{ fontFamily: 'var(--font-mono)', fontSize: 32, fontWeight: 500, color: 'var(--accent)', letterSpacing: '-0.02em' }}>1056</div>
+                <div style={{ fontFamily: 'var(--font-mono)', fontSize: 14, color: 'var(--ink-mute)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>params · 16×65 + bias</div>
+              </div>
+            </div>
+          </div>
+
+          <div style={{ marginTop: 12 }}>
+            <div style={{ fontFamily: 'var(--font-mono)', fontSize: 16, color: 'var(--ink-mute)', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 6 }}>
+              Share of total MACs
+            </div>
+            <div style={{ display: 'flex', height: 34, border: '1px solid var(--ink)' }}>
+              <div style={{ flex: '0 0 53%', background: 'var(--accent)', color: '#fff', fontFamily: 'var(--font-mono)', fontSize: 20, display: 'flex', alignItems: 'center', padding: '0 14px' }}>
+                Conv1D mel · 53 %
+              </div>
+              <div style={{ flex: '0 0 47%', background: 'var(--ink)', color: '#fff', fontFamily: 'var(--font-mono)', fontSize: 20, display: 'flex', alignItems: 'center', padding: '0 10px' }}>
+                3 conv blocks · 47 %
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </SlideFrame>
+  );
+}

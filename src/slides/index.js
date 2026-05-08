@@ -12,7 +12,13 @@ import Verification from './Verification.jsx';
 import Pcb from './Pcb.jsx';
 import PivotModel from './PivotModel.jsx';
 import TheModel from './TheModel.jsx';
+import NoMFCC from './NoMFCC.jsx';
+import Conv1DMelFrontEnd from './Conv1DMelFrontEnd.jsx';
+import ConvBodyClassifier from './ConvBodyClassifier.jsx';
 import ArchitectureDetail from './ArchitectureDetail.jsx';
+import LiteratureComparison from './LiteratureComparison.jsx';
+import VsOtherModels from './VsOtherModels.jsx';
+import Quantization from './Quantization.jsx';
 import TrainingClosedLoop from './TrainingClosedLoop.jsx';
 import DataGap from './DataGap.jsx';
 import LiveInference from './LiveInference.jsx';
@@ -37,8 +43,14 @@ export const slideComponents = [
   Pcb,
   PivotModel,
   TheModel,
+  NoMFCC,
+  Conv1DMelFrontEnd,
+  ConvBodyClassifier,
   ArchitectureDetail,
+  LiteratureComparison,
+  VsOtherModels,
   TrainingClosedLoop,
+  Quantization,
   DataGap,
   LiveInference,
   PivotAccelerator,

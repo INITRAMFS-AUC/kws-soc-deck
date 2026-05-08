@@ -213,24 +213,6 @@ export const slides = [
     },
   },
 
-  // Constraints ──────────────────────────────────────────────────────────────
-  {
-    id: 'constraints',
-    label: 'Constraints',
-    notes: 'Three constraints frame the work. Hazard3 RV32IMAC at 36 megahertz with no FPU. A 64-kilobyte SRAM budget. And an open toolchain — Nix, Verilator, Yosys, OpenOCD, GDB — reproducible from source.',
-    content: {
-      kind: 'Framing',
-      eyebrow: 'The arena',
-      title: 'Always-on keyword spotting in kilobytes.',
-      subtitle: 'Real deployment-class constraints — not relaxed research targets.',
-      constraints: [
-        { head: 'Constraint · 01', lede: 'RV32IMAC, no FPU',  body: 'Hazard3 core at 36 MHz. All math integer-only — int8 / int32.' },
-        { head: 'Constraint · 02', lede: '64 KB SRAM budget', body: 'NNoM static buffer fits inside this; weights live in XIP flash.' },
-        { head: 'Constraint · 03', lede: 'Open toolchain',    body: 'Nix · Verilator · Yosys · OpenOCD · GDB — reproducible from source.' },
-      ],
-    },
-  },
-
   // SoC Architecture ─────────────────────────────────────────────────────────
   {
     id: 'soc',
@@ -377,6 +359,30 @@ export const slides = [
     },
   },
 
+  // No MFCC ─────────────────────────────────────────────────────────────────
+  {
+    id: 'no-mfcc',
+    label: 'No MFCC',
+    notes: 'We ditched MFCC. Standard KWS papers report network MACs and call it done. The MFCC pipeline running underneath them is doing more arithmetic than the network — and it\'s float, and it\'s not accelerable. Our pipeline skips all of that: raw int8 PCM straight into a learnable Conv1D. 0.97 M MACs total, all int8, 100% accelerable.',
+    content: { kind: 'Model' },
+  },
+
+  // Conv1D Mel Front-End ─────────────────────────────────────────────────────
+  {
+    id: 'conv1d-mel',
+    label: 'Conv1D Mel Front-End',
+    notes: 'The learnable sinc filterbank in detail. 16 sinc-bandpass kernels, Hamming-windowed, mel-initialized 50 Hz to 4 kHz. K=65, stride 16 — a 2 ms frame shift fused into the filter. 8000 samples in, 496 frames out, 124 after the 4× pool. 1056 parameters total. This layer alone is 78% of total MACs — by design, it becomes the accelerator target.',
+    content: { kind: 'Model' },
+  },
+
+  // Conv Body + Classifier ───────────────────────────────────────────────────
+  {
+    id: 'conv-body',
+    label: 'Conv Body + Head',
+    notes: 'Three plain 1D conv blocks, then collapse. No depthwise-separable, no 2D — plain Conv1D, BN, ReLU, MaxPool throughout. Block 1 at 31×36, pool 4×. Block 2 at 15×36, pool 2×. Block 3 at 15×36, double conv no pool. Global average pool collapses to 36 channels, dense 16 with ReLU and dropout 0.3, then softmax over 5 classes.',
+    content: { kind: 'Model' },
+  },
+
   // Architecture Detail ──────────────────────────────────────────────────────
   {
     id: 'architecture-detail',
@@ -408,6 +414,22 @@ export const slides = [
     },
   },
 
+  // Literature Comparison ───────────────────────────────────────────────────
+  {
+    id: 'lit-comparison',
+    label: 'vs Literature',
+    notes: 'How this model is different. Most published KWS networks — DS-CNN, MobileNet-derived — are 2D convs over a fixed log-mel spectrogram. We stay on the waveform, learn the front-end, keep the body simple, and quantise it INT8 for NNoM. Closest published work: SincNet (Ravanelli 2018) uses learnable sinc filters but at full resolution then pools. LEAF (Google 2021) uses Gabor filters with learnable pooling — heavier and not cleanly INT8-quantisable. Our stride-16 fused filter saves 16× compute up front.',
+    content: { kind: 'Model' },
+  },
+
+  // vs Other Models ──────────────────────────────────────────────────────────
+  {
+    id: 'vs-models',
+    label: 'vs Other Models',
+    notes: '90% accuracy at a fraction of the parameter count. Google Speech Commands benchmark. DS-CNN small at 94.4% with 38K params and 5.4M MACs. TC-ResNet8 at 96.6% with 66K params. MatchboxNet at 97.5% with 140K params. This work: 90.0% with ~16K params and 0.97M MACs. 8.8× fewer params than MatchboxNet, 4.1× fewer than TC-ResNet8, running on a 36 MHz RV32IMAC.',
+    content: { kind: 'Model' },
+  },
+
   // Training Closed Loop ─────────────────────────────────────────────────────
   {
     id: 'training',
@@ -424,6 +446,14 @@ export const slides = [
       ],
       footer: "If the firmware does a thing, the trainer simulates it. That's how we avoid the sim-to-real gap most KWS projects hit.",
     },
+  },
+
+  // Quantization ────────────────────────────────────────────────────────────
+  {
+    id: 'quantization',
+    label: 'Quantization',
+    notes: 'Post-training quantization, KL-divergence calibrated. No QAT, no fine-tune. Train in float, calibrate on a held-out batch of 1024 samples, ship int8. KLD threshold search picks the clip threshold that minimises D_KL between the float histogram and the requantised histogram — preserving the shape of the distribution rather than the extremes. float32 reference: 92.4%. int8 min-max PTQ: 86.1%. int8 KLD-calibrated: 90.0%. The 2.4 point drop is the price of int8 silicon with no FP unit.',
+    content: { kind: 'Model' },
   },
 
   // Data Gap ─────────────────────────────────────────────────────────────────
