@@ -570,83 +570,110 @@ function FrontEndCompact() {
   );
 }
 
-/* ───────── Front-end EXPANDED — kernels grid + sliding window. */
+/* ───────── Front-end EXPANDED — kernels grid + big numbers focused on
+   the stride-16 + MaxPool 4× downsample chain. The numbers ARE the
+   story; the sliding-window viz that used to live here was low-signal
+   and crowded. */
 function FrontEndExpanded() {
   const paths = sincPaths(16);
   return (
-    <div style={{ height: '100%', border: '2px solid var(--accent)', background: 'rgba(217,119,87,0.06)', padding: '14px 20px', display: 'flex', flexDirection: 'column', boxSizing: 'border-box' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 6 }}>
-        <div style={{ fontFamily: 'var(--font-mono)', fontSize: 14, color: 'var(--accent)', textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 600 }}>Front-end · zoom</div>
-        <div style={{ fontFamily: 'var(--font-mono)', fontSize: 14, color: 'var(--ink-mute)' }}>conv1d_mel · K=65 · stride 16 · 1 056 params · ~516 K MACs (53 %)</div>
+    <div style={{ height: '100%', border: '2px solid var(--accent)', background: 'rgba(217,119,87,0.06)', padding: '16px 22px', display: 'flex', flexDirection: 'column', boxSizing: 'border-box' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 10 }}>
+        <div style={{ fontFamily: 'var(--font-mono)', fontSize: 14, color: 'var(--accent)', textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 600 }}>Front-end · zoom · learnable mel filterbank</div>
+        <div style={{ fontFamily: 'var(--font-mono)', fontSize: 14, color: 'var(--ink-mute)' }}>conv1d_mel · K=65 · 1 056 params · ~516 K MACs (53 %)</div>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1.05fr 1.2fr', gap: 22, alignItems: 'stretch', flex: 1, minHeight: 0 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1.35fr', gap: 22, alignItems: 'stretch', flex: 1, minHeight: 0 }}>
+        {/* Left — 16 learnable mel filters. */}
         <div style={{ display: 'flex', flexDirection: 'column', minHeight: 0 }}>
           <div style={{ fontFamily: 'var(--font-mono)', fontSize: 16, color: 'var(--ink-mute)', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 6 }}>
-            What the 16 kernels look like
+            16 learnable mel filters
           </div>
           <div style={{ border: '1px solid var(--ink)', background: 'var(--paper)', padding: '10px 14px', flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column' }}>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '6px 14px', flex: 1, minHeight: 0 }}>
               {paths.map((d, i) => (
                 <div key={i} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 2, minHeight: 0 }}>
-                  <svg viewBox="0 0 100 48" style={{ width: '100%', height: '70%', maxHeight: 36 }}>
+                  <svg viewBox="0 0 100 48" style={{ width: '100%', height: '70%', maxHeight: 40 }}>
                     <path d={d} fill="none" stroke="var(--ink)" strokeWidth="1.4" />
                   </svg>
                   <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--ink-mute)', letterSpacing: '0.04em' }}>k{i < 10 ? '0' + i : i}</div>
                 </div>
               ))}
             </div>
-            <div style={{ fontFamily: 'var(--font-mono)', fontSize: 13, color: 'var(--ink-mute)', marginTop: 4, textAlign: 'center', letterSpacing: '0.04em' }}>
+            <div style={{ fontFamily: 'var(--font-mono)', fontSize: 13, color: 'var(--ink-mute)', marginTop: 6, textAlign: 'center', letterSpacing: '0.04em' }}>
               low frequency ← mel scale → high frequency
             </div>
           </div>
         </div>
 
+        {/* Right — 2x2 big-number cards: stride · pool · combined downsample · params/MACs. */}
         <div style={{ display: 'flex', flexDirection: 'column', minHeight: 0 }}>
           <div style={{ fontFamily: 'var(--font-mono)', fontSize: 16, color: 'var(--ink-mute)', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 6 }}>
-            Sliding K=65, stride 16
+            What stride and pool buy us
           </div>
-          <div style={{ border: '1px solid var(--ink)', background: 'var(--paper)', padding: '8px 18px', display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0 }}>
-            <svg viewBox="0 0 600 130" style={{ width: '100%', height: '60%', maxHeight: 110 }}>
-              <defs>
-                <marker id="arrow11front" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto">
-                  <path d="M 0 0 L 10 5 L 0 10 Z" fill="var(--accent)" />
-                </marker>
-              </defs>
-              <path
-                d="M0,80 Q15,55 30,90 T70,75 Q90,40 110,100 T160,60 Q180,30 200,100 T260,70 Q290,40 320,95 T380,75 Q410,55 440,90 T500,75 Q540,65 600,80"
-                fill="none" stroke="var(--ink)" strokeWidth="1.2"
-              />
-              <rect x="20" y="35" width="80" height="70" fill="var(--accent)" opacity="0.18" stroke="var(--accent)" strokeWidth="1.2" />
-              <text x="60" y="125" textAnchor="middle" fontFamily="JetBrains Mono, monospace" fontSize="12" fill="var(--ink-mute)">t = 0</text>
-              <rect x="40" y="35" width="80" height="70" fill="var(--accent)" opacity="0.12" stroke="var(--accent)" strokeWidth="0.8" strokeDasharray="3 3" />
-              <text x="80" y="125" textAnchor="middle" fontFamily="JetBrains Mono, monospace" fontSize="12" fill="var(--ink-mute)">+16</text>
-              <rect x="60" y="35" width="80" height="70" fill="var(--accent)" opacity="0.08" stroke="var(--accent)" strokeWidth="0.6" strokeDasharray="3 3" />
-              <text x="100" y="125" textAnchor="middle" fontFamily="JetBrains Mono, monospace" fontSize="12" fill="var(--ink-mute)">+32</text>
-              <line x1="20" y1="20" x2="100" y2="20" stroke="var(--accent)" strokeWidth="1.5" markerEnd="url(#arrow11front)" />
-              <text x="60" y="14" textAnchor="middle" fontFamily="JetBrains Mono, monospace" fontSize="13" fill="var(--accent)" fontWeight="600">window slides</text>
-            </svg>
-
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8, marginTop: 6, paddingTop: 6, borderTop: '1px solid rgba(26,26,26,0.12)' }}>
-              <div>
-                <div style={{ fontFamily: 'var(--font-mono)', fontSize: 26, fontWeight: 500, color: 'var(--ink)', letterSpacing: '-0.02em' }}>8000</div>
-                <div style={{ fontFamily: 'var(--font-mono)', fontSize: 12, color: 'var(--ink-mute)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>samples in</div>
-              </div>
-              <div>
-                <div style={{ fontFamily: 'var(--font-mono)', fontSize: 26, fontWeight: 500, color: 'var(--ink)', letterSpacing: '-0.02em' }}>496 → 124</div>
-                <div style={{ fontFamily: 'var(--font-mono)', fontSize: 12, color: 'var(--ink-mute)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>frames · pool 4×</div>
-              </div>
-              <div>
-                <div style={{ fontFamily: 'var(--font-mono)', fontSize: 26, fontWeight: 500, color: 'var(--accent)', letterSpacing: '-0.02em' }}>1056</div>
-                <div style={{ fontFamily: 'var(--font-mono)', fontSize: 12, color: 'var(--ink-mute)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>params · 16×65 + bias</div>
-              </div>
-            </div>
-            <div style={{ marginTop: 6, fontFamily: 'var(--font-mono)', fontSize: 13, color: 'var(--ink-mute)' }}>
-              Bandpass kernels initialized at mel-spaced cutoffs (50 Hz – 4 kHz), Hamming-windowed, then adapt freely during training.
-            </div>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gridTemplateRows: '1fr 1fr', gap: 14, flex: 1, minHeight: 0 }}>
+            <BigNumCard
+              big="stride 16"
+              label="fused into the kernel"
+              body="One conv op gives the bandpass and the 16× downsample. Free."
+              accent
+            />
+            <BigNumCard
+              big="pool 4×"
+              label="MaxPool right after"
+              body="Another 4× drop in time resolution before the body sees a thing."
+            />
+            <BigNumCard
+              big="64×"
+              label="combined downsample"
+              body="8 000 raw samples collapse to 124 frames before any conv block runs."
+              accent
+            />
+            <BigNumCard
+              big="1 056"
+              label="params · 16×65 + bias"
+              body="The whole front-end fits in a kilobyte of weights — and lands ~516 K MACs (53 % of the model)."
+            />
           </div>
         </div>
       </div>
+    </div>
+  );
+}
+
+function BigNumCard({ big, label, body, accent }) {
+  return (
+    <div style={{
+      border: accent ? '1px solid var(--accent)' : '1px solid var(--ink)',
+      background: 'var(--paper)',
+      padding: '14px 18px',
+      display: 'flex',
+      flexDirection: 'column',
+      gap: 4,
+      minHeight: 0,
+    }}>
+      <div style={{
+        fontFamily: 'var(--font-mono)',
+        fontSize: 44,
+        fontWeight: 500,
+        letterSpacing: '-0.03em',
+        lineHeight: 1.05,
+        color: accent ? 'var(--accent)' : 'var(--ink)',
+      }}>{big}</div>
+      <div style={{
+        fontFamily: 'var(--font-mono)',
+        fontSize: 12,
+        color: 'var(--ink-mute)',
+        textTransform: 'uppercase',
+        letterSpacing: '0.08em',
+        marginBottom: 4,
+      }}>{label}</div>
+      <div style={{
+        fontFamily: 'var(--font-sans)',
+        fontSize: 16,
+        color: 'var(--ink)',
+        lineHeight: 1.35,
+      }}>{body}</div>
     </div>
   );
 }
