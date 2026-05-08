@@ -7,7 +7,7 @@ import SlideFrame from '../components/SlideFrame.jsx';
  * Bars grow from 0 to their target width when the slide becomes active,
  * staggered by row so the eye reads the comparison top-down. Listed in
  * descending accuracy order so we land directly under DS-CNN, our closest
- * accuracy neighbour (94.4 → 93.0).
+ * accuracy neighbour (94.4 → 90.0).
  * ───────────────────────────────────────────────────────────────────────── */
 
 const MAX_PARAMS = 140;   // K params used as 100 % bar reference (was MatchboxNet)
@@ -34,7 +34,7 @@ const models = [
   },
   {
     name: '★ This work · ours',
-    acc: 93.0, accLabel: '93.0 %',
+    acc: 90.0, accLabel: '90.0 %',
     paramsK: 16, paramsLabel: '~16 K',
     macsM: 0.97, macsLabel: '0.97 M',
     highlight: true,
@@ -63,9 +63,9 @@ export default function VsOtherModels() {
     <SlideFrame topLeft="13 · Model">
       <div ref={rootRef} style={{ marginTop: 36 }}>
         <div className="eyebrow">Where we land · accuracy vs parameters</div>
-        <h1 className="title" style={{ marginBottom: 12 }}>93 % accuracy at a fraction of the parameter count.</h1>
+        <h1 className="title" style={{ marginBottom: 12 }}>90 % accuracy at a fraction of the parameter count.</h1>
         <p className="subtitle" style={{ maxWidth: 1700, marginBottom: 28 }}>
-          Google Speech Commands. We trade ~1.4 accuracy points against DS-CNN — our closest neighbour — for 2.4× fewer parameters and 5.6× fewer MACs.
+          Google Speech Commands. We trade ~4.4 accuracy points against DS-CNN — our closest neighbour — for 2.4× fewer parameters and 5.6× fewer MACs.
         </p>
       </div>
 
@@ -111,12 +111,12 @@ export default function VsOtherModels() {
         <CalloutCard
           eyebrow="vs MatchboxNet"
           big="8.8× fewer params"
-          sub="7.6× fewer MACs · 4.5 pts lower accuracy"
+          sub="7.6× fewer MACs · 7.5 pts lower accuracy"
         />
         <CalloutCard
           eyebrow="vs DS-CNN small"
           big="2.4× fewer params"
-          sub="5.6× fewer MACs · 1.4 pts lower accuracy"
+          sub="5.6× fewer MACs · 4.4 pts lower accuracy"
         />
         <CalloutCard
           eyebrow="Our footprint"

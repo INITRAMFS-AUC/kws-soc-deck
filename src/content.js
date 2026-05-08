@@ -372,7 +372,7 @@ export const slides = [
   {
     id: 'vs-models',
     label: 'vs Other Models',
-    notes: '93% accuracy at a fraction of the parameter count. Google Speech Commands benchmark, ordered descending by accuracy: MatchboxNet 97.5% (~140K params, 7.4M MACs), TC-ResNet8 96.6% (~66K, 6.0M), DS-CNN-small 94.4% (~38K, 5.4M), This work 93.0% (~16K, 0.97M). We sit immediately under DS-CNN — our closest accuracy neighbour. Bars animate on slide entry, staggered top-down. Banbury TinyConv removed: it sat far below in accuracy and added clutter without sharpening the comparison. Callouts: vs MatchboxNet 8.8× fewer params; vs DS-CNN 2.4× fewer params + 5.6× fewer MACs at -1.4 pts accuracy.',
+    notes: '90% accuracy at a fraction of the parameter count. Google Speech Commands benchmark, ordered descending by accuracy: MatchboxNet 97.5% (~140K params, 7.4M MACs), TC-ResNet8 96.6% (~66K, 6.0M), DS-CNN-small 94.4% (~38K, 5.4M), This work 90.0% (~16K, 0.97M). We sit immediately under DS-CNN — our closest accuracy neighbour. Bars animate on slide entry, staggered top-down. Banbury TinyConv removed: it sat far below in accuracy and added clutter without sharpening the comparison. Callouts: vs MatchboxNet 8.8× fewer params; vs DS-CNN 2.4× fewer params + 5.6× fewer MACs at -4.4 pts accuracy.',
     content: { kind: 'Model' },
   },
 
