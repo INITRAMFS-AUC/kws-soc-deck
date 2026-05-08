@@ -647,16 +647,16 @@ export const slides = [
           body: 'Open RTL, open PCB, open firmware. Reproducible from a fresh clone — fab it, flash it, talk to it.',
         },
         {
-          tag: '02 · Documentation',
-          head: 'Documented end-to-end',
-          body: 'Every peripheral, every register, every FSM. Block diagrams, memory maps, and the model\'s training pipeline live next to the code.',
+          tag: '02 · Research here',
+          head: 'Research header here',
+          body: 'Research body here',
         },
         {
           tag: '03 · Toolchain',
           head: 'Hazard3 · Verilator VPI',
           body: 'A VPI shim on top of the Hazard3 SoC testbench: ~10× faster sim builds and runtime multithreading. Iteration that used to take minutes now takes seconds.',
           stats: [
-            { value: '~10×',   label: 'sim compile' },
+            { value: '~10×',   label: 'Less Sim Compilation Time' },
             { value: '~100×',   label: 'Smaller Waveform Size, by utilizing FST format Dump' },
             { value: 'multi-threaded',  label: 'runtime threads' },
           ],
