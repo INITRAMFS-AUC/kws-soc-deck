@@ -355,16 +355,8 @@ export const slides = [
   // Standard MFCC ───────────────────────────────────────────────────────────
   {
     id: 'standard-mfcc',
-    label: 'Standard MFCC Pipeline',
-    notes: 'This is the industry baseline — a well-established pipeline from Zhang et al., Hello Edge, 2017. Six steps: framing, FFT, power spectrum, Mel filterbank, log compression, DCT-II. Together they cost around 1.6 M ops of preprocessing before the network even starts. This pipeline is proven and widely used. On platforms with a dedicated DSP or MFCC accelerator it runs in parallel. On our bare RISC-V core, both stages share the same CPU.',
-    content: { kind: 'Model' },
-  },
-
-  // No MFCC ─────────────────────────────────────────────────────────────────
-  {
-    id: 'no-mfcc',
-    label: 'Unified Pipeline',
-    notes: 'Our design decision: skip the MFCC stage entirely. A learnable Conv1D replaces it, merging front-end and body into one pipeline. The total system cost is 0.97 M MACs — no separate preprocessing stage. Zhang et al. DS-CNN-S runs at 5.4 M network MACs plus ~1.6 M MFCC preprocessing, ~7 M total. We achieve 90% accuracy at 0.97 M total — front-end cost included.',
+    label: 'Standard MFCC vs Our Model',
+    notes: 'Three-phase narrative on one slide. Phase 1: the industry baseline — Zhang et al., Hello Edge, 2017. Six MFCC steps (framing, FFT, power, Mel filterbank, log, DCT-II) at ~1.6 M ops, plus a DS-CNN body at ~5.4 M MACs. The data packet animation walks through Input → MFCC → DS-CNN to show the data flow. Phase 2: side-by-side comparison — MFCC pipeline shifts left, our 4-stage Conv1D model appears on the right. Phase 3: our model takes over the slide — front-end and body share one acceleratable datapath, total 0.97 M MACs, all int8. The share-of-MACs bar appears at the bottom and is the source for the FLIP-morph into slide 12 (Conv1D mel detail).',
     content: { kind: 'Model' },
   },
 
@@ -380,7 +372,7 @@ export const slides = [
   {
     id: 'conv-body',
     label: 'Conv Body + Head',
-    notes: 'Three plain 1D conv blocks, then collapse. No depthwise-separable, no 2D — plain Conv1D, BN, ReLU, MaxPool throughout. Block 1 at 31×36, pool 4×. Block 2 at 15×36, pool 2×. Block 3 at 15×36, double conv no pool. Global average pool collapses to 36 channels, dense 16 with ReLU and dropout 0.3, then softmax over 5 classes.',
+    notes: 'Three plain 1D conv blocks, then collapse. No depthwise-separable, no 2D — plain Conv1D, BN, ReLU, MaxPool throughout. Block 1 at 31×36, pool 4×. Block 2 at 15×36, pool 2×. Block 3 at 15×36, double conv no pool. Global average pool collapses to 36 channels, dense 16 with ReLU and dropout 0.3, then softmax over 11 classes (yes, no, up, down, left, right, on, off, stop, go, _unknown_).',
     content: { kind: 'Model' },
   },
 

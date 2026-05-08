@@ -241,12 +241,14 @@ foregrounded.
 >
 > "After the third block, global average pool collapses the 15-by-36
 > activation map into 36 numbers — one per channel — and a tiny dense layer
-> takes that down to 16, dropout 30%, then dense to 5 logits, softmax."
+> takes that down to 16, dropout 30%, then dense to 11 logits, softmax."
 >
-> "Five classes: `yes`, `no`, `up`, `down`, `_unknown_`. The `_unknown_`
-> bucket carries everything else from Speech Commands and silence — it has
-> to, otherwise the model will confidently mis-classify the 30+ words it
-> wasn't trained on as one of the four real keywords."
+> "Eleven classes: the standard 10 Speech Commands keywords — `yes`, `no`,
+> `up`, `down`, `left`, `right`, `on`, `off`, `stop`, `go` — plus an
+> `_unknown_` bucket. The `_unknown_` bucket carries everything else from
+> Speech Commands and silence — it has to, otherwise the model will
+> confidently mis-classify the 20+ other words it wasn't trained on as one
+> of the ten real keywords."
 >
 > "The whole back half — body, GAP, dense, softmax — is plain 1-D INT8.
 > Deliberately simpler than DS-CNN. Standard KWS uses depthwise-separable
@@ -290,7 +292,7 @@ foregrounded.
 
 ### What's on screen
 8-row layer-by-layer table: Layer · Detail · Output · Params. Plus 4 stat
-boxes: ~15.9 K params, 0.97 M MACs, 5 classes, 1-D throughout.
+boxes: ~15.9 K params, 0.97 M MACs, 11 classes, 1-D throughout.
 
 ### Script (≈ 45–60 s)
 > "Layer-by-layer table for the record. 1-D throughout. Plain operations

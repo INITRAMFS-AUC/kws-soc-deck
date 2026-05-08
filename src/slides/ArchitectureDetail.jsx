@@ -46,8 +46,8 @@ const tableRows = [
   },
   {
     layer: 'dense_out',
-    detail: '16 → 5 · Softmax',
-    output: '[5]',
+    detail: '16 → 11 · Softmax',
+    output: '[11]',
     params: '',
   },
 ];
@@ -55,7 +55,7 @@ const tableRows = [
 const stats = [
   { value: '~15.9 K', label: 'total params', accent: false },
   { value: '0.97 M', label: 'MACs · all int8', accent: false },
-  { value: '5', label: 'output classes', accent: false },
+  { value: '11', label: 'output classes', accent: false },
   { value: '1D only', label: 'no 2D convolutions', accent: true },
 ];
 
