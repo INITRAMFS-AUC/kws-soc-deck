@@ -2,9 +2,9 @@ import { useEffect, useRef, useState } from 'react';
 import SlideFrame from '../components/SlideFrame.jsx';
 import { getSlide } from '../content.js';
 
-const c = getSlide('voice').content;
-const { stats, chartTitle, series, sourceLabel, sourceUrl } = c.market;
-const w = c.wrist;
+const c = getSlide('voice')?.content ?? {};
+const { stats, chartTitle, series, sourceLabel, sourceUrl } = c.market ?? {};
+const w = c.wrist ?? { backdropUrl: '', bodyHTML: '', eyebrow: '', quote: '', caption: '' };
 
 const TITLE_PREFIX = 'Voice command interfaces ';
 const SUFFIX_OFF = 'are everywhere.';

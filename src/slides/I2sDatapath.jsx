@@ -2,7 +2,10 @@ import { useEffect, useRef, useState } from 'react';
 import SlideFrame from '../components/SlideFrame.jsx';
 import { getSlide } from '../content.js';
 
-const c = getSlide('i2s-datapath').content;
+const c = getSlide('i2s-datapath')?.content ?? {
+  eyebrow: 'PCM · pack int8 · half-full IRQ',
+  title: 'PCM Audio Journey, I²S Datapath.',
+};
 
 const DEPTH = 8;
 const HALF  = 4;
