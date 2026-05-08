@@ -416,7 +416,27 @@ export const slides = [
       '',
       'Why NNoM and not CMSIS-NN, TFLite-Micro, X-CUBE-AI? Open source, small enough that we could read every line, no Cortex-M dependencies (we are RISC-V), and we needed to patch the cache prefetcher to know about NNoM\'s exact weight layout — not something a closed runtime would let us do.',
       '',
-      'Bridge to next slide: NNoM gives us the runtime. We still need to get the trained float weights into NNoM\'s int8 format — that is post-training quantization, KL-divergence calibrated, no QAT, no fine-tune. That is next.',
+      'Bridge to next slide: NNoM gives us the runtime. But the model is only as good as the data it trains on — and Google Speech Commands alone is studio audio. Next slide: the dataset we recorded ourselves on the real mic.',
+    ].join('\n'),
+    content: { kind: 'Model' },
+  },
+
+  // Our dataset — bridge between NNoM and PTQ. ───────────────────────────────
+  {
+    id: 'our-data',
+    label: 'Our Dataset',
+    notes: [
+      'Bridge slide. NNoM is the runtime. The next two slides are about getting a model into NNoM\'s int8 format that actually works on real audio — and that starts with the training data.',
+      '',
+      'Google Speech Commands is the standard benchmark, and our 93.5 % float number on slide 12 was on GSC. But GSC is studio audio: clean headset mic, controlled levels, near-field, no ambient noise. Real deployment is none of those things — a person talking to a far-field MEMS mic in a noisy room.',
+      '',
+      'So we recorded our own dataset. 4 000 samples on the INMP441 we ship — same mic, same PCB, same analog path the firmware reads from. Whatever distortion or noise floor that path adds, the model already sees it in training.',
+      '',
+      'We deliberately diversified the recordings on three axes: different speakers (multiple people, different voices, accents, distances from the mic — so the model isn\'t tuned to one voice); different environments (quiet rooms, noisy rooms, near-field, far-field — so the acoustics in training span what the model will hear in the field); and the full hardware path (every sample comes through the deployed mic and PCB, not a high-quality reference mic).',
+      '',
+      'We are not quantifying the diversity here — there\'s no "10 speakers, 5 rooms" claim on the slide because that\'s not the point. The point is the principle: without diverse training data, the int8 model that NNoM ends up running can\'t generalize past the conditions it saw, and the on-device accuracy collapses. Slide 16 (Data Gap) shows what that collapse looks like when we deliberately skip the diverse-data step.',
+      '',
+      'Bridge to next slide: this richer dataset is what we calibrate the int8 quantization on. Post-training quantization with KL-divergence calibration — no QAT, no fine-tune — is next.',
     ].join('\n'),
     content: { kind: 'Model' },
   },
