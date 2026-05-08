@@ -596,55 +596,11 @@ export const slides = [
   {
     id: 'xip-prefetch',
     label: 'XIP Prefetch · Adopted vs Rejected',
-    notes: "Prefetch story. We tried the textbook chained next-line prefetch — on every demand miss, also pull line+1 into the main cache. The standalone testbench passed 54 of 54 cases, but end-to-end every cache size regressed: nine percent slower at NL=256, forty-six percent slower at NL=64, never finishes at NL=32. Mechanism: prefetch evicts a hot line on every miss, the CPU then misses on the evicted line, that triggers another prefetch, eviction cascade. Smaller cache, worse cascade. We reverted that. The version we adopted is gated and default off: NNoM-aware prefetch. The firmware on this SoC always runs NNoM, and each Conv2D call's weight scan is strictly sequential — the accelerator knows the start address and the length the moment it starts. Three new APB registers on conv1d_accel — PREFETCH_BASE, PREFETCH_LEN, PREFETCH_CTRL.EN. When the firmware pulses EN, a side-band into ro_dmc triggers a fetch into a separate single-line victim buffer. The victim buffer never evicts main-cache lines, so the cascade is structurally impossible. MVP fetches the first line per call: minus 1.29 percent CYCLES_INFER. Multi-line walk over the BASE..BASE+LEN range is the next refinement.",
+    notes: "Prefetch story. We tried the textbook chained next-line prefetch — on every demand miss, also pull line+1 into the main cache. The standalone testbench passed, but end-to-end every cache size regressed: nine percent slower at NL=256, forty-six percent slower at NL=64. Mechanism: prefetch evicts a hot line on every miss, the CPU then misses on the evicted line, that triggers another prefetch, eviction cascade. We reverted that. The version we adopted is gated and default off: NNoM-aware prefetch. The accelerator knows each Conv1D call's weight base and length the moment it starts. PREFETCH_BASE, PREFETCH_LEN, PREFETCH_CTRL.EN — when the firmware pulses EN, a side-band into ro_dmc triggers the next weight line into a separate victim buffer that cannot evict the main cache. MVP fetches first line per call: minus 1.29 percent CYCLES_INFER.",
     content: {
       kind: 'Optimization',
       eyebrow: 'XIP prefetch · ro_dmc + conv1d_accel APB',
-      title: 'NNoM-aware prefetch — adopted vs rejected.',
-      sub: "The cache learns about NNoM's predictable weight scans without polluting the main DATA[].",
-      adopted: {
-        tag: 'Adopted',
-        head: 'NNoM-aware victim-buffer prefetch',
-        gateNote: 'Gated · default OFF · KWS_XIP_PREFETCH=1',
-        flow: [
-          { kind: 'firmware', name: 'Firmware',
-            sub: 'accel_conv1d.h · KWS_XIP_PREFETCH=1' },
-          { kind: 'apb',      name: 'conv1d_accel APB',
-            sub: 'PREFETCH_CTRL.EN · PREFETCH_BASE · PREFETCH_LEN' },
-          { kind: 'victim',   name: 'Victim buffer',
-            sub: '1 line — pf_data, pf_tag · never evicts main' },
-          { kind: 'flash',    name: 'QSPI flash',
-            sub: 'single shared resource' },
-        ],
-        flowEdges: [
-          { label: 'weight base + len', from: 0, to: 1 },
-          { label: 'side-band hint',    from: 1, to: 2, accent: true },
-          { label: 'background fetch',  from: 2, to: 3, dashed: true },
-        ],
-        mainCacheNote: 'Main cache · DATA[256] × 32 B · unchanged · victim cannot evict main.',
-        result: { v: '−1.29 %', l: 'CYCLES_INFER · MVP fetches first line per call' },
-        next: 'Next: multi-line walk over [BASE, BASE+LEN).',
-      },
-      rejected: {
-        tag: 'Rejected',
-        head: 'Chained next-line prefetch',
-        sub: 'TB passed 54 / 54 — but end-to-end every cache size regressed.',
-        chain: [
-          { name: 'miss line A',   sub: 'cold demand miss' },
-          { name: 'prefetch A+1',  sub: 'evicts hot line H' },
-          { name: 'miss line H',   sub: 'we just evicted!' },
-          { name: 'prefetch H+1',  sub: 'evicts another hot line…' },
-        ],
-        cascade: {
-          head: 'CASCADE',
-          rows: [
-            { v: '+9 %',  l: 'NL = 256' },
-            { v: '+46 %', l: 'NL = 64'  },
-            { v: '∞',     l: 'NL = 32 — never finishes' },
-          ],
-        },
-        footnote: 'Mechanism: every miss evicts a hot line; smaller cache → worse cascade. The ~3.5 % spatial-locality win never pays for the eviction cost.',
-      },
+      title: 'Prefetch — naive vs NNoM-aware.',
     },
   },
 

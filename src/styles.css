@@ -840,6 +840,73 @@ h1, h2, h3, h4, p { margin: 0; }
   100% { opacity: 1; transform: none;                          }
 }
 
+/* CWF cell labels: pre-fill ink fades out, post-fill contrast fades in,
+ * each timed to the cell's arrival cycle so the label flips when the
+ * background colour lands. */
+@keyframes xip-cell-label-out {
+  0%   { opacity: 1; }
+  100% { opacity: 0; }
+}
+@keyframes xip-cell-label-in {
+  0%   { opacity: 0; }
+  100% { opacity: 1; }
+}
+
+/* CWF status pill — STALLED ↔ RELEASED crossfade. */
+@keyframes xip-status-out {
+  0%, 100% { /* held by 0% & forwards */ }
+  0%   { opacity: 1; }
+  100% { opacity: 0; }
+}
+@keyframes xip-status-in {
+  0%   { opacity: 0; }
+  100% { opacity: 1; }
+}
+@keyframes xip-status-blink {
+  0%, 49%   { opacity: 1; }
+  50%, 100% { opacity: 0.35; }
+}
+
+/* CWF release marker — vertical bar drops in at the release cycle. */
+@keyframes xip-marker-drop {
+  0%   { opacity: 0; transform: scaleY(0); transform-origin: top; }
+  100% { opacity: 0.85; transform: scaleY(1); transform-origin: top; }
+}
+
+/* Generic fade-in used by the prefetch slide's memory model — fetch arrows,
+ * cache slot fills, sequence entries each animate at their own delay. */
+@keyframes xip-fade-in {
+  0%   { opacity: 0; transform: translateY(2px); }
+  100% { opacity: 1; transform: none; }
+}
+
+/* Eviction flash: brief red wash over a cache slot when something kicks
+ * out the existing line. */
+@keyframes xip-evict-flash {
+  0%   { opacity: 0;   }
+  35%  { opacity: 0.9; }
+  100% { opacity: 0;   }
+}
+
+/* Prefetch slide — a labelled data block flies from the flash side (right)
+ * across the gutter to the cache slot (left). Right-anchored block uses
+ * `right` to slide; the trailing line fades in just behind it. */
+@keyframes xip-fly {
+  0%   { right: 0;    opacity: 0; }
+  15%  { opacity: 1;             }
+  85%  { opacity: 1;             }
+  100% { right: 100%; opacity: 0; }
+}
+
+/* Phase badge for the prefetch slide — pops in next to the cache slot to
+ * label the event as MISS or PREFETCH, then fades out as the data lands. */
+@keyframes xip-badge-in {
+  0%   { opacity: 0; transform: translateY(-50%) translateY(-22px) scale(0.85); }
+  20%  { opacity: 1; transform: translateY(-50%) translateY(-22px) scale(1);    }
+  80%  { opacity: 1; transform: translateY(-50%) translateY(-22px) scale(1);    }
+  100% { opacity: 0; transform: translateY(-50%) translateY(-22px) scale(1);    }
+}
+
 /* ── Memory map / register table ─────────────────────────────────────────── */
 .memmap { width: 100%; border-collapse: collapse; font-family: var(--font-mono); }
 .memmap th, .memmap td {
