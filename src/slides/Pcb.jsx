@@ -83,23 +83,33 @@ export default function Pcb() {
           }}>
             {step === 0 ? '01 · Design' : '02 · Fabricated'}
           </div>
-          {/* Schematic (design) — SVG has a lot of whitespace around the
-              board, so zoom 2.4× and keep it centered. */}
+          {/* Schematic (design) — sits at scale 2.4 in step 0, then keeps
+              zooming in (and fades out) on the way to step 1, so the design
+              appears to dive into the fabricated photo behind it. */}
           <img src={designSrc} alt={c.imageAlt}
                style={{
                  position: 'absolute', inset: 0,
                  width: '100%', height: '100%',
                  objectFit: 'contain', objectPosition: 'center',
-                 transform: 'scale(2.4)',
+                 transform: step === 0 ? 'scale(2.4)' : 'scale(0.6)',
                  transformOrigin: 'center center',
                  opacity: step === 0 ? 1 : 0,
-                 transition: `opacity 540ms ${EASE}`,
+                 transition:
+                   `opacity 700ms ${EASE}, ` +
+                   `transform 900ms ${EASE}`,
                }} />
-          {/* Actual fabricated board + label callouts */}
+          {/* Actual fabricated board + label callouts — emerges from a
+              slightly zoomed-in pre-state into its natural scale, in
+              lockstep with the design's zoom-out fade, so the two appear
+              to morph into each other. */}
           <div style={{
             position: 'absolute', inset: 0,
             opacity: step === 1 ? 1 : 0,
-            transition: `opacity 540ms ${EASE}`,
+            transform: step === 1 ? 'scale(1)' : 'scale(0.7)',
+            transformOrigin: 'center center',
+            transition:
+              `opacity 700ms ${EASE} 120ms, ` +
+              `transform 900ms ${EASE} 120ms`,
             pointerEvents: step === 1 ? 'auto' : 'none',
           }}>
             <img src={actualSrc} alt={c.actualImageAlt}
