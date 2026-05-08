@@ -10,9 +10,9 @@ const ARRIVAL_MS = 850;   // gap between successive int32 arrivals in the accumu
 const PACK_MS    = 1000;  // duration of the pack collapse (stage → FIFO slot)
 const IRQ_MS     = 1700;  // dwell on the half-full IRQ before flush
 const FLUSH_MS   = 950;   // FIFO drain duration
-const STAGE_ROW_H = 28;
-const SLOT_H      = 42;
-const COL_W       = 340;
+const STAGE_ROW_H = 40;
+const SLOT_H      = 36;
+const COL_W       = 380;
 
 // One row of the accumulator above the FIFO: empty, just-landed (snap-in),
 // or in the middle of being packed downward.
@@ -47,10 +47,10 @@ function StageCell({ filled, isLanding, isPacking, animKey }) {
                 : 'none',
           }}>
           <span style={{
-            fontSize: 10, letterSpacing: '0.16em', textTransform: 'uppercase',
+            fontSize: 12, letterSpacing: '0.16em', textTransform: 'uppercase',
             opacity: 0.78,
           }}>sample</span>
-          <span style={{ fontSize: 16, fontWeight: 600 }}>int32</span>
+          <span style={{ fontSize: 20, fontWeight: 600 }}>int32</span>
         </div>
       )}
     </div>
@@ -89,7 +89,7 @@ function FifoSlot({ filled, isPackingTarget, isInterrupt, isFlushing, animKey })
               background: 'var(--color-accent)',
               color: '#fff',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
-              fontFamily: 'var(--font-mono)', fontSize: 11, fontWeight: 600,
+              fontFamily: 'var(--font-mono)', fontSize: 14, fontWeight: 600,
               letterSpacing: '0.06em',
               opacity: isPackingTarget ? 0 : 1,
               animation: [
@@ -151,12 +151,12 @@ function VerticalFifo({ active }) {
         background: 'var(--color-ink)', color: 'var(--color-cream)',
       }}>
         <span style={{
-          fontFamily: 'var(--font-mono)', fontSize: 11,
+          fontFamily: 'var(--font-mono)', fontSize: 13,
           letterSpacing: '0.14em', textTransform: 'uppercase',
           color: 'var(--color-accent)', whiteSpace: 'nowrap',
         }}>Audio pipeline</span>
         <span style={{
-          fontFamily: 'var(--font-mono)', fontSize: 11,
+          fontFamily: 'var(--font-mono)', fontSize: 13,
           letterSpacing: '0.12em', textTransform: 'uppercase',
           opacity: 0.72, whiteSpace: 'nowrap',
         }}>4 × int32 → 4 × int8</span>
@@ -164,16 +164,16 @@ function VerticalFifo({ active }) {
 
       {/* Inflow caption */}
       <div style={{
-        height: 30, position: 'relative',
+        height: 34, position: 'relative',
         display: 'flex', alignItems: 'center', justifyContent: 'center',
-        fontFamily: 'var(--font-mono)', fontSize: 11,
+        fontFamily: 'var(--font-mono)', fontSize: 13,
         letterSpacing: '0.14em', textTransform: 'uppercase',
         color: 'var(--color-ink-mute)',
       }}>
         I²S RX · int32 in
         <span style={{
           position: 'absolute', right: 0, top: 4,
-          fontSize: 18, color: 'var(--color-accent)',
+          fontSize: 22, color: 'var(--color-accent)',
         }}>↓</span>
       </div>
 
@@ -198,16 +198,16 @@ function VerticalFifo({ active }) {
 
       {/* Pack arrow — pulses while phase==='packing' */}
       <div style={{
-        height: 30,
+        height: 34,
         display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
-        fontFamily: 'var(--font-mono)', fontSize: 11,
+        fontFamily: 'var(--font-mono)', fontSize: 13,
         letterSpacing: '0.14em', textTransform: 'uppercase',
         color: phase === 'packing' ? 'var(--color-accent)' : 'var(--color-ink-mute)',
         opacity: phase === 'packing' ? 1 : 0.55,
         transition: 'color 200ms ease, opacity 200ms ease',
       }}>
         <span style={{
-          fontSize: 18,
+          fontSize: 22,
           animation: phase === 'packing'
             ? `i2s-pack-arrow ${PACK_MS}ms ease-in-out`
             : 'none',
@@ -273,22 +273,22 @@ function VerticalFifo({ active }) {
           whiteSpace: 'nowrap',
         }}>
           <div style={{
-            fontFamily: 'var(--font-mono)', fontSize: 11,
+            fontFamily: 'var(--font-mono)', fontSize: 13,
             letterSpacing: '0.14em', textTransform: 'uppercase',
             color: 'var(--color-accent)', fontWeight: 700,
-            display: 'flex', alignItems: 'center', gap: 6,
+            display: 'flex', alignItems: 'center', gap: 8,
             animation: phase === 'irq'
               ? 'i2s-irq-flash 700ms steps(2, end) infinite'
               : 'none',
           }}>
             IRQ →
             <span style={{
-              width: 9, height: 9, background: 'var(--color-accent)',
+              width: 10, height: 10, background: 'var(--color-accent)',
               borderRadius: '50%',
             }} />
           </div>
           <div style={{
-            fontFamily: 'var(--font-mono)', fontSize: 10,
+            fontFamily: 'var(--font-mono)', fontSize: 12,
             letterSpacing: '0.12em', textTransform: 'uppercase',
             color: 'var(--color-ink-soft)',
           }}>fifo_half_full</div>
@@ -297,16 +297,16 @@ function VerticalFifo({ active }) {
 
       {/* Outflow */}
       <div style={{
-        height: 30, position: 'relative',
+        height: 34, position: 'relative',
         display: 'flex', alignItems: 'center', justifyContent: 'center',
-        fontFamily: 'var(--font-mono)', fontSize: 11,
+        fontFamily: 'var(--font-mono)', fontSize: 13,
         letterSpacing: '0.14em', textTransform: 'uppercase',
         color: phase === 'flushing' ? 'var(--color-accent)' : 'var(--color-ink-mute)',
         transition: 'color 200ms ease',
       }}>
         <span style={{
           position: 'absolute', left: 0, top: -2,
-          fontSize: 18, color: 'inherit',
+          fontSize: 22, color: 'inherit',
         }}>↓</span>
         DMA flush · SRAM ring
       </div>
@@ -328,9 +328,10 @@ const STEPS = [
 ];
 
 const CONFIGS = [
-  { head: 'int16 packing', sub: 'or no packing / no quantization' },
-  { head: 'up to 3× HW downsampling' },
-  { head: 'mono or stereo', sub: '2 mic channels' },
+  { option: 'Packing',      values: 'int8 · int16 · none (raw int32)' },
+  { option: 'Quantization', values: 'on · off' },
+  { option: 'Downsampling', values: 'up to 3× in HW' },
+  { option: 'Channels',     values: 'mono · stereo (2 mics)' },
 ];
 
 function StepBlock({ idx, step, n, title, sub }) {
@@ -382,44 +383,69 @@ function LeftPane({ step }) {
         <StepBlock key={i} idx={i} step={step} {...s} />
       ))}
 
-      {/* I²S controller configurations — secondary panel */}
+      {/* I²S controller configurations — table */}
       <div style={{
-        marginTop: 10,
+        marginTop: 14,
         paddingTop: 22,
         borderTop: '1px solid var(--line-hairline)',
       }}>
         <div style={{
-          fontFamily: 'var(--font-mono)', fontSize: 11,
+          fontFamily: 'var(--font-mono)', fontSize: 13,
           letterSpacing: '0.14em', textTransform: 'uppercase',
           color: 'var(--color-ink-mute)', marginBottom: 14,
         }}>I²S controller · configurations</div>
-        <ul style={{
-          listStyle: 'none', padding: 0, margin: 0,
-          display: 'flex', flexDirection: 'column', gap: 10,
+        <table style={{
+          width: '100%', maxWidth: 720,
+          borderCollapse: 'collapse',
+          tableLayout: 'fixed',
         }}>
-          {CONFIGS.map((cfg) => (
-            <li key={cfg.head} style={{
-              display: 'flex', alignItems: 'baseline', gap: 12,
-            }}>
-              <span style={{
-                width: 6, height: 6,
-                background: 'var(--color-accent)', borderRadius: '50%',
-                flexShrink: 0, transform: 'translateY(-2px)',
-              }} />
-              <div>
-                <span style={{
-                  fontFamily: 'var(--font-mono)', fontSize: 14,
-                  color: 'var(--color-ink)', fontWeight: 600,
-                }}>{cfg.head}</span>
-                {cfg.sub && (
-                  <span style={{
-                    fontSize: 13, color: 'var(--color-ink-soft)', marginLeft: 8,
-                  }}>· {cfg.sub}</span>
-                )}
-              </div>
-            </li>
-          ))}
-        </ul>
+          <thead>
+            <tr>
+              <th style={{
+                textAlign: 'left',
+                padding: '10px 16px',
+                background: 'var(--color-ink)', color: 'var(--color-cream)',
+                fontFamily: 'var(--font-mono)', fontSize: 13,
+                fontWeight: 600,
+                letterSpacing: '0.12em', textTransform: 'uppercase',
+                width: '38%',
+              }}>Option</th>
+              <th style={{
+                textAlign: 'left',
+                padding: '10px 16px',
+                background: 'var(--color-ink)',
+                color: 'var(--color-accent)',
+                fontFamily: 'var(--font-mono)', fontSize: 13,
+                fontWeight: 600,
+                letterSpacing: '0.12em', textTransform: 'uppercase',
+              }}>Values</th>
+            </tr>
+          </thead>
+          <tbody>
+            {CONFIGS.map((cfg, i) => (
+              <tr key={cfg.option} style={{
+                background: i % 2 === 0
+                  ? 'var(--color-paper)'
+                  : 'color-mix(in oklch, var(--color-ink) 4%, var(--color-paper))',
+              }}>
+                <td style={{
+                  padding: '12px 16px',
+                  borderBottom: '1px solid var(--line-hairline)',
+                  fontSize: 18, fontWeight: 600,
+                  color: 'var(--color-ink)',
+                  letterSpacing: '-0.005em',
+                }}>{cfg.option}</td>
+                <td style={{
+                  padding: '12px 16px',
+                  borderBottom: '1px solid var(--line-hairline)',
+                  fontFamily: 'var(--font-mono)', fontSize: 16,
+                  color: 'var(--color-ink-soft)',
+                  letterSpacing: '0.01em',
+                }}>{cfg.values}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
       </div>
     </div>
   );
