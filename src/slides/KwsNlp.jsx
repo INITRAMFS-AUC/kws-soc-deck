@@ -108,7 +108,7 @@ export default function KwsNlp() {
 
         <div className="kws-grid">
           <div>
-            <p className="body kws-body">{c.body}</p>
+            <p className="body kws-body" dangerouslySetInnerHTML={{ __html: c.bodyHTML }} />
 
             <div style={{ marginTop: 48, minHeight: 200 }}>
               <div style={{
