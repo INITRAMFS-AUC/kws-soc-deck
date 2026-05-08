@@ -1,4 +1,5 @@
 import SlideFrame from '../components/SlideFrame.jsx';
+import MacShareBar from '../components/MacShareBar.jsx';
 
 function generateKernelPath(i) {
   const freq = 1 + i * 0.6;
@@ -101,21 +102,13 @@ export default function Conv1DMelFrontEnd() {
             </div>
           </div>
 
-          <div style={{ marginTop: 12 }}>
-            <div style={{ fontFamily: 'var(--font-mono)', fontSize: 16, color: 'var(--ink-mute)', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 6 }}>
-              Share of total MACs
-            </div>
-            <div style={{ display: 'flex', height: 34, border: '1px solid var(--ink)' }}>
-              <div style={{ flex: '0 0 53%', background: 'var(--accent)', color: '#fff', fontFamily: 'var(--font-mono)', fontSize: 20, display: 'flex', alignItems: 'center', padding: '0 14px' }}>
-                Conv1D mel · 53 %
-              </div>
-              <div style={{ flex: '0 0 47%', background: 'var(--ink)', color: '#fff', fontFamily: 'var(--font-mono)', fontSize: 20, display: 'flex', alignItems: 'center', padding: '0 10px' }}>
-                3 conv blocks · 47 %
-              </div>
-            </div>
-          </div>
         </div>
       </div>
+
+      {/* Persistent share-of-MACs bar — same component as slides 12 & 14, with
+          the conv1d_mel segment foregrounded so the slide cross-fade looks
+          like the bar is "zooming into" the front-end. */}
+      <MacShareBar focus="frontend" annotate="↑ this slide explains the 53% segment" />
     </SlideFrame>
   );
 }
