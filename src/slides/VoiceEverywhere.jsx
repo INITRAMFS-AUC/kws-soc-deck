@@ -3,7 +3,7 @@ import SlideFrame from '../components/SlideFrame.jsx';
 import { getSlide } from '../content.js';
 
 const c = getSlide('voice')?.content ?? {};
-const { stats, chartTitle, series, sourceLabel, sourceUrl } = c.market ?? {};
+const { stats, chartTitle, series, sourceLabel, sourceUrl, sources = [] } = c.market ?? {};
 const w = c.wrist ?? { backdropUrl: '', bodyHTML: '', eyebrow: '', quote: '', caption: '' };
 
 const TITLE_PREFIX = 'Voice command interfaces ';
@@ -49,9 +49,9 @@ function MarketChart() {
         const cx = padL + i * slotW + slotW / 2;
         const y = yFor(d.v);
         const isLast = i === series.length - 1;
-        const is2023 = d.y === 2023;
+        const isBaseYear = d.y === 2024;
         const fill = isLast ? 'var(--color-accent)'
-                   : is2023 ? 'oklch(0.55 0.15 38 / 0.78)'
+                   : isBaseYear ? 'oklch(0.55 0.15 38 / 0.78)'
                    : 'var(--color-ink)';
         return (
           <g key={`b-${d.y}`}
@@ -63,7 +63,7 @@ function MarketChart() {
             <text x={cx} y={baseY + 22} textAnchor="middle"
                   fontFamily="var(--font-mono)" fontSize={14}
                   fill="var(--color-ink-mute)">{d.y}</text>
-            {(isLast || is2023) && (
+            {(isLast || isBaseYear) && (
               <text x={cx} y={y - 8} textAnchor="middle"
                     fontFamily="var(--font-mono)" fontSize={14}
                     fontWeight={600}
@@ -342,8 +342,23 @@ export default function VoiceEverywhere() {
               <MarketChart />
             </div>
             <p className="small vx-source" style={{ transitionDelay: '320ms' }}>
-              {sourceLabel} ·{' '}
-              <a href={sourceUrl} target="_blank" rel="noreferrer">grandviewresearch.com</a>
+              {sourceLabel}
+              {sources.length > 0 ? (
+                <>
+                  {' · '}
+                  {sources.map((source, i) => (
+                    <span key={source.url}>
+                      {i > 0 ? ' / ' : ''}
+                      <a href={source.url} target="_blank" rel="noreferrer">{source.label}</a>
+                    </span>
+                  ))}
+                </>
+              ) : sourceUrl ? (
+                <>
+                  {' · '}
+                  <a href={sourceUrl} target="_blank" rel="noreferrer">{sourceUrl}</a>
+                </>
+              ) : null}
             </p>
           </div>
         </div>

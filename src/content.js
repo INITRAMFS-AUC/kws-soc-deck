@@ -62,11 +62,20 @@ export const slides = [
           { label: 'Forecast, 2030',      value: '$69.8 B' },
           { label: 'CAGR, 2024 – 2030',   value: '18.7%'   },
         ],
-        chartTitle: 'Global voice user interface market, 2024 – 2030 (US$ M)',
-        // Strategic Market Research, Voice User Interface Market report
-        // Published Apr 2026. Source gives 2024 base year and 2030 forecast;
-        // intermediate forecast bars are interpolated to the stated endpoint.
+        chartTitle: 'Global voice user interface market, 2017 – 2030 (US$ M)',
+        // Merged source view:
+        // - 2017-2023 values from Grand View Research's VUI market series.
+        // - 2024-2030 values from Strategic Market Research's Apr 2026 report.
+        //   Source gives 2024 base year and 2030 forecast; intermediate
+        //   forecast bars are interpolated to the stated endpoint.
         series: [
+          { y: 2017, v:  6900 },
+          { y: 2018, v:  9000 },
+          { y: 2019, v: 11000 },
+          { y: 2020, v: 13500 },
+          { y: 2021, v: 16200 },
+          { y: 2022, v: 19500 },
+          { y: 2023, v: 23941 },
           { y: 2024, v: 24600 },
           { y: 2025, v: 29270 },
           { y: 2026, v: 34826 },
@@ -75,8 +84,17 @@ export const slides = [
           { y: 2029, v: 58664 },
           { y: 2030, v: 69800 },
         ],
-        sourceLabel: 'Source · Strategic Market Research, Voice User Interface Market Report, Apr 2026',
-        sourceUrl: 'https://www.strategicmarketresearch.com/market-report/voice-user-interface-market',
+        sourceLabel: 'Sources · Grand View Research (2017–2023); Strategic Market Research, Apr 2026 (2024–2030)',
+        sources: [
+          {
+            label: 'Grand View Research',
+            url: 'https://www.grandviewresearch.com/industry-analysis/voice-user-interface-market-report',
+          },
+          {
+            label: 'Strategic Market Research',
+            url: 'https://www.strategicmarketresearch.com/market-report/voice-user-interface-market',
+          },
+        ],
       },
       // Intra-slide step between "are everywhere." and "Market Cap" — same
       // slide, second pane: smart-watch + "Start Timer." over a top-down track.
