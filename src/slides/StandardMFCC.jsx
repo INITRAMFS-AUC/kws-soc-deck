@@ -345,9 +345,20 @@ function MfccPipelineContent({ rowIdx, data }) {
   const [renderedData, setRenderedData] = useState(null);
 
   /* Re-measure each render — the box width changes on phase transitions
-     so cached offsets would go stale. */
+     so cached offsets would go stale. Bail out if the measurements are
+     identical to the last pass, otherwise the unconditional setState in
+     a no-deps effect re-renders forever. */
   useLayoutEffect(() => {
-    setRowMetrics(rowRefs.current.map(el => el ? { top: el.offsetTop, height: el.offsetHeight } : null));
+    const next = rowRefs.current.map(el => el ? { top: el.offsetTop, height: el.offsetHeight } : null);
+    setRowMetrics(prev => {
+      if (prev.length === next.length && prev.every((p, i) => {
+        const n = next[i];
+        if (p === n) return true;
+        if (!p || !n) return false;
+        return p.top === n.top && p.height === n.height;
+      })) return prev;
+      return next;
+    });
   });
 
   useEffect(() => {
