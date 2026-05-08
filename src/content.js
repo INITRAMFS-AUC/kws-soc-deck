@@ -585,7 +585,7 @@ export const slides = [
       title: 'From 3.0s seconds to 30 milliseconds.',
       stats: [
         { value: '3.0s → 30 ms',  label: 'End-to-end',              size: 56 },
-        { value: '~1000×',           label: 'Speedup',                 size: 56 },
+        { value: '~100×',           label: 'Speedup',                 size: 56 },
         { value: '10 / 11 clips',   label: 'Matches SW baseline',     size: 44 },
         { value: '90 %',            label: 'INMP441 mic accuracy',    size: 56 },
       ],
@@ -614,9 +614,9 @@ export const slides = [
         { num: '01', label: 'Custom PCB' },
       ],
       stats: [
-        { label: 'Speedup',      value: '180×',  accent: true },
+        { label: 'Speedup',      value: '100×',  accent: true },
         { label: 'Inference',    value: '30 ms' },
-        { label: 'Mic accuracy', value: '95 %' },
+        { label: 'Mic accuracy', value: '90 %' },
         { label: 'Open source',  value: '100 %' },
       ],
     },

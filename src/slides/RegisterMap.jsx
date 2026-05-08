@@ -83,11 +83,15 @@ const CPU_MAX_CYCLES = 960;
 
 // ── CPU pane ─────────────────────────────────────────────────────────────
 function CpuPane({ s }) {
+  const busy = s.cpuPC >= 0 && !s.cpuDone;
   return (
     <div style={{
       flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0,
-      border: `2px solid ${s.cpuPC >= 0 && !s.cpuDone ? RED : LINE}`,
+      position: 'relative',
+      border: `2px solid ${LINE}`,
       background: 'var(--color-bg)',
+      boxShadow: busy ? `inset 0 0 0 3px ${RED}` : 'none',
+      transition: 'box-shadow 280ms ease',
     }}>
       <div style={{
         padding: '14px 20px', borderBottom: `1px solid ${LINE}`,
@@ -160,11 +164,16 @@ function CpuPane({ s }) {
 
 // ── Accel pane ───────────────────────────────────────────────────────────
 function AccelPane({ s }) {
+  const busy = s.accelStage >= 0 && !s.accelDone;
+  const lit  = busy || s.accelDone;
   return (
     <div style={{
       flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0,
-      border: `2px solid ${s.accelStage >= 0 && !s.accelDone ? ACCENT : s.accelDone ? ACCENT : LINE}`,
+      position: 'relative',
+      border: `2px solid ${LINE}`,
       background: 'var(--color-bg)',
+      boxShadow: lit ? `inset 0 0 0 3px ${ACCENT}` : 'none',
+      transition: 'box-shadow 280ms ease',
     }}>
       <div style={{
         padding: '14px 20px', borderBottom: `1px solid ${LINE}`,

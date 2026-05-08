@@ -16,31 +16,15 @@ export default function WhatWeBuilt() {
           <div className="brand"><span className="brand-mark" /><span>{c.brand}</span></div>
           <div>{defenseTag}</div>
         </div>
-        <div style={{ display: 'grid', gridTemplateColumns: '1.1fr 1fr', gap: 80, alignItems: 'center' }}>
-          <div>
-            <div style={{
-              fontFamily: 'var(--font-mono)', fontSize: 24, color: 'var(--color-accent)',
-              letterSpacing: 'var(--ls-caps-extra)', textTransform: 'uppercase', marginBottom: 28,
-            }}>{c.eyebrow}</div>
-            <div style={{
-              fontSize: 92, lineHeight: 1.0, fontWeight: 'var(--fw-semibold)',
-              letterSpacing: '-0.03em', color: 'var(--color-cream)',
-            }}>{c.titleLineOne}<br />{c.titleLineTwo}</div>
-          </div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-            {c.stack.map((s) => (
-              <div key={s.num} style={{
-                background: s.accent ? 'var(--color-accent)' : 'var(--on-dark-12)',
-                color: s.accent ? '#fff' : 'var(--color-cream)',
-                padding: '14px 22px',
-                fontFamily: 'var(--font-mono)', fontSize: 22,
-                display: 'flex', justifyContent: 'space-between',
-              }}>
-                <span>{s.num}</span>
-                <span>{s.label}</span>
-              </div>
-            ))}
-          </div>
+        <div>
+          <div style={{
+            fontFamily: 'var(--font-mono)', fontSize: 24, color: 'var(--color-accent)',
+            letterSpacing: 'var(--ls-caps-extra)', textTransform: 'uppercase', marginBottom: 28,
+          }}>{c.eyebrow}</div>
+          <div style={{
+            fontSize: 92, lineHeight: 1.0, fontWeight: 'var(--fw-semibold)',
+            letterSpacing: '-0.03em', color: 'var(--color-cream)',
+          }}>{c.titleLineOne}<br />{c.titleLineTwo}</div>
         </div>
         <div style={{
           display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 50, alignItems: 'end',
