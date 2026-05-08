@@ -9,13 +9,16 @@ import MacShareBar from '../components/MacShareBar.jsx';
  * as the slide-11 MFCC box flying into its slot here. */
 const MORPH_DX = 396;
 
-/* Phase timing — the whole sequence runs in ~1100 ms, well under the
- *  ~5 s of the previous typewriter. */
-const T_HOLD   = 60;    // hold at slide-11 position so cross-fade settles
-const T_MOVE   = 460;   // box slides left
-const T_FADE   = 220;   // slide-11 content fades out
-const T_POP    = 360;   // big summary numbers spring in
-const T_REST   = 200;   // right column + punchline strip stagger
+/* Phase timing — slow, smooth, no overshoot. Total ~1.9 s. */
+const T_HOLD   = 120;   // hold at slide-11 position so cross-fade settles
+const T_MOVE   = 820;   // box slides left (was 460, was bouncy)
+const T_FADE   = 320;   // slide-11 content fades out
+const T_POP    = 540;   // big summary numbers fade + scale in (no bounce)
+const T_REST   = 240;   // right column + punchline strip stagger
+
+/* Easing — smooth ease-out-quint. No overshoot, no bounce. */
+const EASE_MOVE = 'cubic-bezier(0.16, 1, 0.3, 1)';
+const EASE_POP  = 'cubic-bezier(0.22, 1, 0.36, 1)';
 
 export default function NoMFCC() {
   const rootRef = useRef(null);
@@ -72,7 +75,7 @@ export default function NoMFCC() {
 
   const boxTransform = isHolding ? `translateX(${MORPH_DX}px)` : 'translateX(0)';
   const boxTransition = isMoving
-    ? `transform ${T_MOVE}ms cubic-bezier(0.4, 0, 0.2, 1)`
+    ? `transform ${T_MOVE}ms ${EASE_MOVE}`
     : 'none';
 
   return (
@@ -115,7 +118,7 @@ export default function NoMFCC() {
             <div style={{
               gridArea: 'a',
               opacity: showPipeline ? 1 : 0,
-              transition: `opacity ${T_FADE}ms var(--anim-ease)`,
+              transition: `opacity ${T_FADE}ms ${EASE_POP}`,
               pointerEvents: showPipeline ? 'auto' : 'none',
               display: 'flex',
               flexDirection: 'column',
@@ -144,14 +147,14 @@ export default function NoMFCC() {
               ))}
             </div>
 
-            {/* Summary view — pops in after the morph */}
+            {/* Summary view — fades and scales in after the morph (no bounce). */}
             <div style={{
               gridArea: 'a',
               opacity: showSummary ? 1 : 0,
-              transform: showSummary ? 'scale(1)' : 'scale(0.78)',
+              transform: showSummary ? 'scale(1)' : 'scale(0.92)',
               transformOrigin: 'center center',
               transition: showSummary
-                ? `opacity ${T_POP}ms cubic-bezier(0.34, 1.56, 0.64, 1), transform ${T_POP}ms cubic-bezier(0.34, 1.56, 0.64, 1)`
+                ? `opacity ${T_POP}ms ${EASE_POP}, transform ${T_POP}ms ${EASE_POP}`
                 : 'none',
               pointerEvents: showSummary ? 'auto' : 'none',
               display: 'flex',
@@ -222,7 +225,7 @@ export default function NoMFCC() {
           background: '#fff7f2',
           opacity: showRest ? 1 : 0,
           transform: showRest ? 'none' : 'translateY(20px)',
-          transition: 'opacity 360ms var(--anim-ease), transform 360ms var(--anim-ease)',
+          transition: `opacity 480ms ${EASE_POP}, transform 480ms ${EASE_POP}`,
         }}>
           <div style={{ fontFamily: 'var(--font-mono)', fontSize: 14, color: 'var(--accent)', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 8, fontWeight: 600 }}>
             ★ Our approach · unified pipeline
@@ -268,7 +271,7 @@ export default function NoMFCC() {
         display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 10,
         opacity: showRest ? 1 : 0,
         transform: showRest ? 'none' : 'translateY(20px)',
-        transition: 'opacity 360ms var(--anim-ease) 100ms, transform 360ms var(--anim-ease) 100ms',
+        transition: `opacity 480ms ${EASE_POP} 140ms, transform 480ms ${EASE_POP} 140ms`,
       }}>
         <div style={{ background: 'var(--paper)', border: '1px solid var(--ink)', padding: '10px 14px' }}>
           <div style={{ fontFamily: 'var(--font-mono)', fontSize: 13, color: 'var(--ink-mute)', letterSpacing: '0.08em', textTransform: 'uppercase', fontWeight: 600, marginBottom: 4 }}>Standard · Zhang et al., 2017</div>
