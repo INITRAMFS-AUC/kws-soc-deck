@@ -118,8 +118,9 @@
       visibility: visible;
     }
 
-    /* Tap zones for mobile — back/forward thirds like Stories.
-       Transparent, no visible UI, don't block the overlay. */
+    /* Tap zones — back/forward thirds like Stories. Active on touch and
+       desktop alike so click-to-advance works everywhere. The middle third
+       has pointer-events: none so clicks pass through to slide content. */
     .tapzones {
       position: fixed;
       inset: 0;
@@ -132,10 +133,8 @@
       pointer-events: auto;
       -webkit-tap-highlight-color: transparent;
     }
-    /* Only activate tap zones on coarse pointers (touch devices). */
-    @media (hover: hover) and (pointer: fine) {
-      .tapzones { display: none; }
-    }
+    .tapzone--back { cursor: w-resize; }
+    .tapzone--fwd  { cursor: e-resize; }
 
     .overlay {
       position: fixed;
@@ -1204,12 +1203,22 @@
 
     _onTapBack(e) {
       e.preventDefault();
-      this._advance(-1, 'tap');
+      this._dispatchNavKey('ArrowLeft');
     }
 
     _onTapForward(e) {
       e.preventDefault();
-      this._advance(1, 'tap');
+      this._dispatchNavKey('ArrowRight');
+    }
+
+    // Forward clicks as synthetic keydowns so per-slide step handlers
+    // (capture-phase listeners on window) can consume them for in-slide
+    // animation steps before the deck-stage handler advances slides.
+    _dispatchNavKey(key) {
+      const evt = new KeyboardEvent('keydown', {
+        key, code: key, bubbles: true, cancelable: true,
+      });
+      window.dispatchEvent(evt);
     }
 
     _onKey(e) {
