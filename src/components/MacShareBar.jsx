@@ -9,7 +9,7 @@
  *   focus="frontend"  — conv1d_mel highlighted, body muted   (slide 13)
  *   focus="body"      — conv blocks highlighted, mel muted   (slide 14)
  */
-export default function MacShareBar({ focus = 'balanced', label = 'Share of total MACs · 0.97 M', annotate }) {
+export default function MacShareBar({ focus = 'balanced', label = 'Share of total MACs · 0.97 M', annotate, inline = false }) {
   const muteFrontend = focus === 'body';
   const muteBody     = focus === 'frontend';
   const activeFrontend = focus === 'frontend';
@@ -27,7 +27,7 @@ export default function MacShareBar({ focus = 'balanced', label = 'Share of tota
   };
 
   return (
-    <div className="mac-share-bar" style={{ marginTop: 'auto', paddingTop: 14 }}>
+    <div className="mac-share-bar" style={{ marginTop: inline ? 0 : 'auto', paddingTop: inline ? 0 : 14 }}>
       <div style={{
         display: 'flex',
         alignItems: 'baseline',

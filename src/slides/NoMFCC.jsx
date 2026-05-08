@@ -3,18 +3,18 @@ import SlideFrame from '../components/SlideFrame.jsx';
 import MacShareBar from '../components/MacShareBar.jsx';
 
 /* Slide-11 MFCC box left edge ≈ 396 px inside the 1720 px content area
- *   ( cols: 0.7fr · 36 px · 1.6fr · 36 px · 0.9fr  →  396.5 px )
+ *   ( cols: 0.75fr · 40 px · 1.6fr · 40 px · 0.95fr  →  ~398 px )
  * Slide-12 left column left edge ≈ 0 px inside the same area.
  * The morph animates the slide-12 box from 396 px back to 0 px so it reads
  * as the slide-11 MFCC box flying into its slot here. */
 const MORPH_DX = 396;
 
 /* Phase timing — slow, smooth, no overshoot. Total ~1.9 s. */
-const T_HOLD   = 120;   // hold at slide-11 position so cross-fade settles
-const T_MOVE   = 820;   // box slides left (was 460, was bouncy)
-const T_FADE   = 320;   // slide-11 content fades out
-const T_POP    = 540;   // big summary numbers fade + scale in (no bounce)
-const T_REST   = 240;   // right column + punchline strip stagger
+const T_HOLD   = 120;
+const T_MOVE   = 820;
+const T_FADE   = 320;
+const T_POP    = 540;
+const T_REST   = 240;
 
 /* Easing — smooth ease-out-quint. No overshoot, no bounce. */
 const EASE_MOVE = 'cubic-bezier(0.16, 1, 0.3, 1)';
@@ -23,13 +23,6 @@ const EASE_POP  = 'cubic-bezier(0.22, 1, 0.36, 1)';
 export default function NoMFCC() {
   const rootRef = useRef(null);
 
-  /* Phases:
-   *   'hold'   — box pinned at slide-11 coords, slide-11 content visible
-   *   'move'   — box translates to slide-12 coords (slide-11 content still in)
-   *   'swap'   — slide-11 content fades out, summary numbers prepare to pop
-   *   'pop'    — big summary numbers spring in; right column + punchline rise
-   *   'done'   — final resting state
-   */
   const [phase, setPhase] = useState('done');
 
   useEffect(() => {
@@ -56,7 +49,6 @@ export default function NoMFCC() {
     };
     document.addEventListener('slidechange', onSlideChange);
 
-    // First-mount deep-link case — if we're already active, skip morph.
     const mySection = rootRef.current?.closest('section');
     if (mySection?.hasAttribute('data-deck-active')) setPhase('done');
 
@@ -66,7 +58,6 @@ export default function NoMFCC() {
     };
   }, []);
 
-  /* Box transform: pinned right when 'hold', sliding when 'move', settled after. */
   const isHolding   = phase === 'hold';
   const isMoving    = phase === 'move';
   const showPipeline = phase === 'hold' || phase === 'move';
@@ -74,9 +65,7 @@ export default function NoMFCC() {
   const showRest     = phase === 'done';
 
   const boxTransform = isHolding ? `translateX(${MORPH_DX}px)` : 'translateX(0)';
-  const boxTransition = isMoving
-    ? `transform ${T_MOVE}ms ${EASE_MOVE}`
-    : 'none';
+  const boxTransition = isMoving ? `transform ${T_MOVE}ms ${EASE_MOVE}` : 'none';
 
   return (
     <SlideFrame topLeft="12 · Model">
@@ -85,33 +74,32 @@ export default function NoMFCC() {
         <h1 className="title" style={{ fontSize: 48, marginBottom: 8 }}>
           We merge front-end and body — one unified, lower-cost pipeline.
         </h1>
-        <p className="subtitle" style={{ fontSize: 32, maxWidth: 1700, marginBottom: 16 }}>
+        <p className="subtitle" style={{ fontSize: 30, maxWidth: 1700, marginBottom: 22 }}>
           MFCC is a proven front-end. We skip it — a learnable Conv1D performs the spectral decomposition
           as part of the model itself, cutting total system MACs from ~7 M down to 0.97 M.
         </p>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 12 }}>
+      {/* Two big boxes filling the rest of the slide. No punchline strip. */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20, flex: 1, alignItems: 'stretch' }}>
 
         {/* ── Left: the morphing box ── */}
         <div style={{
           border: '1px solid var(--ink)',
-          padding: '14px 18px',
+          padding: '22px 28px',
           background: 'rgba(26,26,26,0.04)',
           transform: boxTransform,
           transition: boxTransition,
           willChange: 'transform',
-          /* Both content variants stack in the same grid cell so they can
-             cross-fade without layout shift. */
           display: 'grid',
-          gridTemplateRows: 'auto auto 1fr auto',
+          gridTemplateRows: 'auto auto 1fr',
         }}>
-          <div style={{ fontFamily: 'var(--font-mono)', fontSize: 14, color: 'var(--ink-mute)', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 6 }}>
+          <div style={{ fontFamily: 'var(--font-mono)', fontSize: 16, color: 'var(--ink-mute)', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 8 }}>
             Standard approach · two stages
           </div>
-          <div style={{ fontFamily: 'var(--font-sans)', fontSize: 24, fontWeight: 600, marginBottom: 12 }}>MFCC + DS-CNN</div>
+          <div style={{ fontFamily: 'var(--font-sans)', fontSize: 30, fontWeight: 600, marginBottom: 18 }}>MFCC + DS-CNN</div>
 
-          {/* Stack zone — both views render in the same grid cell. */}
+          {/* Both content variants share one cell so they cross-fade in place. */}
           <div style={{ display: 'grid', gridTemplateAreas: '"a"', alignItems: 'stretch' }}>
 
             {/* Pipeline view (echoes slide 11) — visible during hold + move */}
@@ -122,9 +110,10 @@ export default function NoMFCC() {
               pointerEvents: showPipeline ? 'auto' : 'none',
               display: 'flex',
               flexDirection: 'column',
-              gap: 4,
+              gap: 6,
               fontFamily: 'var(--font-mono)',
-              fontSize: 16,
+              fontSize: 18,
+              justifyContent: 'center',
             }}>
               {[
                 ['Frame · 25 ms / 10 ms hop',     '100 frames'],
@@ -136,9 +125,9 @@ export default function NoMFCC() {
               ].map(([label, cost]) => (
                 <div key={label} style={{
                   display: 'grid',
-                  gridTemplateColumns: '1fr 110px',
-                  gap: 8,
-                  padding: '5px 10px',
+                  gridTemplateColumns: '1fr 130px',
+                  gap: 10,
+                  padding: '8px 14px',
                   background: 'rgba(26,26,26,0.05)',
                 }}>
                   <span>{label}</span>
@@ -159,7 +148,7 @@ export default function NoMFCC() {
               pointerEvents: showSummary ? 'auto' : 'none',
               display: 'flex',
               flexDirection: 'column',
-              gap: 12,
+              gap: 18,
               alignItems: 'stretch',
               justifyContent: 'center',
               padding: '4px 0',
@@ -167,13 +156,13 @@ export default function NoMFCC() {
               {/* Big total */}
               <div style={{
                 textAlign: 'center',
-                padding: '18px 16px',
+                padding: '28px 16px',
                 background: 'var(--paper)',
                 border: '1px solid rgba(26,26,26,0.18)',
               }}>
                 <div style={{
                   fontFamily: 'var(--font-mono)',
-                  fontSize: 96,
+                  fontSize: 132,
                   fontWeight: 500,
                   letterSpacing: '-0.03em',
                   lineHeight: 1,
@@ -183,34 +172,33 @@ export default function NoMFCC() {
                 </div>
                 <div style={{
                   fontFamily: 'var(--font-mono)',
-                  fontSize: 14,
+                  fontSize: 16,
                   color: 'var(--ink-mute)',
                   textTransform: 'uppercase',
-                  letterSpacing: '0.12em',
-                  marginTop: 6,
+                  letterSpacing: '0.14em',
+                  marginTop: 10,
                 }}>
                   total system ops
                 </div>
               </div>
 
               {/* Two-column breakdown */}
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-                <div style={{ padding: '10px 14px', border: '1px solid rgba(26,26,26,0.18)', background: 'var(--paper)', textAlign: 'center' }}>
-                  <div style={{ fontFamily: 'var(--font-mono)', fontSize: 38, fontWeight: 500, letterSpacing: '-0.02em' }}>~1.6 M</div>
-                  <div style={{ fontFamily: 'var(--font-mono)', fontSize: 13, color: 'var(--ink-mute)', textTransform: 'uppercase', marginTop: 3 }}>MFCC preproc · CPU</div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
+                <div style={{ padding: '16px 18px', border: '1px solid rgba(26,26,26,0.18)', background: 'var(--paper)', textAlign: 'center' }}>
+                  <div style={{ fontFamily: 'var(--font-mono)', fontSize: 52, fontWeight: 500, letterSpacing: '-0.02em', lineHeight: 1 }}>~1.6 M</div>
+                  <div style={{ fontFamily: 'var(--font-mono)', fontSize: 14, color: 'var(--ink-mute)', textTransform: 'uppercase', marginTop: 6 }}>MFCC preproc · CPU</div>
                 </div>
-                <div style={{ padding: '10px 14px', border: '1px solid rgba(26,26,26,0.18)', background: 'var(--paper)', textAlign: 'center' }}>
-                  <div style={{ fontFamily: 'var(--font-mono)', fontSize: 38, fontWeight: 500, letterSpacing: '-0.02em' }}>~5.4 M</div>
-                  <div style={{ fontFamily: 'var(--font-mono)', fontSize: 13, color: 'var(--ink-mute)', textTransform: 'uppercase', marginTop: 3 }}>DS-CNN · network</div>
+                <div style={{ padding: '16px 18px', border: '1px solid rgba(26,26,26,0.18)', background: 'var(--paper)', textAlign: 'center' }}>
+                  <div style={{ fontFamily: 'var(--font-mono)', fontSize: 52, fontWeight: 500, letterSpacing: '-0.02em', lineHeight: 1 }}>~5.4 M</div>
+                  <div style={{ fontFamily: 'var(--font-mono)', fontSize: 14, color: 'var(--ink-mute)', textTransform: 'uppercase', marginTop: 6 }}>DS-CNN · network</div>
                 </div>
               </div>
 
               <div style={{
                 fontFamily: 'var(--font-mono)',
-                fontSize: 13,
+                fontSize: 14,
                 color: 'var(--ink-mute)',
                 textAlign: 'center',
-                marginTop: 2,
               }}>
                 Zhang et al., 2017 · 94.4% on Speech Commands
               </div>
@@ -218,25 +206,29 @@ export default function NoMFCC() {
           </div>
         </div>
 
-        {/* ── Right: our pipeline. Held back until the morph + pop completes. ── */}
+        {/* ── Right: our pipeline. Held back until the morph completes. ── */}
         <div style={{
           border: '2px solid var(--accent)',
-          padding: '14px 18px',
+          padding: '22px 28px',
           background: '#fff7f2',
           opacity: showRest ? 1 : 0,
           transform: showRest ? 'none' : 'translateY(20px)',
           transition: `opacity 480ms ${EASE_POP}, transform 480ms ${EASE_POP}`,
+          display: 'grid',
+          gridTemplateRows: 'auto auto auto auto 1fr auto',
+          gap: 0,
         }}>
-          <div style={{ fontFamily: 'var(--font-mono)', fontSize: 14, color: 'var(--accent)', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 8, fontWeight: 600 }}>
+          <div style={{ fontFamily: 'var(--font-mono)', fontSize: 16, color: 'var(--accent)', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 8, fontWeight: 600 }}>
             ★ Our approach · unified pipeline
           </div>
-          <div style={{ fontFamily: 'var(--font-sans)', fontSize: 24, fontWeight: 600, marginBottom: 12 }}>Conv1D → CNN</div>
+          <div style={{ fontFamily: 'var(--font-sans)', fontSize: 30, fontWeight: 600, marginBottom: 18 }}>Conv1D → CNN</div>
 
-          <div style={{ padding: '10px 14px', border: '2px solid var(--accent)', background: 'rgba(217,119,87,0.08)', marginBottom: 10 }}>
-            <div style={{ fontFamily: 'var(--font-mono)', fontSize: 13, color: 'var(--accent)', textTransform: 'uppercase', marginBottom: 6 }}>
+          {/* Pipeline detail */}
+          <div style={{ padding: '14px 18px', border: '2px solid var(--accent)', background: 'rgba(217,119,87,0.08)', marginBottom: 14 }}>
+            <div style={{ fontFamily: 'var(--font-mono)', fontSize: 14, color: 'var(--accent)', textTransform: 'uppercase', marginBottom: 10 }}>
               One stage · front-end + body
             </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 4, fontFamily: 'var(--font-mono)', fontSize: 16 }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 7, fontFamily: 'var(--font-mono)', fontSize: 18 }}>
               <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                 <span><span style={{ color: 'var(--accent)' }}>→</span> conv1d_mel · learnable spectral</span>
                 <span style={{ color: 'var(--ink)', fontWeight: 500 }}>~516 K MACs</span>
@@ -256,38 +248,26 @@ export default function NoMFCC() {
             </div>
           </div>
 
-          <div style={{ padding: '8px 12px', background: 'var(--ink)', color: '#f4f1ea' }}>
-            <div style={{ fontFamily: 'var(--font-mono)', fontSize: 13, color: 'rgba(244,241,234,0.6)', textTransform: 'uppercase' }}>Total system MACs</div>
-            <div style={{ fontFamily: 'var(--font-mono)', fontSize: 26, fontWeight: 500 }}>0.97 M</div>
-            <div style={{ fontFamily: 'var(--font-sans)', fontSize: 15, color: 'rgba(244,241,234,0.7)', marginTop: 4 }}>
-              Front-end and body share the same datapath — nothing runs outside the model.
+          {/* Total system MACs */}
+          <div style={{ padding: '14px 18px', background: 'var(--ink)', color: '#f4f1ea', marginBottom: 14 }}>
+            <div style={{ fontFamily: 'var(--font-mono)', fontSize: 14, color: 'rgba(244,241,234,0.6)', textTransform: 'uppercase' }}>Total system MACs</div>
+            <div style={{ fontFamily: 'var(--font-mono)', fontSize: 44, fontWeight: 500, letterSpacing: '-0.02em' }}>0.97 M</div>
+            <div style={{ fontFamily: 'var(--font-sans)', fontSize: 16, color: 'rgba(244,241,234,0.7)', marginTop: 4 }}>
+              Front-end and body share one datapath — nothing runs outside the model.
             </div>
+          </div>
+
+          {/* spacer pushes the share bar to the box's bottom */}
+          <div />
+
+          {/* ── Share-of-MACs bar — INSIDE the Our approach box.
+                Marked with data-shared-bar so slide 13 can FLIP-morph it
+                from this position down to the bottom of slide 13 on advance. ── */}
+          <div data-shared-bar="mac-share">
+            <MacShareBar focus="balanced" inline label="Share of total MACs · 0.97 M" annotate="next two slides break this down" />
           </div>
         </div>
       </div>
-
-      {/* ── Punchline strip — also held back. ── */}
-      <div style={{
-        display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 10,
-        opacity: showRest ? 1 : 0,
-        transform: showRest ? 'none' : 'translateY(20px)',
-        transition: `opacity 480ms ${EASE_POP} 140ms, transform 480ms ${EASE_POP} 140ms`,
-      }}>
-        <div style={{ background: 'var(--paper)', border: '1px solid var(--ink)', padding: '10px 14px' }}>
-          <div style={{ fontFamily: 'var(--font-mono)', fontSize: 13, color: 'var(--ink-mute)', letterSpacing: '0.08em', textTransform: 'uppercase', fontWeight: 600, marginBottom: 4 }}>Standard · Zhang et al., 2017</div>
-          <div style={{ fontFamily: 'var(--font-sans)', fontSize: 19, color: 'var(--ink)', lineHeight: 1.4 }}>DS-CNN-S: 94.4% top-1, ~5.4 M network MACs. Front-end counted separately.</div>
-        </div>
-        <div style={{ background: 'var(--paper)', border: '1px solid var(--ink)', padding: '10px 14px' }}>
-          <div style={{ fontFamily: 'var(--font-mono)', fontSize: 13, color: 'var(--ink-mute)', letterSpacing: '0.08em', textTransform: 'uppercase', fontWeight: 600, marginBottom: 4 }}>Full system cost</div>
-          <div style={{ fontFamily: 'var(--font-sans)', fontSize: 19, color: 'var(--ink)', lineHeight: 1.4 }}>~5.4 M network MACs <strong>+ ~1.6 M preprocessing</strong> = ~7.0 M total system ops.</div>
-        </div>
-        <div style={{ background: 'var(--accent)', color: '#fff', padding: '10px 14px' }}>
-          <div style={{ fontFamily: 'var(--font-mono)', fontSize: 13, color: 'rgba(255,255,255,0.8)', letterSpacing: '0.08em', textTransform: 'uppercase', fontWeight: 600, marginBottom: 4 }}>★ Our approach</div>
-          <div style={{ fontFamily: 'var(--font-sans)', fontSize: 19, color: '#fff', lineHeight: 1.4 }}><strong>0.97 M MACs total.</strong> Front-end fused into the model — no separate preprocessing stage.</div>
-        </div>
-      </div>
-
-      <MacShareBar focus="balanced" annotate="introduces the 53 / 47 split — see next two slides" />
     </SlideFrame>
   );
 }

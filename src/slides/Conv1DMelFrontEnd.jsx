@@ -1,5 +1,17 @@
+import { useEffect, useRef, useState } from 'react';
 import SlideFrame from '../components/SlideFrame.jsx';
 import MacShareBar from '../components/MacShareBar.jsx';
+
+/* Cross-slide FLIP morph: when the user advances from slide 12 to this
+ * slide, the share-of-MACs bar inside slide 12's "Our approach" box flies
+ * down to the bottom of this slide and the rest of this slide reveals
+ * after it lands. We capture slide-12's bar bbox at slidechange, set the
+ * bar here to that exact position via a translate+scale transform, then
+ * release to identity with a smooth cubic ease-out. */
+const FLIP_MS = 900;
+const FLIP_EASE = 'cubic-bezier(0.16, 1, 0.3, 1)';
+const REVEAL_DELAY_MS = 380;   // when the kernels + sliding window start
+const REVEAL_MS = 480;
 
 function generateKernelPath(i) {
   const freq = 1 + i * 0.6;
@@ -21,9 +33,93 @@ export default function Conv1DMelFrontEnd() {
     return { label, path };
   });
 
+  const rootRef = useRef(null);
+  const barRef  = useRef(null);
+  const [revealed, setRevealed] = useState(true);  // safe default for non-sequential entry
+
+  useEffect(() => {
+    let revealTimer = null;
+    let resetTimer  = null;
+
+    const onSlideChange = (e) => {
+      const mySection = rootRef.current?.closest('section');
+      if (!mySection) return;
+      const becameActive = e.detail.slide === mySection;
+      const cameFromPrev = e.detail.previousIndex === e.detail.index - 1;
+
+      clearTimeout(revealTimer);
+      clearTimeout(resetTimer);
+
+      if (becameActive && cameFromPrev) {
+        const prevSection = e.detail.previousSlide;
+        const fromBar = prevSection?.querySelector('[data-shared-bar="mac-share"]');
+        const toBar   = barRef.current;
+
+        if (fromBar && toBar) {
+          // Hide rest of slide while the bar is in flight.
+          setRevealed(false);
+
+          // FLIP — measure first/last positions, invert with transform, play.
+          const fromRect = fromBar.getBoundingClientRect();
+
+          // Force the bar to render at its natural position so we can measure it.
+          toBar.style.transition = 'none';
+          toBar.style.transform  = '';
+          const toRect = toBar.getBoundingClientRect();
+
+          const dx = fromRect.left - toRect.left;
+          const dy = fromRect.top  - toRect.top;
+          const sx = fromRect.width  / toRect.width;
+          const sy = fromRect.height / toRect.height;
+
+          toBar.style.transformOrigin = '0 0';
+          toBar.style.transform = `translate(${dx}px, ${dy}px) scale(${sx}, ${sy})`;
+          toBar.getBoundingClientRect();   // force reflow before transitioning back
+          toBar.style.transition = `transform ${FLIP_MS}ms ${FLIP_EASE}`;
+          toBar.style.transform = '';      // animate to identity = natural position
+
+          // Reveal kernels + sliding window once the bar is on its way.
+          revealTimer = setTimeout(() => setRevealed(true), REVEAL_DELAY_MS);
+          // After the morph fully completes, drop the inline transition so
+          // future renders aren't fighting it.
+          resetTimer  = setTimeout(() => {
+            if (toBar) { toBar.style.transition = ''; toBar.style.transform = ''; }
+          }, FLIP_MS + 50);
+        } else {
+          setRevealed(true);
+        }
+      } else if (becameActive) {
+        setRevealed(true);
+        if (barRef.current) {
+          barRef.current.style.transition = '';
+          barRef.current.style.transform = '';
+        }
+      } else {
+        // leaving — reset for next forward entry
+        if (barRef.current) {
+          barRef.current.style.transition = '';
+          barRef.current.style.transform = '';
+        }
+      }
+    };
+
+    document.addEventListener('slidechange', onSlideChange);
+    return () => {
+      document.removeEventListener('slidechange', onSlideChange);
+      clearTimeout(revealTimer);
+      clearTimeout(resetTimer);
+    };
+  }, []);
+
+  const restStyle = {
+    opacity: revealed ? 1 : 0,
+    transform: revealed ? 'none' : 'translateY(12px)',
+    transition: `opacity ${REVEAL_MS}ms ${FLIP_EASE}, transform ${REVEAL_MS}ms ${FLIP_EASE}`,
+  };
+
   return (
     <SlideFrame topLeft="13 · Model">
-      <div style={{ marginTop: 0 }}>
+      <div ref={rootRef} style={{ marginTop: 0 }}>
         <div className="eyebrow" style={{ marginBottom: 6 }}>★ Accelerator target</div>
         <h1 className="title" style={{ fontSize: 48, marginBottom: 8 }}>Learnable sinc filterbank — the front-end <em>is</em> a Conv1D.</h1>
         <p className="subtitle" style={{ maxWidth: 1700, marginBottom: 14 }}>
@@ -31,7 +127,7 @@ export default function Conv1DMelFrontEnd() {
         </p>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1.05fr 1.2fr', gap: 28, alignItems: 'start' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: '1.05fr 1.2fr', gap: 28, alignItems: 'start', ...restStyle }}>
 
         {/* Left: kernel grid */}
         <div>
@@ -105,10 +201,13 @@ export default function Conv1DMelFrontEnd() {
         </div>
       </div>
 
-      {/* Persistent share-of-MACs bar — same component as slides 12 & 14, with
-          the conv1d_mel segment foregrounded so the slide cross-fade looks
-          like the bar is "zooming into" the front-end. */}
-      <MacShareBar focus="frontend" annotate="↑ this slide explains the 53% segment" />
+      {/* Persistent share-of-MACs bar — when entering from slide 12 the bar
+          flies in from inside slide-12's "Our approach" box (FLIP morph in
+          the useEffect above) and lands here. The wrapper div is the FLIP
+          target; we set transform on it imperatively. */}
+      <div ref={barRef} data-shared-bar="mac-share" style={{ marginTop: 'auto', willChange: 'transform' }}>
+        <MacShareBar focus="frontend" inline annotate="↑ this slide explains the 53% segment" />
+      </div>
     </SlideFrame>
   );
 }
