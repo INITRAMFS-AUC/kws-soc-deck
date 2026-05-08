@@ -4,12 +4,14 @@ import SlideFrame from '../components/SlideFrame.jsx';
 /* ─────────────────────────────────────────────────────────────────────────────
  * Slide 14 — INMP441 transfer gap, three intra-slide phases.
  *
- *   P0 — Just the two top before/after panels. Bars grow from 0 % to target on
- *        slide entry, staggered (left bar then right bar).
- *   P1 — Two "fix" specimen cards fade up into the bottom row.
- *   P2 — The two fix cards cross-fade out and one wide "frequency response"
- *        box takes their place: our INMP441 is flat across the 8 kHz band so
- *        the gap was a level shift, not spectral distortion.
+ *   P0 — Just the two top before/after panels, BIG. Bars grow from 0 % to
+ *        target on slide entry, staggered (left bar then right bar).
+ *   P1 — Top panels shrink to a compact size; two "fix" specimen cards fade
+ *        up into the freed bottom row.
+ *   P2 — Top panels stay compact; the two fix cards cross-fade out and one
+ *        wide "frequency response" box takes their place — a real measured
+ *        INMP441 frequency-response chart so the audience sees the mic IS
+ *        flat across our 8 kHz band.
  *
  * All accuracies on this slide are int8 (the deployed model). Bar labels say
  * "GSC int8" / "INMP441 int8" so the audience never confuses these with the
@@ -20,6 +22,7 @@ const MAX_PHASE = 2;
 const BAR_DUR_MS = 900;
 const BAR_EASE   = 'cubic-bezier(0.16, 1, 0.3, 1)';
 const FADE_MS    = 480;
+const SIZE_MS    = 600;
 
 export default function DataGap() {
   const rootRef = useRef(null);
@@ -60,11 +63,13 @@ export default function DataGap() {
     return () => window.removeEventListener('keydown', onKey, true);
   }, [phase]);
 
+  const big = phase === 0;
+
   return (
     <SlideFrame topLeft="14 · Model">
-      <div ref={rootRef} style={{ marginTop: 40 }}>
+      <div ref={rootRef} style={{ marginTop: 32 }}>
         <div className="eyebrow">The real-world gap</div>
-        <h1 className="title" style={{ marginBottom: 14, maxWidth: 1700 }}>
+        <h1 className="title" style={{ marginBottom: 12, maxWidth: 1700 }}>
           GSC int8 doesn't transfer to a real microphone — until you fix it.
         </h1>
         <p className="subtitle" style={{ maxWidth: 1700, marginBottom: 18, fontSize: 22 }}>
@@ -72,51 +77,93 @@ export default function DataGap() {
         </p>
       </div>
 
-      {/* Top row — Before / After panels with animated bars. */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 24, marginBottom: 22 }}>
+      {/* Top row — Before / After panels with animated bars. They grow large
+         in P0 (whole stage to themselves) and shrink in P1+ to make room for
+         the fix cards / frequency-response box below. */}
+      <div style={{
+        display: 'grid',
+        gridTemplateColumns: '1fr 1fr',
+        gap: 24,
+        marginBottom: 22,
+        transition: `padding ${SIZE_MS}ms ${BAR_EASE}`,
+      }}>
         {/* Before */}
-        <div style={{ border: '2px solid var(--ink)', padding: '20px 24px', background: 'var(--paper)' }}>
-          <div style={{ fontFamily: 'var(--font-mono)', fontSize: 17, color: 'var(--ink-mute)', letterSpacing: '0.08em', textTransform: 'uppercase', fontWeight: 600, marginBottom: 14 }}>
+        <div style={{
+          border: '2px solid var(--ink)',
+          padding: big ? '32px 36px 28px' : '18px 22px',
+          background: 'var(--paper)',
+          transition: `padding ${SIZE_MS}ms ${BAR_EASE}`,
+        }}>
+          <div style={{
+            fontFamily: 'var(--font-mono)',
+            fontSize: big ? 20 : 16,
+            color: 'var(--ink-mute)',
+            letterSpacing: '0.08em',
+            textTransform: 'uppercase',
+            fontWeight: 600,
+            marginBottom: big ? 22 : 12,
+            transition: `font-size ${SIZE_MS}ms ${BAR_EASE}, margin-bottom ${SIZE_MS}ms ${BAR_EASE}`,
+          }}>
             Before · GSC-trained int8 model on real INMP441
           </div>
 
-          <div style={{ display: 'flex', alignItems: 'flex-end', gap: 32, marginBottom: 16 }}>
-            <BarColumn label="GSC int8"      pct={90} colorOk active={active} delay={0}   value="90 %" />
-            <Arrow />
-            <BarColumn label="INMP441 int8"  pct={62} colorBad active={active} delay={180} value="62 %" />
+          <div style={{ display: 'flex', alignItems: 'flex-end', gap: big ? 48 : 28, marginBottom: big ? 26 : 14, transition: `gap ${SIZE_MS}ms ${BAR_EASE}, margin-bottom ${SIZE_MS}ms ${BAR_EASE}` }}>
+            <BarColumn label="GSC int8"      pct={90} colorOk      active={active} delay={0}   value="90 %" big={big} />
+            <Arrow big={big} />
+            <BarColumn label="INMP441 int8"  pct={62} colorBad     active={active} delay={180} value="62 %" big={big} />
           </div>
 
-          <div style={{ padding: '10px 14px', background: 'rgba(204,68,68,0.08)', border: '1px solid #c44' }}>
-            <div style={{ fontFamily: 'var(--font-mono)', fontSize: 18, color: '#c44', fontWeight: 600 }}>−28 pts drop</div>
-            <div style={{ fontFamily: 'var(--font-sans)', fontSize: 17, color: 'var(--ink-mute)', marginTop: 2 }}>
+          <div style={{ padding: big ? '14px 18px' : '8px 12px', background: 'rgba(204,68,68,0.08)', border: '1px solid #c44', transition: `padding ${SIZE_MS}ms ${BAR_EASE}` }}>
+            <div style={{ fontFamily: 'var(--font-mono)', fontSize: big ? 22 : 17, color: '#c44', fontWeight: 600, transition: `font-size ${SIZE_MS}ms ${BAR_EASE}` }}>−28 pts drop</div>
+            <div style={{ fontFamily: 'var(--font-sans)', fontSize: big ? 19 : 16, color: 'var(--ink-mute)', marginTop: 2, transition: `font-size ${SIZE_MS}ms ${BAR_EASE}` }}>
               Distribution shift the int8 model never saw on GSC.
             </div>
           </div>
         </div>
 
         {/* After */}
-        <div style={{ border: '2px solid var(--accent)', padding: '20px 24px', background: '#fff7f2' }}>
-          <div style={{ fontFamily: 'var(--font-mono)', fontSize: 17, color: 'var(--accent)', letterSpacing: '0.08em', textTransform: 'uppercase', fontWeight: 600, marginBottom: 14 }}>
+        <div style={{
+          border: '2px solid var(--accent)',
+          padding: big ? '32px 36px 28px' : '18px 22px',
+          background: '#fff7f2',
+          transition: `padding ${SIZE_MS}ms ${BAR_EASE}`,
+        }}>
+          <div style={{
+            fontFamily: 'var(--font-mono)',
+            fontSize: big ? 20 : 16,
+            color: 'var(--accent)',
+            letterSpacing: '0.08em',
+            textTransform: 'uppercase',
+            fontWeight: 600,
+            marginBottom: big ? 22 : 12,
+            transition: `font-size ${SIZE_MS}ms ${BAR_EASE}, margin-bottom ${SIZE_MS}ms ${BAR_EASE}`,
+          }}>
             ★ After · int8 + peak-norm + fine-tune
           </div>
 
-          <div style={{ display: 'flex', alignItems: 'flex-end', gap: 32, marginBottom: 16 }}>
-            <BarColumn label="GSC int8"     pct={90} colorOk active={active} delay={120} value="90 %" />
-            <Arrow />
-            <BarColumn label="INMP441 int8" pct={90} colorAccent active={active} delay={300} value="90 %" />
+          <div style={{ display: 'flex', alignItems: 'flex-end', gap: big ? 48 : 28, marginBottom: big ? 26 : 14, transition: `gap ${SIZE_MS}ms ${BAR_EASE}, margin-bottom ${SIZE_MS}ms ${BAR_EASE}` }}>
+            <BarColumn label="GSC int8"     pct={90} colorOk     active={active} delay={120} value="90 %" big={big} />
+            <Arrow big={big} />
+            <BarColumn label="INMP441 int8" pct={90} colorAccent active={active} delay={300} value="90 %" big={big} />
           </div>
 
-          <div style={{ padding: '10px 14px', background: 'var(--ink)', color: '#f4f1ea' }}>
-            <div style={{ fontFamily: 'var(--font-mono)', fontSize: 18, color: 'var(--accent)', fontWeight: 600 }}>0 pts degradation</div>
-            <div style={{ fontFamily: 'var(--font-sans)', fontSize: 17, color: 'rgba(244,241,234,0.7)', marginTop: 2 }}>
+          <div style={{ padding: big ? '14px 18px' : '8px 12px', background: 'var(--ink)', color: '#f4f1ea', transition: `padding ${SIZE_MS}ms ${BAR_EASE}` }}>
+            <div style={{ fontFamily: 'var(--font-mono)', fontSize: big ? 22 : 17, color: 'var(--accent)', fontWeight: 600, transition: `font-size ${SIZE_MS}ms ${BAR_EASE}` }}>0 pts degradation</div>
+            <div style={{ fontFamily: 'var(--font-sans)', fontSize: big ? 19 : 16, color: 'rgba(244,241,234,0.7)', marginTop: 2, transition: `font-size ${SIZE_MS}ms ${BAR_EASE}` }}>
               90 % on both — same int8 weights, just calibrated to the new audio source.
             </div>
           </div>
         </div>
       </div>
 
-      {/* Bottom row — phase-driven. P0 empty; P1 two fix cards; P2 one wide freq-response box. */}
-      <div style={{ position: 'relative', minHeight: 200 }}>
+      {/* Bottom row — phase-driven. P0 empty; P1 two fix cards; P2 one wide
+         freq-response box. Empty wrapper takes no space when both layers are
+         inactive (P0); a min-height kicks in once we reveal something. */}
+      <div style={{
+        position: 'relative',
+        minHeight: phase === 0 ? 0 : 230,
+        transition: `min-height ${SIZE_MS}ms ${BAR_EASE}`,
+      }}>
         <PhaseLayer active={phase === 1}>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 18 }}>
             <FixCard
@@ -144,8 +191,8 @@ export default function DataGap() {
   );
 }
 
-/* ── A bar column: number label up top, growing bar, INMP441 / GSC label below. */
-function BarColumn({ label, pct, value, active, delay, colorOk, colorBad, colorAccent }) {
+/* ── A bar column. Sizes scale with `big`. */
+function BarColumn({ label, pct, value, active, delay, colorOk, colorBad, colorAccent, big }) {
   const fill =
     colorAccent ? 'var(--accent)' :
     colorBad    ? '#c44' :
@@ -155,18 +202,29 @@ function BarColumn({ label, pct, value, active, delay, colorOk, colorBad, colorA
     colorBad    ? '#c44' :
                   'var(--ink)';
 
+  const W = big ? 150 : 76;
+  const H = big ? 320 : 130;
+  const valueFont = big ? 56 : 28;
+  const labelFont = big ? 19 : 14;
+
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8, flex: 1, maxWidth: 200 }}>
+    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: big ? 10 : 6, flex: 1, maxWidth: 240 }}>
       <div style={{
         fontFamily: 'var(--font-mono)',
-        fontSize: 30, fontWeight: 600, color: txt,
+        fontSize: valueFont, fontWeight: 600, color: txt,
         opacity: active ? 1 : 0,
-        transition: `opacity 500ms ease ${delay + BAR_DUR_MS - 200}ms`,
+        transition: `opacity 500ms ease ${delay + BAR_DUR_MS - 200}ms, font-size ${SIZE_MS}ms ${BAR_EASE}`,
       }}>
         {value}
       </div>
 
-      <div style={{ width: 80, height: 130, position: 'relative', background: 'rgba(26,26,26,0.06)' }}>
+      <div style={{
+        width: W,
+        height: H,
+        position: 'relative',
+        background: 'rgba(26,26,26,0.06)',
+        transition: `width ${SIZE_MS}ms ${BAR_EASE}, height ${SIZE_MS}ms ${BAR_EASE}`,
+      }}>
         <div style={{
           position: 'absolute', bottom: 0, left: 0, width: '100%',
           height: active ? `${pct}%` : '0%',
@@ -175,16 +233,29 @@ function BarColumn({ label, pct, value, active, delay, colorOk, colorBad, colorA
         }} />
       </div>
 
-      <div style={{ fontFamily: 'var(--font-mono)', fontSize: 15, color: 'var(--ink-mute)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+      <div style={{
+        fontFamily: 'var(--font-mono)',
+        fontSize: labelFont,
+        color: 'var(--ink-mute)',
+        textTransform: 'uppercase',
+        letterSpacing: '0.06em',
+        transition: `font-size ${SIZE_MS}ms ${BAR_EASE}`,
+      }}>
         {label}
       </div>
     </div>
   );
 }
 
-function Arrow() {
+function Arrow({ big }) {
   return (
-    <div style={{ fontFamily: 'var(--font-mono)', fontSize: 32, color: 'var(--ink-mute)', marginBottom: 60 }}>→</div>
+    <div style={{
+      fontFamily: 'var(--font-mono)',
+      fontSize: big ? 56 : 30,
+      color: 'var(--ink-mute)',
+      marginBottom: big ? 140 : 60,
+      transition: `font-size ${SIZE_MS}ms ${BAR_EASE}, margin-bottom ${SIZE_MS}ms ${BAR_EASE}`,
+    }}>→</div>
   );
 }
 
@@ -207,17 +278,17 @@ function PhaseLayer({ active, children }) {
 /* ── A fix specimen card (peak norm / fine-tune). */
 function FixCard({ num, title, body, code, codeAccent }) {
   return (
-    <div style={{ border: '1px solid var(--ink)', padding: '16px 22px', background: 'var(--paper)' }}>
-      <div style={{ fontFamily: 'var(--font-mono)', fontSize: 16, color: 'var(--ink-mute)', letterSpacing: '0.08em', textTransform: 'uppercase', fontWeight: 600, marginBottom: 8 }}>
+    <div style={{ border: '1px solid var(--ink)', padding: '14px 20px', background: 'var(--paper)' }}>
+      <div style={{ fontFamily: 'var(--font-mono)', fontSize: 15, color: 'var(--ink-mute)', letterSpacing: '0.08em', textTransform: 'uppercase', fontWeight: 600, marginBottom: 6 }}>
         Fix {num} · {title}
       </div>
-      <div style={{ fontFamily: 'var(--font-sans)', fontSize: 21, color: 'var(--ink)', lineHeight: 1.45 }}>
+      <div style={{ fontFamily: 'var(--font-sans)', fontSize: 19, color: 'var(--ink)', lineHeight: 1.4 }}>
         {body}
       </div>
       <div style={{
-        marginTop: 10,
+        marginTop: 8,
         fontFamily: 'var(--font-mono)',
-        fontSize: 18,
+        fontSize: 17,
         color: codeAccent ? 'var(--accent)' : 'var(--ink)',
         background: codeAccent ? 'rgba(217,119,87,0.08)' : 'rgba(26,26,26,0.05)',
         padding: '6px 10px',
@@ -228,62 +299,38 @@ function FixCard({ num, title, body, code, codeAccent }) {
   );
 }
 
-/* ── Phase-2 box: the single "freq response" replacement for the two fix cards. */
+/* ── Phase-2 box: text on the left, a real measured INMP441 frequency-response
+   chart on the right (image lives in public/assets). */
 function FrequencyResponseBox() {
   return (
     <div style={{
       border: '2px solid var(--accent)',
       background: '#fff7f2',
-      padding: '20px 28px',
+      padding: '18px 24px',
       display: 'grid',
       gridTemplateColumns: '1fr 360px',
       gap: 32,
       alignItems: 'center',
     }}>
       <div>
-        <div style={{ fontFamily: 'var(--font-mono)', fontSize: 16, color: 'var(--accent)', letterSpacing: '0.08em', textTransform: 'uppercase', fontWeight: 600, marginBottom: 6 }}>
+        <div style={{ fontFamily: 'var(--font-mono)', fontSize: 15, color: 'var(--accent)', letterSpacing: '0.08em', textTransform: 'uppercase', fontWeight: 600, marginBottom: 6 }}>
           ★ Frequency response · INMP441
         </div>
-        <div style={{ fontFamily: 'var(--font-sans)', fontSize: 30, fontWeight: 600, color: 'var(--ink)', marginBottom: 10 }}>
+        <div style={{ fontFamily: 'var(--font-sans)', fontSize: 28, fontWeight: 600, color: 'var(--ink)', marginBottom: 8 }}>
           Our mic is flat across the 8 kHz band.
         </div>
-        <div style={{ fontFamily: 'var(--font-sans)', fontSize: 21, color: 'var(--ink)', lineHeight: 1.45 }}>
-          We measured the INMP441's response — flat to ±1.5 dB from 100 Hz to 4 kHz. At an 8 kHz sample rate there is no spectral distortion to fix; the two cards above patch a level shift, not a frequency-dependent one.
+        <div style={{ fontFamily: 'var(--font-sans)', fontSize: 19, color: 'var(--ink)', lineHeight: 1.4 }}>
+          We checked the datasheet. Flat to ±2 dB from 100 Hz to ~10 kHz — well past our 4 kHz Nyquist. No spectral distortion at 8 kHz; the two fixes above patch a level shift, not a frequency-dependent one.
         </div>
       </div>
 
-      <FreqResponseChart />
-    </div>
-  );
-}
-
-/* ── Tiny inline frequency-response chart (ideal flat curve with measurement
-   trace overlay). Conceptual, not data-true. */
-function FreqResponseChart() {
-  return (
-    <div style={{ background: 'var(--paper)', border: '1px solid var(--ink)', padding: '12px 14px' }}>
-      <svg viewBox="0 0 320 120" style={{ width: '100%', height: 110 }}>
-        {/* y grid */}
-        <line x1="40"  y1="20"  x2="310" y2="20"  stroke="rgba(26,26,26,0.08)" strokeDasharray="2 4" />
-        <line x1="40"  y1="60"  x2="310" y2="60"  stroke="rgba(26,26,26,0.18)" />
-        <line x1="40"  y1="100" x2="310" y2="100" stroke="rgba(26,26,26,0.08)" strokeDasharray="2 4" />
-        {/* y labels */}
-        <text x="32" y="24"  textAnchor="end" fontFamily="JetBrains Mono, monospace" fontSize="10" fill="var(--ink-mute)">+1.5</text>
-        <text x="32" y="64"  textAnchor="end" fontFamily="JetBrains Mono, monospace" fontSize="10" fill="var(--ink-mute)">  0</text>
-        <text x="32" y="104" textAnchor="end" fontFamily="JetBrains Mono, monospace" fontSize="10" fill="var(--ink-mute)">−1.5</text>
-        {/* x labels */}
-        <text x="46"  y="115" textAnchor="middle" fontFamily="JetBrains Mono, monospace" fontSize="10" fill="var(--ink-mute)">100 Hz</text>
-        <text x="175" y="115" textAnchor="middle" fontFamily="JetBrains Mono, monospace" fontSize="10" fill="var(--ink-mute)">1 kHz</text>
-        <text x="305" y="115" textAnchor="middle" fontFamily="JetBrains Mono, monospace" fontSize="10" fill="var(--ink-mute)">4 kHz</text>
-        {/* measured trace — small wiggles, stays inside ±1.5 dB */}
-        <path
-          d="M40,62 C70,58 100,64 130,60 C160,56 190,63 220,59 C250,55 280,62 310,60"
-          fill="none" stroke="var(--accent)" strokeWidth="1.6"
+      <div style={{ background: 'var(--paper)', border: '1px solid var(--ink)', padding: '8px 12px' }}>
+        <img
+          src={`${import.meta.env.BASE_URL}assets/inmp441-frequency-response.png`}
+          alt="Measured INMP441 frequency response — flat to ±2 dB from 100 Hz to ~10 kHz"
+          style={{ width: '100%', height: 'auto', display: 'block' }}
         />
-        {/* "flat" reference */}
-        <line x1="40" y1="60" x2="310" y2="60" stroke="var(--ink)" strokeWidth="0.6" strokeDasharray="3 3" />
-        <text x="305" y="56" textAnchor="end" fontFamily="JetBrains Mono, monospace" fontSize="9" fill="var(--ink-mute)">flat ref</text>
-      </svg>
+      </div>
     </div>
   );
 }
