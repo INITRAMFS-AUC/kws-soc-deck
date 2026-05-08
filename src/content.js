@@ -509,30 +509,6 @@ export const slides = [
     content: { kind: 'Model' },
   },
 
-  // Use Cases ────────────────────────────────────────────────────────────────
-  {
-    id: 'use-cases',
-    label: 'Use Cases',
-    notes: [
-      'The model section so far has been about the 11-class system. This slide makes the point that the same backbone is immediately reusable for narrower deployment targets — you fine-tune the head, not the whole model.',
-      '',
-      'Four verticals on screen, chosen to span the range of what a tiny always-on classifier is actually useful for in industry.',
-      '',
-      'Healthcare — yes/no is the archetypal hands-free interface. Surgeons, radiologists, anyone in a sterile or gloved workflow who needs to confirm or reject without touching a keyboard. 98.5 % on real mic recordings.',
-      '',
-      'Smart home — on/off is the most common voice command in consumer IoT. Lights, HVAC, appliances. 97.7 % on the INMP441.',
-      '',
-      'Robotics — go/left/right/stop is a direct robot navigation command set. Assembly line guidance, AGV control, warehouse robots. 96.2 % at full 4-command vocabulary.',
-      '',
-      'Accessibility — up/down covers motorised wheelchairs, stairlifts, hospital bed height adjustment. Highest accuracy of the four at 99.2 % — two acoustically distinct words with no confusable neighbours.',
-      '',
-      'Key point to land: none of these required retraining from scratch. The 11-class backbone already knows how to hear all ten keywords. Fine-tuning just re-weights the head for the subset that matters. Same 30 ms inference. Same chip.',
-      '',
-      'Accuracy numbers are from 30 held-out samples per keyword recorded through the exact INMP441 and PCB the system ships with — not studio audio, not GSC.',
-    ].join('\n'),
-    content: { kind: 'Model' },
-  },
-
   // Data Gap ─────────────────────────────────────────────────────────────────
   {
     id: 'data-gap',
@@ -568,6 +544,30 @@ export const slides = [
       micLabel: 'Real INMP441 mic data',
       micValue: '90 %',
     },
+  },
+
+  // Use Cases ────────────────────────────────────────────────────────────────
+  {
+    id: 'use-cases',
+    label: 'Use Cases',
+    notes: [
+      'The model section so far has been about the 11-class system. This slide makes the point that the same backbone is immediately reusable for narrower deployment targets — you fine-tune the head, not the whole model.',
+      '',
+      'Four verticals on screen, chosen to span the range of what a tiny always-on classifier is actually useful for in industry.',
+      '',
+      'Healthcare — yes/no is the archetypal hands-free interface. Surgeons, radiologists, anyone in a sterile or gloved workflow who needs to confirm or reject without touching a keyboard. 98.5 % on real mic recordings.',
+      '',
+      'Smart home — on/off is the most common voice command in consumer IoT. Lights, HVAC, appliances. 97.7 % on the INMP441.',
+      '',
+      'Robotics — go/left/right/stop is a direct robot navigation command set. Assembly line guidance, AGV control, warehouse robots. 96.2 % at full 4-command vocabulary.',
+      '',
+      'Accessibility — up/down covers motorised wheelchairs, stairlifts, hospital bed height adjustment. Highest accuracy of the four at 99.2 % — two acoustically distinct words with no confusable neighbours.',
+      '',
+      'Key point to land: none of these required retraining from scratch. The 11-class backbone already knows how to hear all ten keywords. Fine-tuning just re-weights the head for the subset that matters. Same 30 ms inference. Same chip.',
+      '',
+      'Accuracy numbers are from 30 held-out samples per keyword recorded through the exact INMP441 and PCB the system ships with — not studio audio, not GSC.',
+    ].join('\n'),
+    content: { kind: 'Model' },
   },
 
   // Live Inference ───────────────────────────────────────────────────────────
