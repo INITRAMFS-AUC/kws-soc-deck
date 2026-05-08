@@ -35,7 +35,10 @@ const STOPS = [
   { kind: 'mfcc', row: 3, label: 'Mel',     shape: '[100, 40]',  detail: '~1.0 M MACs' },
   { kind: 'mfcc', row: 4, label: 'log',     shape: '[100, 40]',  detail: '~4 K ops' },
   { kind: 'mfcc', row: 5, label: 'DCT-II',  shape: '[100, 13]',  detail: '~130 K ops' },
-  { kind: 'cnn',          label: 'Predict', shape: '11 logits',  detail: 'argmax → keyword' },
+  { kind: 'cnn',  row: 0 },
+  { kind: 'cnn',  row: 1 },
+  { kind: 'cnn',  row: 2 },
+  { kind: 'cnn',  row: 3 },
   { kind: 'gap' },
 ];
 
@@ -259,7 +262,7 @@ export default function StandardMFCC() {
           transform: phase === 0 ? 'translateX(0)' : 'translateX(30%)',
           transition: TR_BOX,
         }}>
-          <CnnContent active={cur.kind === 'cnn' ? cur : null} />
+          <CnnContent rowIdx={cur.kind === 'cnn' ? cur.row : null} />
         </Box>
 
         {/* Our-model container: P1 summary · P2/P4/P6 three-cards · P3/P5/P7 zooms. */}
@@ -426,22 +429,37 @@ function InputContent({ active }) {
   );
 }
 
-/* ───────── DS-CNN panel — text rows like MFCC. The predict packet
-   overlays the LAST row (Dense → Softmax) so its position is meaningful
-   instead of floating in dead space. ───────── */
-function CnnContent({ active }) {
-  const lastRowRef = useRef(null);
-  const [rowMetric, setRowMetric] = useState(null);
+/* ───────── DS-CNN panel — text rows like MFCC. A walking packet visits
+   each layer row in turn; on every row it shows the SAME text that the
+   row holds (same content, dark inverted styling) so the overlay reads
+   as "this is the layer the data is currently in." ───────── */
+function CnnContent({ rowIdx }) {
+  const rowRefs = useRef([]);
+  const [rowMetrics, setRowMetrics] = useState(DSCNN_ROWS.map(() => null));
+  const [renderedRow, setRenderedRow] = useState(null);
 
   useLayoutEffect(() => {
-    const el = lastRowRef.current;
-    if (!el) return;
-    const next = { top: el.offsetTop, height: el.offsetHeight };
-    setRowMetric(prev => {
-      if (prev && prev.top === next.top && prev.height === next.height) return prev;
+    const next = rowRefs.current.map(el =>
+      el ? { top: el.offsetTop, height: el.offsetHeight } : null
+    );
+    setRowMetrics(prev => {
+      if (prev.length === next.length && prev.every((p, i) => {
+        const n = next[i];
+        if (p === null && n === null) return true;
+        if (!p || !n) return false;
+        return p.top === n.top && p.height === n.height;
+      })) return prev;
       return next;
     });
   });
+
+  useEffect(() => {
+    if (rowIdx !== null) setRenderedRow(rowIdx);
+  }, [rowIdx]);
+
+  const visible = rowIdx !== null;
+  const metric  = renderedRow !== null ? rowMetrics[renderedRow] : null;
+  const renderedRowText = renderedRow !== null ? DSCNN_ROWS[renderedRow] : null;
 
   return (
     <div style={{ position: 'relative', height: '100%', border: '2px solid var(--ink)', padding: '20px 22px', background: 'var(--paper)', boxSizing: 'border-box' }}>
@@ -449,50 +467,48 @@ function CnnContent({ active }) {
       <div style={{ fontFamily: 'var(--font-sans)', fontSize: 30, fontWeight: 600, marginBottom: 14 }}>DS-CNN</div>
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: 5, marginBottom: 14 }}>
-        {DSCNN_ROWS.map(([a, b], i) => {
-          const isLast = i === DSCNN_ROWS.length - 1;
-          return (
-            <div key={i} ref={isLast ? lastRowRef : null} style={{
-              display: 'grid', gridTemplateColumns: '1fr auto',
-              gap: 8, padding: '6px 10px',
-              background: 'rgba(26,26,26,0.05)',
-              fontFamily: 'var(--font-mono)', fontSize: 15,
-            }}>
-              <span style={{ color: 'var(--ink)' }}>{a}</span>
-              <span style={{ color: 'var(--ink-mute)', textAlign: 'right' }}>{b}</span>
-            </div>
-          );
-        })}
+        {DSCNN_ROWS.map(([a, b], i) => (
+          <div key={i} ref={el => (rowRefs.current[i] = el)} style={{
+            display: 'grid', gridTemplateColumns: '1fr auto',
+            gap: 8, padding: '6px 10px',
+            background: 'rgba(26,26,26,0.05)',
+            fontFamily: 'var(--font-mono)', fontSize: 15,
+          }}>
+            <span style={{ color: 'var(--ink)' }}>{a}</span>
+            <span style={{ color: 'var(--ink-mute)', textAlign: 'right' }}>{b}</span>
+          </div>
+        ))}
       </div>
 
       <div style={{ fontFamily: 'var(--font-mono)', fontSize: 14, color: 'var(--ink-mute)', lineHeight: 1.55 }}>
         Depthwise-separable 2-D conv<br />over Mel features · ~5.4 M MACs
       </div>
 
-      {/* Predict packet — overlays the last row when DS-CNN is the active stop. */}
+      {/* Walking packet — overlays whichever DS-CNN row is currently active,
+          mirroring its text in inverted styling. */}
       <div style={{
         position: 'absolute',
         left: 22,
         right: 22,
-        top: rowMetric ? rowMetric.top : 0,
-        height: rowMetric ? rowMetric.height : 0,
-        opacity: active && rowMetric ? 1 : 0,
-        transition: `opacity ${PACKET_FADE_MS}ms ${PHASE_EASE}`,
+        top: metric ? metric.top : 0,
+        height: metric ? metric.height : 0,
+        opacity: visible && metric ? 1 : 0,
+        transition: `top ${PACKET_GLIDE_MS}ms ${PHASE_EASE}, opacity ${PACKET_FADE_MS}ms ${PHASE_EASE}`,
         background: 'var(--ink)',
         color: '#f4f1ea',
         boxShadow: '0 6px 18px rgba(0,0,0,0.28)',
         zIndex: 4,
-        display: 'flex',
+        display: 'grid',
+        gridTemplateColumns: '1fr auto',
+        gap: 8,
         alignItems: 'center',
-        gap: 16,
-        padding: '0 14px',
+        padding: '0 10px',
         pointerEvents: 'none',
       }}>
-        {active && (
+        {renderedRowText && (
           <>
-            <span style={{ fontFamily: 'var(--font-mono)', fontSize: 12, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--accent)', fontWeight: 600, minWidth: 80 }}>{active.label}</span>
-            <span style={{ fontFamily: 'var(--font-mono)', fontSize: 16, fontWeight: 500, flex: 1 }}>{active.shape}</span>
-            <span style={{ fontFamily: 'var(--font-mono)', fontSize: 13, color: 'rgba(244,241,234,0.65)' }}>{active.detail}</span>
+            <span style={{ fontFamily: 'var(--font-mono)', fontSize: 15, color: '#f4f1ea' }}>{renderedRowText[0]}</span>
+            <span style={{ fontFamily: 'var(--font-mono)', fontSize: 15, color: 'rgba(244,241,234,0.7)', textAlign: 'right' }}>{renderedRowText[1]}</span>
           </>
         )}
       </div>
