@@ -106,7 +106,7 @@ export const slides = [
       kind: 'Context',
       eyebrow: 'Where KWS sits',
       title: 'Keyword Spotting & Natural Language Processing.',
-      body: 'Unlike Natural Language Processing, Keyword Spotting is concerned with classifying single words from the user, not the whole speech. Keyword spotting usually aids NLP applications, like Siri, when you say "Hey Siri". And is used in simpler applications like smart home devices as a simpler low-compute alternative to NLP.',
+      body: 'Unlike Natural Language Processing, which is power hungry, and compute intensive. Keyword Spotting is concerned with classifying single words from the user, not the whole speech. Keyword spotting usually aids NLP applications, like Siri, when you say "Hey Siri".',
       wakePhrase: 'Hey Siri',
     },
   },
