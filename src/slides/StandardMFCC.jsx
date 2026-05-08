@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import SlideFrame from '../components/SlideFrame.jsx';
 
 /* ─────────────────────────────────────────────────────────────────────────────
@@ -236,10 +236,7 @@ export default function StandardMFCC() {
           transition: TR_BOX,
         }}>
           <FadeView active={phase === 0}>
-            <MfccPipelineContent
-              rowIdx={cur.kind === 'mfcc' ? cur.row : null}
-              data={cur.kind === 'mfcc' ? cur : null}
-            />
+            <MfccPipelineContent rowIdx={cur.kind === 'mfcc' ? cur.row : null} />
           </FadeView>
           <FadeView active={phase === 1}>
             <SummaryCard
@@ -429,132 +426,49 @@ function InputContent({ active }) {
   );
 }
 
-/* ───────── DS-CNN panel — text rows like MFCC. A walking packet visits
-   each layer row in turn; on every row it shows the SAME text that the
-   row holds (same content, dark inverted styling) so the overlay reads
-   as "this is the layer the data is currently in." ───────── */
+/* ───────── DS-CNN panel — same inline-inversion pattern as MFCC. */
 function CnnContent({ rowIdx }) {
-  const rowRefs = useRef([]);
-  const [rowMetrics, setRowMetrics] = useState(DSCNN_ROWS.map(() => null));
-  const [renderedRow, setRenderedRow] = useState(null);
-
-  useLayoutEffect(() => {
-    const next = rowRefs.current.map(el =>
-      el ? { top: el.offsetTop, height: el.offsetHeight } : null
-    );
-    setRowMetrics(prev => {
-      if (prev.length === next.length && prev.every((p, i) => {
-        const n = next[i];
-        if (p === null && n === null) return true;
-        if (!p || !n) return false;
-        return p.top === n.top && p.height === n.height;
-      })) return prev;
-      return next;
-    });
-  });
-
-  useEffect(() => {
-    if (rowIdx !== null) setRenderedRow(rowIdx);
-  }, [rowIdx]);
-
-  const visible = rowIdx !== null;
-  const metric  = renderedRow !== null ? rowMetrics[renderedRow] : null;
-  const renderedRowText = renderedRow !== null ? DSCNN_ROWS[renderedRow] : null;
-
   return (
     <div style={{ position: 'relative', height: '100%', border: '2px solid var(--ink)', padding: '20px 22px', background: 'var(--paper)', boxSizing: 'border-box' }}>
       <div style={{ fontFamily: 'var(--font-mono)', fontSize: 16, color: 'var(--ink-mute)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 10 }}>Stage 2 · Network</div>
       <div style={{ fontFamily: 'var(--font-sans)', fontSize: 30, fontWeight: 600, marginBottom: 14 }}>DS-CNN</div>
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: 5, marginBottom: 14 }}>
-        {DSCNN_ROWS.map(([a, b], i) => (
-          <div key={i} ref={el => (rowRefs.current[i] = el)} style={{
-            display: 'grid', gridTemplateColumns: '1fr auto',
-            gap: 8, padding: '6px 10px',
-            background: 'rgba(26,26,26,0.05)',
-            fontFamily: 'var(--font-mono)', fontSize: 15,
-          }}>
-            <span style={{ color: 'var(--ink)' }}>{a}</span>
-            <span style={{ color: 'var(--ink-mute)', textAlign: 'right' }}>{b}</span>
-          </div>
-        ))}
+        {DSCNN_ROWS.map(([a, b], i) => {
+          const isActive = rowIdx === i;
+          return (
+            <div key={i} style={{
+              display: 'grid', gridTemplateColumns: '1fr auto',
+              gap: 8, padding: '6px 10px',
+              background: isActive ? 'var(--ink)' : 'rgba(26,26,26,0.05)',
+              fontFamily: 'var(--font-mono)', fontSize: 15,
+              transition: 'background 320ms ease',
+              boxShadow: isActive ? '0 6px 18px rgba(0,0,0,0.28)' : 'none',
+              position: 'relative',
+              zIndex: isActive ? 2 : 1,
+            }}>
+              <span style={{ color: isActive ? '#f4f1ea' : 'var(--ink)', transition: 'color 320ms ease' }}>{a}</span>
+              <span style={{ color: isActive ? 'rgba(244,241,234,0.7)' : 'var(--ink-mute)', textAlign: 'right', transition: 'color 320ms ease' }}>{b}</span>
+            </div>
+          );
+        })}
       </div>
 
       <div style={{ fontFamily: 'var(--font-mono)', fontSize: 14, color: 'var(--ink-mute)', lineHeight: 1.55 }}>
         Depthwise-separable 2-D conv<br />over Mel features · ~5.4 M MACs
-      </div>
-
-      {/* Walking packet — overlays whichever DS-CNN row is currently active,
-          mirroring its text in inverted styling. */}
-      <div style={{
-        position: 'absolute',
-        left: 22,
-        right: 22,
-        top: metric ? metric.top : 0,
-        height: metric ? metric.height : 0,
-        opacity: visible && metric ? 1 : 0,
-        transition: `top ${PACKET_GLIDE_MS}ms ${PHASE_EASE}, opacity ${PACKET_FADE_MS}ms ${PHASE_EASE}`,
-        background: 'var(--ink)',
-        color: '#f4f1ea',
-        boxShadow: '0 6px 18px rgba(0,0,0,0.28)',
-        zIndex: 4,
-        display: 'grid',
-        gridTemplateColumns: '1fr auto',
-        gap: 8,
-        alignItems: 'center',
-        padding: '0 10px',
-        pointerEvents: 'none',
-      }}>
-        {renderedRowText && (
-          <>
-            <span style={{ fontFamily: 'var(--font-mono)', fontSize: 15, color: '#f4f1ea' }}>{renderedRowText[0]}</span>
-            <span style={{ fontFamily: 'var(--font-mono)', fontSize: 15, color: 'rgba(244,241,234,0.7)', textAlign: 'right' }}>{renderedRowText[1]}</span>
-          </>
-        )}
       </div>
     </div>
   );
 }
 
 /* ───────── MFCC pipeline content ─────────
-   The packet position uses `offsetTop` (NOT getBoundingClientRect) because
-   the deck-stage canvas has a `transform: scale()` for fitting the viewport;
-   getBoundingClientRect returns scaled coords, but `top` for absolute
-   positioning is in unscaled CSS pixels. Mixing the two puts the packet at
-   scale² of the intended position. offsetTop is layout-pixel based and
-   immune to ancestor transforms.
+   The packet IS the row — when `rowIdx` matches, that row inverts to dark
+   (cream text on ink background) with a soft drop-shadow. Rendering the
+   highlight inline rather than via an absolutely-positioned overlay
+   guarantees the packet aligns with its row by construction (no
+   measurement, no scale-transform pitfalls, no useLayoutEffect race).
    ───────────────────────────────────────── */
-function MfccPipelineContent({ rowIdx, data }) {
-  const rowRefs = useRef([]);
-  const [rowMetrics, setRowMetrics] = useState(MFCC_ROWS.map(() => null));
-  const [renderedRow,  setRenderedRow]  = useState(null);
-  const [renderedData, setRenderedData] = useState(null);
-
-  useLayoutEffect(() => {
-    const next = rowRefs.current.map(el =>
-      el ? { top: el.offsetTop, height: el.offsetHeight } : null
-    );
-    setRowMetrics(prev => {
-      if (prev.length === next.length && prev.every((p, i) => {
-        const n = next[i];
-        if (p === null && n === null) return true;
-        if (!p || !n) return false;
-        return p.top === n.top && p.height === n.height;
-      })) return prev;
-      return next;
-    });
-  });
-
-  useEffect(() => {
-    if (rowIdx !== null) {
-      setRenderedRow(rowIdx);
-      setRenderedData(data);
-    }
-  }, [rowIdx, data]);
-
-  const visible = rowIdx !== null;
-  const metric  = renderedRow !== null ? rowMetrics[renderedRow] : null;
-
+function MfccPipelineContent({ rowIdx }) {
   return (
     <div style={{ position: 'relative', height: '100%', border: '1px solid var(--ink)', padding: '20px 22px', background: 'rgba(26,26,26,0.04)', boxSizing: 'border-box' }}>
       <div style={{ fontFamily: 'var(--font-mono)', fontSize: 16, color: 'var(--ink-mute)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 8 }}>
@@ -562,46 +476,27 @@ function MfccPipelineContent({ rowIdx, data }) {
       </div>
       <div style={{ fontFamily: 'var(--font-sans)', fontSize: 30, fontWeight: 600, marginBottom: 14 }}>MFCC</div>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
-        {MFCC_ROWS.map(([a, b, c], i) => (
-          <div key={i} ref={el => (rowRefs.current[i] = el)} style={{
-            display: 'grid', gridTemplateColumns: '1fr 110px',
-            gap: 8, padding: '6px 10px',
-            background: 'rgba(26,26,26,0.05)',
-            fontFamily: 'var(--font-mono)', fontSize: 17,
-          }}>
-            <span style={{ color: 'var(--ink)' }}>
-              {a}{b ? <span style={{ color: 'var(--ink-mute)' }}> · {b}</span> : ''}
-            </span>
-            <span style={{ color: 'var(--ink)', fontWeight: 500, textAlign: 'right' }}>{c}</span>
-          </div>
-        ))}
-      </div>
-
-      <div style={{
-        position: 'absolute',
-        left: 22,
-        right: 22,
-        top: metric ? metric.top : 0,
-        height: metric ? metric.height : 0,
-        opacity: visible && metric ? 1 : 0,
-        transition: `top ${PACKET_GLIDE_MS}ms ${PHASE_EASE}, opacity ${PACKET_FADE_MS}ms ${PHASE_EASE}`,
-        background: 'var(--ink)',
-        color: '#f4f1ea',
-        boxShadow: '0 6px 18px rgba(0,0,0,0.28)',
-        zIndex: 4,
-        display: 'flex',
-        alignItems: 'center',
-        gap: 16,
-        padding: '0 14px',
-        pointerEvents: 'none',
-      }}>
-        {renderedData && (
-          <>
-            <span style={{ fontFamily: 'var(--font-mono)', fontSize: 12, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--accent)', fontWeight: 600, minWidth: 80 }}>{renderedData.label}</span>
-            <span style={{ fontFamily: 'var(--font-mono)', fontSize: 16, fontWeight: 500, flex: 1 }}>{renderedData.shape}</span>
-            <span style={{ fontFamily: 'var(--font-mono)', fontSize: 13, color: 'rgba(244,241,234,0.65)' }}>{renderedData.detail}</span>
-          </>
-        )}
+        {MFCC_ROWS.map(([a, b, c], i) => {
+          const isActive = rowIdx === i;
+          return (
+            <div key={i} style={{
+              display: 'grid', gridTemplateColumns: '1fr 110px',
+              gap: 8, padding: '6px 10px',
+              background: isActive ? 'var(--ink)' : 'rgba(26,26,26,0.05)',
+              fontFamily: 'var(--font-mono)', fontSize: 17,
+              transition: 'background 320ms ease',
+              boxShadow: isActive ? '0 6px 18px rgba(0,0,0,0.28)' : 'none',
+              position: 'relative',
+              zIndex: isActive ? 2 : 1,
+            }}>
+              <span style={{ color: isActive ? '#f4f1ea' : 'var(--ink)', transition: 'color 320ms ease' }}>
+                {a}
+                {b ? <span style={{ color: isActive ? 'rgba(244,241,234,0.7)' : 'var(--ink-mute)', transition: 'color 320ms ease' }}> · {b}</span> : ''}
+              </span>
+              <span style={{ color: isActive ? '#f4f1ea' : 'var(--ink)', fontWeight: 500, textAlign: 'right', transition: 'color 320ms ease' }}>{c}</span>
+            </div>
+          );
+        })}
       </div>
     </div>
   );
