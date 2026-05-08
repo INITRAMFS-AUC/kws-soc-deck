@@ -4,7 +4,7 @@ import { useSlideMeta, pad2 } from '../slide-meta.js';
 
 const c = getSlide('cover').content;
 
-function NameCycler({ names, holdMs = 1500, typeMs = 70, eraseMs = 35 }) {
+function NameCycler({ names, holdMs = 1500, typeMs = 25, eraseMs = 15 }) {
   const [i, setI] = useState(0);
   const [text, setText] = useState('');
   const [erasing, setErasing] = useState(false);

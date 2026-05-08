@@ -4,10 +4,17 @@ import { getSlide } from '../content.js';
 
 const c = getSlide('voice').content;
 const { stats, chartTitle, series, sourceLabel, sourceUrl } = c.market;
+const w = c.wrist;
 
 const TITLE_PREFIX = 'Voice command interfaces ';
 const SUFFIX_OFF = 'are everywhere.';
 const SUFFIX_ON  = 'Market Cap';
+
+// Steps:
+//   0 — bedroom backdrop, "Alexa." (default)
+//   1 — top-down track backdrop, smart-watch + "Start Timer."
+//   2 — chart reveal (Market Cap)
+const LAST_STEP = 2;
 
 function MarketChart() {
   const W = 1700, H = 360;
@@ -71,10 +78,72 @@ function MarketChart() {
   );
 }
 
+function SmartWatch({ active }) {
+  const [seconds, setSeconds] = useState(0);
+
+  // Reset to 00:00 whenever the wrist pane goes inactive; first tick lands
+  // ~600 ms after activation so the "Start Timer." beat reads first.
+  useEffect(() => {
+    if (!active) { setSeconds(0); return; }
+    const id = setTimeout(() => setSeconds(1), 600);
+    return () => clearTimeout(id);
+  }, [active]);
+
+  useEffect(() => {
+    if (!active || seconds === 0) return;
+    const id = setTimeout(() => setSeconds((s) => s + 1), 1000);
+    return () => clearTimeout(id);
+  }, [active, seconds]);
+
+  const mm = String(Math.floor(seconds / 60)).padStart(2, '0');
+  const ss = String(seconds % 60).padStart(2, '0');
+
+  const r = 132;
+  const C = 2 * Math.PI * r;
+  const dashOffset = C * (1 - (seconds % 60) / 60);
+
+  return (
+    <div className={`watch ${active ? 'watch--running' : ''}`} aria-hidden>
+      <div className="watch-strap watch-strap--top">
+        <div className="watch-strap-stitch" />
+        <div className="watch-strap-stitch" />
+      </div>
+
+      <div className="watch-body">
+        <div className="watch-crown" />
+        <div className="watch-button" />
+        <div className="watch-face">
+          <svg className="watch-ring" viewBox="0 0 320 320">
+            <circle cx="160" cy="160" r={r}
+                    stroke="rgba(255,255,255,0.10)" strokeWidth="6" fill="none" />
+            <circle cx="160" cy="160" r={r}
+                    stroke="var(--color-accent)" strokeWidth="6" fill="none"
+                    strokeLinecap="round"
+                    strokeDasharray={C} strokeDashoffset={dashOffset}
+                    transform="rotate(-90 160 160)"
+                    style={{ transition: seconds === 0 ? 'none' : 'stroke-dashoffset 1s linear' }} />
+          </svg>
+          <div className="watch-time">{mm}:{ss}</div>
+          <div className="watch-label">Timer</div>
+          <div className={`watch-dot ${active && seconds > 0 ? 'watch-dot--pulse' : ''}`} />
+        </div>
+      </div>
+
+      <div className="watch-strap watch-strap--bot">
+        <div className="watch-strap-stitch" />
+        <div className="watch-strap-stitch" />
+      </div>
+    </div>
+  );
+}
+
 export default function VoiceEverywhere() {
-  const [reveal, setReveal] = useState(false);
+  const [step, setStep] = useState(0);
   const [suffix, setSuffix] = useState(SUFFIX_OFF);
   const rootRef = useRef(null);
+
+  const reveal = step === 2;
+  const onDarkBackdrop = step < 2;
 
   // Reset when this slide loses focus.
   useEffect(() => {
@@ -82,7 +151,7 @@ export default function VoiceEverywhere() {
       const here = rootRef.current?.closest('section');
       if (!here) return;
       if (e.detail?.slide !== here) {
-        setReveal(false);
+        setStep(0);
         setSuffix(SUFFIX_OFF);
       }
     };
@@ -90,7 +159,7 @@ export default function VoiceEverywhere() {
     return () => document.removeEventListener('slidechange', onSlideChange);
   }, []);
 
-  // Typewriter: erase divergent tail, then type the new tail toward `target`.
+  // Typewriter — only swaps when crossing the chart boundary (step 0/1 ↔ 2).
   useEffect(() => {
     const target = reveal ? SUFFIX_ON : SUFFIX_OFF;
     if (suffix === target) return;
@@ -105,8 +174,8 @@ export default function VoiceEverywhere() {
     return () => clearTimeout(id);
   }, [suffix, reveal]);
 
-  // Right-arrow / Space first reveals the chart, then advances the deck.
-  // Left-arrow collapses; once collapsed it falls through to deck-stage's back-nav.
+  // Right/left arrow steps through the panes; falls through to deck-stage
+  // navigation only at the ends.
   useEffect(() => {
     const onKey = (e) => {
       if (e.metaKey || e.ctrlKey || e.altKey) return;
@@ -114,63 +183,85 @@ export default function VoiceEverywhere() {
       if (!section?.hasAttribute('data-deck-active')) return;
       const fwd  = e.key === 'ArrowRight' || e.key === 'PageDown' || e.key === ' ' || e.key === 'Spacebar';
       const back = e.key === 'ArrowLeft'  || e.key === 'PageUp';
-      if (fwd && !reveal) {
+      if (fwd && step < LAST_STEP) {
         e.preventDefault(); e.stopPropagation();
-        setReveal(true);
-      } else if (back && reveal) {
+        setStep(step + 1);
+      } else if (back && step > 0) {
         e.preventDefault(); e.stopPropagation();
-        setReveal(false);
+        setStep(step - 1);
       }
     };
     window.addEventListener('keydown', onKey, true);
     return () => window.removeEventListener('keydown', onKey, true);
-  }, [reveal]);
+  }, [step]);
 
   const target = reveal ? SUFFIX_ON : SUFFIX_OFF;
   const typing = suffix !== target;
 
+  const hint =
+    step === 0 ? '→ on the wrist' :
+    step === 1 ? '→ market data'  :
+                 '← back   ·   → next slide';
+
   return (
     <SlideFrame>
-      <div ref={rootRef} className={`vx-root ${reveal ? 'vx-root--chart' : ''}`}>
-        {/* Full-bleed bedroom backdrop — escapes .slide padding so the photo
-            covers the whole 1920×1080 section. Fades out when reveal=true. */}
-        <div aria-hidden style={{
-          position: 'absolute',
-          top: 'calc(-1 * var(--pad-top))',
-          bottom: 'calc(-1 * var(--pad-bottom))',
-          left: 'calc(-1 * var(--pad-x))',
-          right: 'calc(-1 * var(--pad-x))',
-          opacity: reveal ? 0 : 1,
-          transition: 'opacity var(--anim-slide-dur) var(--anim-ease)',
-          pointerEvents: 'none',
-          zIndex: 0,
-        }}>
-          <div style={{
-            position: 'absolute', inset: 0,
-            backgroundImage: "url('https://images.unsplash.com/photo-1540518614846-7eded433c457?w=1920&q=80')",
-            backgroundSize: 'cover', backgroundPosition: 'center',
-            filter: 'saturate(0.85) contrast(1.1)',
-            opacity: 0.65,
-          }} />
-          <div style={{
-            position: 'absolute', inset: 0,
-            background: 'linear-gradient(90deg, rgba(0,0,0,0.78) 0%, rgba(0,0,0,0.45) 40%, rgba(0,0,0,0.35) 70%, rgba(0,0,0,0.6) 100%)',
-          }} />
-          <div style={{
-            position: 'absolute', inset: 0,
-            background: 'linear-gradient(180deg, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0.2) 30%, rgba(0,0,0,0.78) 100%)',
-          }} />
-        </div>
-
+      {/* Two full-bleed backdrops — siblings of vx-root, anchored to the
+          stable section box. Cross-fade between them by step. */}
+      <div aria-hidden style={{
+        position: 'absolute', inset: 0,
+        opacity: step === 0 ? 1 : 0,
+        transition: 'opacity var(--anim-slide-dur) var(--anim-ease)',
+        pointerEvents: 'none', zIndex: 0,
+      }}>
         <div style={{
-          marginTop: 60, position: 'relative', zIndex: 1,
-          color: reveal ? 'var(--color-ink)' : '#f4f1ea',
+          position: 'absolute', inset: 0,
+          backgroundImage: "url('https://images.unsplash.com/photo-1540518614846-7eded433c457?w=1920&q=80')",
+          backgroundSize: 'cover', backgroundPosition: 'center',
+          filter: 'saturate(0.85) contrast(1.1)',
+          opacity: 0.65,
+        }} />
+        <div style={{
+          position: 'absolute', inset: 0,
+          background: 'linear-gradient(90deg, rgba(0,0,0,0.78) 0%, rgba(0,0,0,0.45) 40%, rgba(0,0,0,0.35) 70%, rgba(0,0,0,0.6) 100%)',
+        }} />
+        <div style={{
+          position: 'absolute', inset: 0,
+          background: 'linear-gradient(180deg, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0.2) 30%, rgba(0,0,0,0.78) 100%)',
+        }} />
+      </div>
+
+      <div aria-hidden style={{
+        position: 'absolute', inset: 0,
+        opacity: step === 1 ? 1 : 0,
+        transition: 'opacity var(--anim-slide-dur) var(--anim-ease)',
+        pointerEvents: 'none', zIndex: 0,
+      }}>
+        <div style={{
+          position: 'absolute', inset: 0,
+          backgroundImage: `url('${w.backdropUrl}')`,
+          backgroundSize: 'cover', backgroundPosition: 'center',
+          filter: 'saturate(0.9) contrast(1.05) brightness(1.05)',
+          opacity: 0.78,
+        }} />
+        <div style={{
+          position: 'absolute', inset: 0,
+          background: 'linear-gradient(90deg, rgba(0,0,0,0.45) 0%, rgba(0,0,0,0.18) 40%, rgba(0,0,0,0.18) 70%, rgba(0,0,0,0.55) 100%)',
+        }} />
+        <div style={{
+          position: 'absolute', inset: 0,
+          background: 'linear-gradient(180deg, rgba(0,0,0,0.35) 0%, rgba(0,0,0,0.1) 30%, rgba(0,0,0,0.6) 100%)',
+        }} />
+      </div>
+
+      <div ref={rootRef} className={`vx-root vx-root--step-${step}`}>
+        <div className="vx-head" style={{
+          color: onDarkBackdrop ? '#f4f1ea' : 'var(--color-ink)',
           transition: 'color var(--anim-slide-dur) var(--anim-ease)',
         }}>
           <div className="eyebrow">{c.eyebrow}</div>
           <h1 className="title vx-title" style={{
             color: 'inherit',
-            textShadow: reveal ? 'none' : '0 4px 30px rgba(0,0,0,0.5)',
+            textShadow: onDarkBackdrop ? '0 4px 30px rgba(0,0,0,0.5)' : 'none',
             transition: 'text-shadow var(--anim-slide-dur) var(--anim-ease)',
           }}>
             {TITLE_PREFIX}<span className="vx-tw">{suffix}</span>
@@ -178,7 +269,8 @@ export default function VoiceEverywhere() {
           </h1>
         </div>
 
-        <div className="vx-panes" style={{ position: 'relative', zIndex: 1 }}>
+        <div className="vx-panes">
+          {/* Step 0 — bedroom + "Alexa." */}
           <div className="vx-body">
             <div style={{
               display: 'grid', gridTemplateColumns: '1fr 1fr',
@@ -214,6 +306,28 @@ export default function VoiceEverywhere() {
             </div>
           </div>
 
+          {/* Step 1 — top-down track + smart-watch + "Start Timer." */}
+          <div className="vx-wrist">
+            <div style={{
+              display: 'grid', gridTemplateColumns: '1fr 1fr',
+              gap: 80, alignItems: 'center', height: '100%',
+            }}>
+              <div style={{ textAlign: 'right' }}>
+                <div style={{
+                  fontFamily: 'var(--font-sans)', fontSize: 110,
+                  lineHeight: 1.0, fontWeight: 600, letterSpacing: '-0.03em',
+                  color: '#f4f1ea',
+                  textShadow: '0 4px 40px rgba(0,0,0,0.6)',
+                }}>{w.quote}</div>
+              </div>
+
+              <div style={{ display: 'flex', justifyContent: 'center' }}>
+                <SmartWatch active={step === 1} />
+              </div>
+            </div>
+          </div>
+
+          {/* Step 2 — chart */}
           <div className="vx-market">
             <div className="vx-stats">
               {stats.map((s, i) => (
@@ -236,11 +350,13 @@ export default function VoiceEverywhere() {
 
         <div className="vx-hint" aria-hidden style={{
           zIndex: 1,
-          color: reveal ? 'var(--color-ink-mute)' : 'rgba(244,241,234,0.7)',
-          textShadow: reveal ? 'none' : '0 2px 8px rgba(0,0,0,0.5)',
+          right: 'var(--pad-x)',
+          bottom: 80,
+          color: onDarkBackdrop ? 'rgba(244,241,234,0.7)' : 'var(--color-ink-mute)',
+          textShadow: onDarkBackdrop ? '0 2px 8px rgba(0,0,0,0.5)' : 'none',
           transition: 'color var(--anim-slide-dur) var(--anim-ease)',
         }}>
-          {reveal ? '← back   ·   → next slide' : '→ market data'}
+          {hint}
         </div>
       </div>
     </SlideFrame>

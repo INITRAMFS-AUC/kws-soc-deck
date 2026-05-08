@@ -83,6 +83,17 @@ export const slides = [
         sourceLabel: 'Source · Grand View Research, Voice User Interface Market Report',
         sourceUrl: 'https://www.grandviewresearch.com/industry-analysis/voice-user-interface-market-report',
       },
+      // Intra-slide step between "are everywhere." and "Market Cap" — same
+      // slide, second pane: smart-watch + "Start Timer." over a top-down track.
+      wrist: {
+        bodyHTML: 'A runner mid-set. A surgeon between cases. A driver on the freeway. The hands are already doing something — and the device that hears the wake word is the one strapped to your wrist.',
+        eyebrow: '◉ Wake word, then a fixed verb',
+        quote: '"Start Timer."',
+        caption: '— spoken at lap&nbsp;3, 6:47&nbsp;AM',
+        // Top-down running track with athletes on the lanes. Swap the
+        // Unsplash ID if a different shot fits better.
+        backdropUrl: 'https://images.unsplash.com/photo-1502810190503-8303352d0dd1?w=1920&q=80',
+      },
     },
   },
 
@@ -277,21 +288,16 @@ export const slides = [
     },
   },
 
-  // Verification ─────────────────────────────────────────────────────────────
+  // I²S Datapath ─────────────────────────────────────────────────────────────
   {
-    id: 'verification',
-    label: 'Verification',
-    notes: 'Verification has three rungs and the same firmware binary runs on all three. cxxrtl gives a fast C++ simulation with a JTAG bit-bang wrapper. Verilator catches what cxxrtl misses — internally generated clocks like the I²S SCK. The DE10-Standard is the final rung. Each had to pass before the next design decision was committed.',
+    id: 'i2s-datapath',
+    label: 'I²S Datapath',
+    notes: 'The microphone speaks PCM over I²S. Each int32 word is sampled and packed into four int8 lanes, then queued in the FIFO. When the FIFO crosses half-full it raises an IRQ and the DMA flushes everything into the SRAM ring — and the cycle restarts. Packing four samples per FIFO entry quadruples throughput at the cost of nothing: we already quantize to int8 for the model.',
     content: {
       kind: 'Hardware',
-      eyebrow: 'Three rungs of confidence',
-      title: 'Same binary on all three.',
-      rungs: [
-        { head: 'Rung 01 · cxxrtl',        lede: 'RTL → C++ sim',  bodyHTML: 'JTAG bit-bang wrapper. <span class="mono">make sim</span>. OpenOCD &amp; GDB connect as if it were silicon.' },
-        { head: 'Rung 02 · Verilator',     lede: 'Cycle-accurate', bodyHTML: 'Catches what cxxrtl misses — internally generated <span class="mono">sck</span>, where edge-detection variables cache before <span class="mono">.next</span> register values update.' },
-        { head: 'Rung 03 · DE10-Standard', lede: 'Cyclone V FPGA', bodyHTML: 'Same firmware binary, no changes. The final rung before silicon.' },
-      ],
-      footer: 'Each rung is closer to real silicon. Each had to pass before the next design decision was committed.',
+      eyebrow: 'PCM · pack int8 · half-full IRQ',
+      title: 'PCM Audio Journey, I²S Datapath.',
+      footer: 'Each int32 word is sampled into four packed int8 lanes; at half-full the FIFO fires an IRQ and the DMA flushes it into the SRAM ring.',
     },
   },
 

@@ -8,7 +8,7 @@ import CommercialReality from './CommercialReality.jsx';
 import WeDid from './WeDid.jsx';
 import SocArchitecture from './SocArchitecture.jsx';
 import MemoryMap from './MemoryMap.jsx';
-import Verification from './Verification.jsx';
+import I2sDatapath from './I2sDatapath.jsx';
 import Pcb from './Pcb.jsx';
 import PivotModel from './PivotModel.jsx';
 import StandardMFCC from './StandardMFCC.jsx';
@@ -39,7 +39,7 @@ export const slideComponents = [
   WeDid,
   SocArchitecture,
   MemoryMap,
-  Verification,
+  I2sDatapath,
   Pcb,
   PivotModel,
   StandardMFCC,

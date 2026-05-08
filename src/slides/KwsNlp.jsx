@@ -44,7 +44,7 @@ function SiriOrb({ active, processing }) {
 }
 
 // Typewriter that erases divergent tail of `current` then types toward `target`.
-function useTypewriter(target, { eraseMs = 25, typeMs = 55 } = {}) {
+function useTypewriter(target, { eraseMs = 18, typeMs = 25 } = {}) {
   const [text, setText] = useState(target);
   useEffect(() => {
     if (text === target) return;
@@ -65,7 +65,7 @@ export default function KwsNlp() {
   const active = step >= 1;
 
   const [headText, headTyping] = useTypewriter(USE_CASES[step].head);
-  const [subText,  subTyping]  = useTypewriter(USE_CASES[step].sub, { eraseMs: 18, typeMs: 35 });
+  const [subText,  subTyping]  = useTypewriter(USE_CASES[step].sub, { eraseMs: 18, typeMs: 25 });
 
   useEffect(() => {
     const onSlideChange = (e) => {

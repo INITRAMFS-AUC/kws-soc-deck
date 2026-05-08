@@ -447,29 +447,54 @@ h1, h2, h3, h4, p { margin: 0; }
 .soc-grid--crossbar .xbar-dot { transform: scale(1); }
 /* Stagger the dots in by index — set via inline transition-delay. */
 
-/* ── Slide 02: Voice Everywhere — body ↔ market chart cross-fade ─────────── */
-.vx-root { position: relative; }
-.vx-title { font-size: 96px; max-width: 1500px; margin-bottom: 60px; }
-.vx-panes {
-  position: relative;
-  min-height: 660px;
+/* ── Slide 02: Voice Everywhere — body ↔ market chart cross-fade ───────────
+ * Layout is pinned: the header band (eyebrow + title) and the panes are both
+ * absolutely positioned relative to the section so the title can grow from
+ * one line to two without shifting the content below it. Panes top is set
+ * to hug the bottom of a two-line title; one-line title leaves a tight gap. */
+.vx-root { position: absolute; inset: 0; z-index: 1; }
+.vx-head {
+  position: absolute;
+  top: 130px;
+  left: var(--pad-x);
+  right: var(--pad-x);
+  z-index: 1;
 }
-.vx-body, .vx-market {
+.vx-title { font-size: 96px; max-width: 1500px; margin-bottom: 20px; }
+.vx-panes {
+  position: absolute;
+  top: 380px;
+  left: var(--pad-x);
+  right: var(--pad-x);
+  bottom: 110px;
+  z-index: 1;
+}
+.vx-hint { z-index: 1; }
+.vx-body, .vx-wrist, .vx-market {
   position: absolute;
   inset: 0;
+  opacity: 0;
+  transform: translateY(18px);
+  pointer-events: none;
   transition:
     opacity   var(--anim-dur) var(--anim-ease),
     transform var(--anim-dur) var(--anim-ease);
   will-change: opacity, transform;
 }
-.vx-body    { 
-  display: grid;
-  opacity: 1; 
-  transform: none; 
-}
-.vx-market  { opacity: 0; transform: translateY(18px); pointer-events: none; }
-.vx-root--chart .vx-body   { opacity: 0; transform: translateY(-18px); pointer-events: none; }
-.vx-root--chart .vx-market { opacity: 1; transform: none;             pointer-events: auto; }
+.vx-body  { display: grid; }
+.vx-wrist { display: grid; }
+
+.vx-root--step-0 .vx-body  { opacity: 1; transform: none; pointer-events: auto; }
+.vx-root--step-1 .vx-wrist { opacity: 1; transform: none; pointer-events: auto; }
+.vx-root--step-2 .vx-market { opacity: 1; transform: none; pointer-events: auto; }
+
+/* Off-screen panes drift in the direction the deck is moving. */
+.vx-root--step-1 .vx-body   { transform: translateY(-18px); }
+.vx-root--step-2 .vx-body,
+.vx-root--step-2 .vx-wrist  { transform: translateY(-18px); }
+.vx-root--step-0 .vx-wrist,
+.vx-root--step-0 .vx-market { transform: translateY(18px); }
+.vx-root--step-1 .vx-market { transform: translateY(18px); }
 
 .vx-stats {
   display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px;
@@ -531,12 +556,12 @@ h1, h2, h3, h4, p { margin: 0; }
 }
 .vx-source a { color: var(--color-accent); text-decoration: none; }
 
-.vx-root--chart .vx-stat,
-.vx-root--chart .vx-chart,
-.vx-root--chart .vx-source {
+.vx-root--step-2 .vx-stat,
+.vx-root--step-2 .vx-chart,
+.vx-root--step-2 .vx-source {
   opacity: 1; transform: none;
 }
-.vx-root--chart .vx-bar { opacity: 1; transform: scaleY(1); }
+.vx-root--step-2 .vx-bar { opacity: 1; transform: scaleY(1); }
 
 .vx-hint {
   position: absolute; right: 0; bottom: -40px;
@@ -1009,4 +1034,256 @@ h1, h2, h3, h4, p { margin: 0; }
   line-height: 1.3;
   letter-spacing: -0.005em;
   border-left: 6px solid var(--color-accent);
+}
+
+/* ── Pixel-Watch-style smartwatch ──────────────────────────────────────────
+ * Fully circular pebble body. Domed glass top with reflection highlights,
+ * a thin (~3px) bezel, polished crown + side button, soft fluoroelastomer
+ * strap. All gradients — no images. */
+.watch {
+  --watch-size: 340px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  filter:
+    drop-shadow(0 32px 50px rgba(0, 0, 0, 0.55))
+    drop-shadow(0 6px 14px rgba(0, 0, 0, 0.35));
+}
+
+/* Strap — soft fluoroelastomer band, tapered toward the body */
+.watch-strap {
+  position: relative;
+  width: 56%;
+  height: 110px;
+  background:
+    linear-gradient(180deg, rgba(255,255,255,0.04) 0%, transparent 30%),
+    linear-gradient(180deg, #1a1a20 0%, #0c0c11 100%);
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,0.03);
+}
+.watch-strap--top {
+  border-radius: 24px 24px 8px 8px;
+  margin-bottom: -22px;
+  clip-path: polygon(8% 0, 92% 0, 100% 100%, 0 100%);
+}
+.watch-strap--bot {
+  border-radius: 8px 8px 24px 24px;
+  margin-top: -22px;
+  clip-path: polygon(0 0, 100% 0, 92% 100%, 8% 100%);
+  background:
+    linear-gradient(180deg, transparent 70%, rgba(255,255,255,0.04) 100%),
+    linear-gradient(180deg, #0c0c11 0%, #1a1a20 100%);
+}
+.watch-strap-stitch {
+  position: absolute;
+  top: 16px; bottom: 16px;
+  width: 1px;
+  background: linear-gradient(180deg, transparent, rgba(255,255,255,0.06), transparent);
+}
+.watch-strap-stitch:nth-child(1) { left: 22%; }
+.watch-strap-stitch:nth-child(2) { right: 22%; }
+
+/* Body — perfectly circular pebble with a domed metallic shell */
+.watch-body {
+  position: relative;
+  width: var(--watch-size);
+  height: var(--watch-size);
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 32% 22%, rgba(255,255,255,0.20) 0%, transparent 38%),
+    radial-gradient(circle at 75% 80%, rgba(255,255,255,0.05) 0%, transparent 40%),
+    linear-gradient(155deg, #43434c 0%, #1f1f26 45%, #0a0a0e 100%);
+  box-shadow:
+    /* outer micro-rim */
+    0 0 0 1px rgba(0, 0, 0, 0.55),
+    /* dome top highlight */
+    inset 0 2px 1px rgba(255, 255, 255, 0.18),
+    /* dome bottom shadow */
+    inset 0 -3px 6px rgba(0, 0, 0, 0.7),
+    /* hairline */
+    inset 0 0 0 1px rgba(255, 255, 255, 0.05);
+  z-index: 1;
+}
+
+/* Specular gloss above the dome — that wet, glassy Pixel Watch sheen */
+.watch-body::before {
+  content: '';
+  position: absolute;
+  top: 6%;
+  left: 14%;
+  right: 14%;
+  height: 36%;
+  background:
+    radial-gradient(ellipse at 50% 0%,
+      rgba(255,255,255,0.28) 0%,
+      rgba(255,255,255,0.10) 35%,
+      transparent 70%);
+  border-radius: 50%;
+  filter: blur(6px);
+  pointer-events: none;
+  z-index: 3;
+}
+
+/* Crown — small protruding dial on the right, mid-body */
+.watch-crown {
+  position: absolute;
+  right: -5px;
+  top: 38%;
+  width: 11px;
+  height: 26px;
+  background:
+    linear-gradient(90deg,
+      #2a2a30 0%,
+      #6e6e78 25%,
+      #a4a4ac 50%,
+      #6e6e78 75%,
+      #2a2a30 100%);
+  border-radius: 2px 4px 4px 2px;
+  box-shadow:
+    inset 0 0 0 0.5px rgba(0, 0, 0, 0.6),
+    -1px 1px 2px rgba(0, 0, 0, 0.5);
+  z-index: 0;
+}
+.watch-crown::before {
+  content: '';
+  position: absolute;
+  inset: 3px 1px 3px 0;
+  background: repeating-linear-gradient(
+    0deg,
+    rgba(0, 0, 0, 0.45) 0 1px,
+    rgba(255, 255, 255, 0.06) 1px 2.5px
+  );
+  border-radius: 1px 3px 3px 1px;
+}
+
+/* Side button — flat below the crown */
+.watch-button {
+  position: absolute;
+  right: -3px;
+  top: 60%;
+  width: 8px;
+  height: 16px;
+  background: linear-gradient(90deg, #2a2a30 0%, #5e5e66 50%, #2a2a30 100%);
+  border-radius: 2px 3px 3px 2px;
+  box-shadow:
+    inset 0 0 0 0.5px rgba(0, 0, 0, 0.6),
+    -1px 1px 2px rgba(0, 0, 0, 0.5);
+  z-index: 0;
+}
+
+/* Face — black AMOLED glass, thin bezel, soft inner vignette */
+.watch-face {
+  position: absolute;
+  inset: 3px;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 50% 35%, #15151c 0%, #03030a 70%, #000000 100%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.04),
+    inset 0 0 28px rgba(0, 0, 0, 0.85);
+  z-index: 2;
+}
+
+/* Glass reflection sweeping across the face */
+.watch-face::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse 90% 55% at 28% 8%,
+      rgba(255, 255, 255, 0.10) 0%,
+      rgba(255, 255, 255, 0.04) 40%,
+      transparent 65%),
+    radial-gradient(circle at 78% 92%,
+      rgba(255, 255, 255, 0.04) 0%,
+      transparent 35%);
+  pointer-events: none;
+  border-radius: 50%;
+  z-index: 1;
+}
+
+.watch-ring {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 1;
+}
+
+.watch-time {
+  position: relative;
+  font-family: var(--font-mono);
+  font-size: 56px;
+  font-weight: 600;
+  color: #ffffff;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+  z-index: 2;
+  text-shadow: 0 0 28px rgba(255, 255, 255, 0.10);
+}
+
+.watch-label {
+  position: relative;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.34em;
+  color: var(--color-accent);
+  text-transform: uppercase;
+  margin-top: 10px;
+  z-index: 2;
+}
+
+.watch-dot {
+  position: absolute;
+  bottom: 26px;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.22);
+  z-index: 2;
+}
+.watch-dot--pulse {
+  background: var(--color-accent);
+  box-shadow: 0 0 10px var(--color-accent);
+  animation: watch-pulse 1s ease-in-out infinite;
+}
+@keyframes watch-pulse {
+  0%, 100% { opacity: 0.45; transform: scale(1); }
+  50%      { opacity: 1;    transform: scale(1.4); }
+}
+
+/* I²S datapath: 4 int32 samples accumulate, then pack into one FIFO slot
+   (4 × int8 lanes). Slide 08. */
+@keyframes i2s-int32-snap {
+  0%   { transform: translateY(-26px); opacity: 0; }
+  55%  { transform: translateY(2px);   opacity: 1; }
+  100% { transform: translateY(0);     opacity: 1; }
+}
+@keyframes i2s-stage-pack-out {
+  0%   { opacity: 1; transform: translateY(0)    scaleY(1);   }
+  100% { opacity: 0; transform: translateY(18px) scaleY(0.35); }
+}
+@keyframes i2s-int8-emerge {
+  0%   { opacity: 0; transform: scaleY(0.4); }
+  100% { opacity: 1; transform: scaleY(1);   }
+}
+@keyframes i2s-flush-out {
+  0%   { opacity: 1; transform: translateY(0);    }
+  100% { opacity: 0; transform: translateY(16px); }
+}
+@keyframes i2s-irq-flash {
+  0%, 100% { opacity: 1;   }
+  50%      { opacity: 0.4; }
+}
+@keyframes i2s-irq-glow {
+  0%, 100% { box-shadow: inset 0 0 0 0 transparent;            }
+  50%      { box-shadow: inset 0 0 0 3px var(--color-accent);  }
+}
+@keyframes i2s-pack-arrow {
+  0%, 100% { opacity: 0.5; transform: translateY(0);   }
+  50%      { opacity: 1;   transform: translateY(4px); }
 }
