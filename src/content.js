@@ -171,12 +171,44 @@ export const slides = [
       eyebrow: 'KWS-SoC',
       title: 'A fully open RISC-V SoC built specifically for Audio inference.',
       pillars: [
-        { head: '01', lede: 'Open RISC-V core',     body: 'Hazard3, formally re-verified after our edits.' },
-        { head: '02', lede: 'Custom Conv1D accel',  body: 'RTL we designed and verified end-to-end.' },
-        { head: '03', lede: 'HW-aware model',       body: 'Trained knowing exactly what the chip would do.' },
-        { head: '04', lede: 'Custom PCB',           body: "Fabricated when the dev board wasn't enough." },
-        { head: '05', lede: 'One open toolchain',   body: 'Nix, Verilator, Yosys, OpenOCD, GDB.' },
+        {
+          head: '01', lede: 'Open RISC-V core',
+          body: 'Hazard3, formally re-verified after our edits.',
+          constraint: {
+            tag: 'Constraint · 01',
+            head: 'RV32IMAC, no FPU',
+            body: 'Hazard3 core at 36 MHz. All math integer-only — int8 / int32.',
+          },
+        },
+        {
+          head: '02', lede: 'Custom Conv1D accel',
+          body: 'RTL we designed and verified end-to-end.',
+        },
+        {
+          head: '03', lede: 'HW-aware model',
+          body: 'Trained knowing exactly what the chip would do.',
+          constraint: {
+            tag: 'Constraint · 02',
+            head: '64 KB SRAM budget',
+            body: 'NNoM static buffer fits inside this; weights live in XIP flash.',
+          },
+        },
+        {
+          head: '04', lede: 'Custom PCB',
+          body: "Fabricated when the dev board wasn't enough.",
+        },
+        {
+          head: '05', lede: 'One open toolchain',
+          body: 'Nix, Verilator, Yosys, OpenOCD, GDB.',
+          constraint: {
+            tag: 'Constraint · 03',
+            head: 'Open toolchain',
+            body: 'Nix · Verilator · Yosys · OpenOCD · GDB — reproducible from source.',
+          },
+        },
       ],
+      titleInitial: 'A fully open RISC-V SoC built specifically for Audio inference.',
+      titleConstraints: 'A fully open RISC-V SoC, has its constraints.',
       callout: "We didn't adapt a model to fit a chip. We built both to fit eachother.",
     },
   },
@@ -212,7 +244,10 @@ export const slides = [
         { label: 'Hazard3 Core', sub: 'RV32IMAC · 36 MHz · i+d ports' },
         { label: 'JTAG DTM',     sub: 'hazard3_dm + DTM', style: { width: 269, margin: '0 0 0 -18px' } },
         { label: 'SRAM',         sub: 'ahb_sync_sram · 64 KB', style: { width: 769 } },
-        { label: 'QSPI XIP cache', sub: 'peris/xip · ro_cache.v', variant: 'accent' },
+        { stack: [
+          { label: 'QSPI XIP Flash Controller', sub: 'peris/xip · qspi_flash_ctrl.v', variant: 'accent-light' },
+          { label: 'QSPI XIP cache',            sub: 'peris/xip · ro_cache.v',        variant: 'accent' },
+        ] },
       ],
       bus: 'AHB-Lite system bus · 32-bit · busfabric/',
       busHint: 'press → to expand',
@@ -222,7 +257,6 @@ export const slides = [
         { label: 'APB bridge',        sub: 'AHBL → APB · control + status' },
       ],
       peripherals: [
-        { label: 'Conv1D config', sub: '0x4000_C000 · 7 regs', variant: 'accent' },
         { label: 'I²S RX + FIFO', sub: 'peris/i2s · INMP441',  variant: 'accent' },
         { label: 'UART',          sub: 'libfpga · 115200 8N1' },
         { label: 'RV Timer',      sub: 'mtime / mtimecmp' },
@@ -287,12 +321,14 @@ export const slides = [
     content: {
       kind: 'Hardware',
       eyebrow: 'Real hardware, real noise',
-      title: 'We designed and fabricated our own board.',
-      bodyOneHTML: 'The INMP441 on the DE10-Standard\'s GPIO header was corrupted by power-rail noise. The mic data was wrong. <strong style="color: var(--ink);">You cannot retrain your way out of physics.</strong>',
-      bodyTwo: 'So we designed a custom PCB — proper decoupling, clean ground plane, INMP441 correctly housed. The result: a clean I²S signal and the path to 95 % accuracy on real mic data.',
+      title: 'We designed and fabricated our own Dev board.',
+      bodyOneHTML: 'For our Design to interface with external peripheries and debuggers we were using regular Breadboards and veroboards, we suffered from signal integrity and noise issues at high frequencies, <strong>we needed to grow out of our dev boards and upgrade.</strong>',
+      bodyTwo: 'So we designed a custom PCB, clean ground plane. The result: a clean I²S signal and clean clocks.',
       callout: 'When the hardware fails you, you fix the hardware.',
-      imageSrc: '/assets/pcb.svg',
+      imageSrc: 'assets/pcb.svg',
       imageAlt: 'KWS-SoC custom PCB schematic',
+      actualImageSrc: 'assets/actual_pcb.jpg',
+      actualImageAlt: 'Photograph of the fabricated KWS-SoC dev board',
     },
   },
 

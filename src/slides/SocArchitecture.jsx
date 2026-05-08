@@ -106,8 +106,33 @@ export default function SocArchitecture() {
       <div className={`soc-grid ${crossbar ? 'soc-grid--crossbar' : ''}`}
            style={{ display: 'grid', gridTemplateColumns: '1fr', gap: 16, maxWidth: 1700, textAlign: 'center' }}>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: 16 }}>
-          {c.rowOne.map((b) => (
-            <Block key={b.label} variant={b.variant} sub={b.sub} style={b.style}>{b.label}</Block>
+          {c.rowOne.map((b, i) => (
+            b.stack ? (
+              // Stacked cell — wrap the two halves in their own container
+              // sized to 100% so it tracks the grid row's height (driven by
+              // the neighbouring full-height blocks). Each child overrides
+              // .blk { height: var(--block-h) } via flex sizing so they
+              // split the container exactly in half.
+              <div key={`stack-${i}`} style={{
+                height: '100%',
+                display: 'flex', flexDirection: 'column',
+                boxSizing: 'border-box',
+              }}>
+                {b.stack.map((s) => (
+                  <Block key={s.label} variant={s.variant} sub={s.sub}
+                         className="blk--stacked"
+                         style={{
+                           flex: '1 1 0',
+                           height: 'auto', minHeight: 0,
+                           boxSizing: 'border-box',
+                         }}>
+                    {s.label}
+                  </Block>
+                ))}
+              </div>
+            ) : (
+              <Block key={b.label} variant={b.variant} sub={b.sub} style={b.style}>{b.label}</Block>
+            )
           ))}
         </div>
         <div className="blk muted bus" onClick={() => setCrossbar((v) => !v)}>
@@ -128,7 +153,11 @@ export default function SocArchitecture() {
         </div>
         <div style={{ display: 'grid', gridTemplateColumns: '1.4fr 1fr', gap: 16 }}>
           <div />
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16, textAlign: 'center' }}>
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: `repeat(${c.peripherals.length}, 1fr)`,
+            gap: 16, textAlign: 'center',
+          }}>
             {c.peripherals.map((b) => (
               <Block key={b.label} variant={b.variant} sub={b.sub}>{b.label}</Block>
             ))}

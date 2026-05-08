@@ -115,10 +115,16 @@ function AccessAxis({ step }) {
 }
 
 // ── One cache lane (Naive or NNoM) ─────────────────────────────────────────
-function Lane({ kind, step }) {
+// `step` is the lane-local 0..7 step, or null when the lane is waiting its
+// turn (initial empty state). `running` controls the highlighting.
+function Lane({ kind, step, running }) {
   const isNnom = kind === 'nnom';
   const STEPS = isNnom ? NNOM_STEPS : NAIVE_STEPS;
-  const cur = STEPS[Math.min(step, STEPS.length - 1)];
+  const idle = step == null;
+  const cur = idle
+    // Idle lane: all slots empty, no active request, neutral caption.
+    ? { req: null, slots: ['—', '—', '—', '—'], victim: null, cap: isNnom ? 'waiting…' : 'waiting…' }
+    : STEPS[Math.min(step, STEPS.length - 1)];
 
   // Victim buffer width spans the four slots so it reads as one wide line.
   const fourWide = SLOT_BOX.w * 4 + 12 * 3;
@@ -128,7 +134,11 @@ function Lane({ kind, step }) {
   const showApbHint = isNnom && step === 2;
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
+    <div style={{
+      display: 'flex', flexDirection: 'column', gap: 18,
+      opacity: idle && !running ? 0.42 : 1,
+      transition: 'opacity 400ms ease',
+    }}>
       {/* Lane title */}
       <div style={{ display: 'flex', alignItems: 'baseline', gap: 14 }}>
         <div style={{
@@ -139,10 +149,25 @@ function Lane({ kind, step }) {
         <div style={{
           fontSize: 14, color: 'var(--color-ink-mute)',
         }}>direct-mapped · 4 slots{isNnom ? ' + victim buffer' : ''}</div>
+        {running && (
+          <div style={{
+            marginLeft: 'auto',
+            fontFamily: 'var(--font-mono)', fontSize: 11,
+            letterSpacing: '0.14em', textTransform: 'uppercase',
+            color: 'var(--color-accent)', display: 'flex', alignItems: 'center', gap: 6,
+          }}>
+            <span style={{
+              width: 8, height: 8, background: 'var(--color-accent)',
+              borderRadius: '50%',
+              animation: 'xip-status-blink 700ms steps(2, end) infinite',
+            }} />
+            running
+          </div>
+        )}
       </div>
 
       {/* Access pattern axis */}
-      <AccessAxis step={step} />
+      <AccessAxis step={idle ? -1 : step} />
 
       {/* Cache slot row */}
       <div>
@@ -211,7 +236,8 @@ function Lane({ kind, step }) {
         background: 'var(--color-paper)',
         border: '1px solid var(--line-hairline)',
         borderLeft: `3px solid ${
-          cur.cap.startsWith('hit') ? '#3a7bd5'
+          idle ? 'var(--color-ink-mute)'
+          : cur.cap.startsWith('hit') ? '#3a7bd5'
           : cur.cap.startsWith('miss') ? 'var(--color-ink)'
           : 'var(--color-accent)'
         }`,
@@ -220,7 +246,7 @@ function Lane({ kind, step }) {
           fontFamily: 'var(--font-mono)', fontSize: 11,
           letterSpacing: '0.14em', textTransform: 'uppercase',
           color: 'var(--color-ink-mute)',
-        }}>step {step + 1} / 8 · req {cur.req}</span>
+        }}>{idle ? '— / 8' : `step ${step + 1} / 8 · req ${cur.req}`}</span>
         <span style={{
           fontFamily: 'var(--font-mono)', fontSize: 18, fontWeight: 600,
           color: 'var(--color-ink)',
@@ -263,12 +289,24 @@ function Tally({ kind }) {
   );
 }
 
+// Total playback: 8 steps for naive (0..7), then 8 steps for NNoM (8..15).
+// While naive plays, NNoM sits idle. Once naive finishes, NNoM kicks off and
+// naive freezes at its final state for the rest of the slide.
+const NAIVE_LEN = 8;
+const NNOM_LEN  = 8;
+const TOTAL     = NAIVE_LEN + NNOM_LEN; // 16
+const FINAL     = TOTAL - 1;            // 15
+
 export default function XipPrefetch() {
-  // Both lanes share the same step counter — they advance in lockstep so
-  // the audience can compare cache state per request.
   const [step, setStep] = useState(0);
   const [active, setActive] = useState(false);
   const rootRef = useRef(null);
+
+  // Lane-local step indexes derived from the master step.
+  const naiveStep = step < NAIVE_LEN ? step : NAIVE_LEN - 1;
+  const nnomStep  = step < NAIVE_LEN ? null : step - NAIVE_LEN;
+  const naiveRunning = step < NAIVE_LEN;
+  const nnomRunning  = step >= NAIVE_LEN && step < TOTAL;
 
   // Track slide-active state.
   useEffect(() => {
@@ -285,17 +323,20 @@ export default function XipPrefetch() {
     return () => document.removeEventListener('slidechange', onSlideChange);
   }, []);
 
-  // Auto-advance the step counter while the slide is active. Pauses at the
-  // last step so the audience can read the final state.
+  // Auto-advance. A longer pause sits between the two lanes so the audience
+  // can register that naive finished before NNoM starts.
   useEffect(() => {
     if (!active) return;
-    if (step >= 7) return;
-    const id = setTimeout(() => setStep((s) => Math.min(s + 1, 7)), 1500);
+    if (step >= FINAL) return;
+    // Step from NAIVE_LEN - 1 (final naive) → NAIVE_LEN (first NNoM) gets a
+    // longer hold so the comparison reads cleanly.
+    const isHandover = step === NAIVE_LEN - 1;
+    const delay = isHandover ? 2500 : 1500;
+    const id = setTimeout(() => setStep((s) => Math.min(s + 1, FINAL)), delay);
     return () => clearTimeout(id);
   }, [active, step]);
 
-  // Right arrow nudges forward through the steps; left arrow rewinds.
-  // Pressing right past step 7 advances the deck (default behaviour).
+  // Right/left arrow scrubs through the master step.
   useEffect(() => {
     const onKey = (e) => {
       if (e.metaKey || e.ctrlKey || e.altKey) return;
@@ -303,7 +344,7 @@ export default function XipPrefetch() {
       if (!section?.hasAttribute('data-deck-active')) return;
       const fwd  = e.key === 'ArrowRight' || e.key === 'PageDown' || e.key === ' ' || e.key === 'Spacebar';
       const back = e.key === 'ArrowLeft'  || e.key === 'PageUp';
-      if (fwd && step < 7) {
+      if (fwd && step < FINAL) {
         e.preventDefault(); e.stopPropagation();
         setStep(step + 1);
       } else if (back && step > 0) {
@@ -330,11 +371,11 @@ export default function XipPrefetch() {
           gap: 56, flex: 1, minHeight: 0,
         }}>
           <div style={{ display: 'flex', flexDirection: 'column' }}>
-            <Lane kind="naive" step={step} />
+            <Lane kind="naive" step={naiveStep} running={naiveRunning} />
             <Tally kind="naive" />
           </div>
           <div style={{ display: 'flex', flexDirection: 'column' }}>
-            <Lane kind="nnom" step={step} />
+            <Lane kind="nnom" step={nnomStep} running={nnomRunning} />
             <Tally kind="nnom" />
           </div>
         </div>

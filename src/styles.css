@@ -356,6 +356,22 @@ h1, h2, h3, h4, p { margin: 0; }
   filter: brightness(1.06);
 }
 
+/* Stacked half-height blocks (e.g. QSPI controller + cache pair) — tighter
+ * type so the label + sub fit inside half a row block. */
+.blk.blk--stacked {
+  font-size: 15px;
+  padding: 4px 14px;
+  overflow: hidden;
+}
+.blk.blk--stacked .sub {
+  font-size: 11px;
+  margin-top: 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+
 /* ── Slide 06: SoC diagram + crossbar expansion ──────────────────────────── */
 .soc-grid {
   --block-h: 110px;

@@ -6,7 +6,6 @@ import VoiceEverywhere from './VoiceEverywhere.jsx';
 import KwsNlp from './KwsNlp.jsx';
 import CommercialReality from './CommercialReality.jsx';
 import WeDid from './WeDid.jsx';
-import Constraints from './Constraints.jsx';
 import SocArchitecture from './SocArchitecture.jsx';
 import MemoryMap from './MemoryMap.jsx';
 import Verification from './Verification.jsx';
@@ -32,7 +31,6 @@ export const slideComponents = [
   KwsNlp,
   CommercialReality,
   WeDid,
-  Constraints,
   SocArchitecture,
   MemoryMap,
   Verification,
