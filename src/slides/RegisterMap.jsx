@@ -17,60 +17,61 @@ const PAPER  = 'var(--color-paper)';
 const LINE   = 'var(--line-hairline)';
 const MONO   = 'var(--font-mono)';
 
-// One scalar MAC iteration on Hazard3 with MULDIV_UNROLL=1.
-// 8 MACs per output × 3 outputs ≈ 960 cycles.
+// One scalar MAC iteration on Hazard3, build with MUL_FAST=0 / MULDIV_UNROLL=1.
+// Each iteration ≈ 37 cycles · 8 MACs/output · 3 outputs + setup ≈ ~880 cycles.
 const CPU_PROGRAM = [
   'lb   t0, 0(s0)      ; load input byte',
   'lb   t1, 0(s1)      ; load weight byte',
-  'mul  t2, t0, t1     ; ~32 cycles',
+  'mul  t2, t0, t1     ; ~32 cycles (UNROLL=1)',
   'add  a0, a0, t2',
   'addi s0, s0, 1',
   'addi s1, s1, 1',
-  'bne  s0, s8, .L1    ; loop body × 8',
+  'bne  s0, s8, .L1    ; loop body × 8 per output',
   'sra  a0, a0, t3     ; shift',
   'andi a0, a0, 0xff   ; saturate',
   'sb   a0, 0(s2)      ; store output byte',
 ];
 
-// Accelerator FSM trace, with cycle costs from the RTL.
+// Accelerator FSM trace, with cycle costs from the RTL (AHB: one word/cycle).
+// 5 + 5 + 4 + 7 + 7 + 5 + 1 = 34 cycles total.
 const ACCEL_TRACE = [
-  { fsm: 'S_WT_DATA',     desc: 'load 2 weight words',         cycles: 4  },
-  { fsm: 'S_BIAS / SHIFT',desc: 'bias + shift from SRAM',      cycles: 5  },
-  { fsm: 'S_IN_DATA',     desc: 'first patch into BUF A',      cycles: 4  },
-  { fsm: 'S_MAC_OVLP',    desc: 'MAC A · preload B · out[0]',  cycles: 5  },
-  { fsm: 'S_MAC_OVLP',    desc: 'MAC B · preload A · out[1]',  cycles: 5  },
-  { fsm: 'S_MAC',         desc: 'MAC A · out[2]',              cycles: 4  },
-  { fsm: 'S_DONE',        desc: 'IRQ → CPU',                   cycles: 3  },
+  { fsm: 'S_INIT → S_WT_DATA_W',  desc: '2 weight words from XIP',      cycles: 5 },
+  { fsm: 'S_BIAS_DATA / SHIFT',   desc: 'bias + shift from SRAM',       cycles: 5 },
+  { fsm: 'S_IN_DATA · w_pos=0',   desc: 'first patch → BUF A',          cycles: 4 },
+  { fsm: 'S_MAC_OVLP · w_pos=0',  desc: 'MAC A · preload B · out[0]',   cycles: 7 },
+  { fsm: 'S_MAC_OVLP · w_pos=1',  desc: 'MAC B · preload A · out[1]',   cycles: 7 },
+  { fsm: 'S_MAC · w_pos=2',       desc: 'MAC A · no preload · out[2]',  cycles: 5 },
+  { fsm: 'S_DONE',                desc: 'accel_done_irq → CPU',         cycles: 1 },
 ];
 
 // Per-step view of the side-by-side. Each step advances both clocks.
-// CPU clock counts from 0 → 960. Accel clock counts from 0 → 30 then stops.
+// CPU clock counts from 0 → 880. Accel clock counts from 0 → 34 then stops.
 // `cpuPC` indexes into CPU_PROGRAM (which line is "current").
 // `accelStage` indexes into ACCEL_TRACE (which trace row is "current"),
 // or -1 = not started, ACCEL_TRACE.length = done.
 const RUN_STEPS = [
   { cpuCycles:   0, cpuPC: -1, accelCycles:  0, accelStage: -1,
     cap: 'Idle. Press → to run both.',  cpuDone: false, accelDone: false },
-  { cpuCycles:  40, cpuPC:  2, accelCycles:  4, accelStage:  1,
-    cap: 'CPU 1st mul (~32 c).  Accel: weights loaded.',
+  { cpuCycles:  37, cpuPC:  2, accelCycles: 14, accelStage:  3,
+    cap: 'CPU mid 1st MAC (~32 c mul).  Accel: MAC on BUF A, BUF B preloading in parallel.',
     cpuDone: false, accelDone: false },
-  { cpuCycles: 160, cpuPC:  3, accelCycles: 13, accelStage:  3,
-    cap: 'CPU 4th MAC.  Accel: MAC overlap, out[0] written.',
+  { cpuCycles: 294, cpuPC:  9, accelCycles: 28, accelStage:  5,
+    cap: 'CPU finished output[0] (~293 c, 8 MACs).  Accel: starting last MAC for out[2].',
     cpuDone: false, accelDone: false },
-  { cpuCycles: 320, cpuPC:  6, accelCycles: 26, accelStage:  6,
-    cap: 'CPU finishing output[0] (8 MACs).  Accel: all 3 outputs done.',
+  { cpuCycles: 587, cpuPC:  6, accelCycles: 34, accelStage:  6,
+    cap: 'CPU mid output[1].  Accel: IRQ fired — done in 34 cycles, sleeping.',
     cpuDone: false, accelDone: true },
-  { cpuCycles: 960, cpuPC:  9, accelCycles: 30, accelStage:  6,
-    cap: 'CPU finally done.  Accel idle for ~930 cycles.',
+  { cpuCycles: 880, cpuPC:  9, accelCycles: 34, accelStage:  6,
+    cap: 'CPU finally done at ~880 c.  Accel was idle for ~846 cycles.',
     cpuDone: true,  accelDone: true },
 ];
 
 // Final comparison card.
 const TABLE_ROWS = [
-  ['MULs per cycle',                      '< 1',          '4'],
-  ['Cycles per single MAC',               '~40',          '~0.25 peak'],
-  ['Effective MACs per cycle',            '~0.025',       '~1.1 sustained'],
-  ['Toy example · 8 MACs · 3 outputs',    '~960 cycles',  '~30 cycles'],
+  ['MULs per cycle',                      '< 1',           '4'],
+  ['Cycles per single MAC',               '~37',           '~0.25 peak'],
+  ['Effective MACs per cycle',            '~0.027',        '~0.7 sustained'],
+  ['Toy example · 24 MACs · 3 outputs',   '~880 cycles',   '~34 cycles'],
   ['Real model · mel_compact_4blk_ch36 (~5M MACs)',
                                           '195,486,215  (5.43 s)',
                                           '4,644,544  (0.129 s)'],
@@ -79,7 +80,7 @@ const TABLE_ROWS = [
 const FINAL_STEP = RUN_STEPS.length; // last step shows the table
 const TOTAL = RUN_STEPS.length + 1;  // 6 total steps
 
-const CPU_MAX_CYCLES = 960;
+const CPU_MAX_CYCLES = 880;
 
 // ── CPU pane ─────────────────────────────────────────────────────────────
 function CpuPane({ s }) {
@@ -156,7 +157,7 @@ function CpuPane({ s }) {
         <span style={{
           marginLeft: 'auto',
           fontFamily: MONO, fontSize: 12, color: MUTE,
-        }}>~40 cycles / MAC · 8 MACs / output · 3 outputs</span>
+        }}>~37 cycles / MAC · 8 MACs / output · 3 outputs · MUL_FAST=0</span>
       </div>
     </div>
   );
@@ -247,7 +248,7 @@ function AccelPane({ s }) {
         <span style={{
           marginLeft: 'auto',
           fontFamily: MONO, fontSize: 12, color: MUTE,
-        }}>4 MACs/cycle · loads overlapped</span>
+        }}>AHB 1 word/cycle · MAC overlapped with preload</span>
       </div>
     </div>
   );
