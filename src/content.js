@@ -165,11 +165,11 @@ export const slides = [
   {
     id: 'we-did',
     label: 'We Did',
-    notes: 'We did. KWS-SoC is the first fully open RISC-V SoC built specifically for keyword spotting inference. Open core, custom accelerator, model trained knowing the hardware, custom PCB, single open toolchain. We didn\'t adapt a model to fit a chip — we built the chip to fit the model.',
+    notes: 'We did. KWS-SoC is a fully open RISC-V SoC built specifically for keyword spotting inference. Open core, custom accelerator, model trained knowing the hardware, custom PCB, single open toolchain. We didn\'t adapt a model to fit a chip — we built the chip to fit the model.',
     content: {
       kind: 'Thesis',
       eyebrow: 'KWS-SoC',
-      title: 'The first fully open RISC-V SoC built specifically for keyword spotting inference.',
+      title: 'A fully open RISC-V SoC built specifically for Audio inference.',
       pillars: [
         { head: '01', lede: 'Open RISC-V core',     body: 'Hazard3, formally re-verified after our edits.' },
         { head: '02', lede: 'Custom Conv1D accel',  body: 'RTL we designed and verified end-to-end.' },
@@ -177,7 +177,7 @@ export const slides = [
         { head: '04', lede: 'Custom PCB',           body: "Fabricated when the dev board wasn't enough." },
         { head: '05', lede: 'One open toolchain',   body: 'Nix, Verilator, Yosys, OpenOCD, GDB.' },
       ],
-      callout: "We didn't adapt a model to fit a chip. We built the chip to fit the model.",
+      callout: "We didn't adapt a model to fit a chip. We built both to fit eachother.",
     },
   },
 
