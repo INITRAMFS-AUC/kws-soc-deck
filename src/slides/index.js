@@ -20,7 +20,6 @@ import VsOtherModels from './VsOtherModels.jsx';
 import Quantization from './Quantization.jsx';
 import TrainingClosedLoop from './TrainingClosedLoop.jsx';
 import DataGap from './DataGap.jsx';
-import LiveInference from './LiveInference.jsx';
 import PivotAccelerator from './PivotAccelerator.jsx';
 import AcceleratorArchitecture from './AcceleratorArchitecture.jsx';
 import RegisterMap from './RegisterMap.jsx';
@@ -50,7 +49,6 @@ export const slideComponents = [
   TrainingClosedLoop,
   Quantization,
   DataGap,
-  LiveInference,
   PivotAccelerator,
   AcceleratorArchitecture,
   RegisterMap,
