@@ -570,12 +570,9 @@ function FrontEndCompact() {
   );
 }
 
-/* ───────── Front-end EXPANDED — kernels grid + big numbers focused on
-   the stride-16 + MaxPool 4× downsample chain. The numbers ARE the
-   story; the sliding-window viz that used to live here was low-signal
-   and crowded. */
+/* ───────── Front-end EXPANDED — animated sliding window on the left,
+   big-number stride/pool cards on the right. */
 function FrontEndExpanded() {
-  const paths = sincPaths(16);
   return (
     <div style={{ height: '100%', border: '2px solid var(--accent)', background: 'rgba(217,119,87,0.06)', padding: '16px 22px', display: 'flex', flexDirection: 'column', boxSizing: 'border-box' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 10 }}>
@@ -584,27 +581,8 @@ function FrontEndExpanded() {
       </div>
 
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1.35fr', gap: 22, alignItems: 'stretch', flex: 1, minHeight: 0 }}>
-        {/* Left — 16 learnable mel filters. */}
-        <div style={{ display: 'flex', flexDirection: 'column', minHeight: 0 }}>
-          <div style={{ fontFamily: 'var(--font-mono)', fontSize: 16, color: 'var(--ink-mute)', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 6 }}>
-            16 learnable mel filters
-          </div>
-          <div style={{ border: '1px solid var(--ink)', background: 'var(--paper)', padding: '10px 14px', flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column' }}>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '6px 14px', flex: 1, minHeight: 0 }}>
-              {paths.map((d, i) => (
-                <div key={i} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 2, minHeight: 0 }}>
-                  <svg viewBox="0 0 100 48" style={{ width: '100%', height: '70%', maxHeight: 40 }}>
-                    <path d={d} fill="none" stroke="var(--ink)" strokeWidth="1.4" />
-                  </svg>
-                  <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--ink-mute)', letterSpacing: '0.04em' }}>k{i < 10 ? '0' + i : i}</div>
-                </div>
-              ))}
-            </div>
-            <div style={{ fontFamily: 'var(--font-mono)', fontSize: 13, color: 'var(--ink-mute)', marginTop: 6, textAlign: 'center', letterSpacing: '0.04em' }}>
-              low frequency ← mel scale → high frequency
-            </div>
-          </div>
-        </div>
+        {/* Left — animated sliding-window over the raw waveform. */}
+        <SlidingWindowViz />
 
         {/* Right — 2x2 big-number cards: stride · pool · combined downsample · params/MACs. */}
         <div style={{ display: 'flex', flexDirection: 'column', minHeight: 0 }}>
@@ -635,6 +613,185 @@ function FrontEndExpanded() {
               body="The whole front-end fits in a kilobyte of weights — and lands ~516 K MACs (53 % of the model)."
             />
           </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ───────── Sliding-window animation for the front-end zoom.
+   A long waveform sits at the top of the panel; a K=65 window box
+   slides left → right in stride-16 steps. As it lands on each step,
+   a 16-tall column of mel-feature bars pops in below — building up a
+   feature map cell by cell. Loop with a brief pause at the end. ── */
+
+const SW_STEPS      = 12;       // visible window positions (real model has 124)
+const SW_STEP_MS    = 520;      // dwell per position (= window+features animate)
+const SW_END_PAUSE  = 1200;     // hold the full feature map for a beat
+const SW_RESET_MS   = 320;      // fade-out before the next loop
+
+/* Deterministic 12×16 magnitude grid — looks varied without re-rendering
+   different values on every paint. */
+const SW_MAGS = Array.from({ length: SW_STEPS }, (_, t) =>
+  Array.from({ length: 16 }, (_, m) => {
+    const a = Math.sin((t * 1.7 + m * 0.9) * 0.6) * 0.5 + 0.5;
+    const b = Math.sin((t * 0.6 - m * 1.3) * 0.4) * 0.5 + 0.5;
+    return 0.25 + 0.7 * (a * 0.6 + b * 0.4);
+  })
+);
+
+function SlidingWindowViz() {
+  /* `step` runs through 0..SW_STEPS-1 (window slides), then SW_STEPS
+     (hold full grid), then SW_STEPS+1 (fade out → reset). */
+  const [step, setStep] = useState(0);
+
+  useEffect(() => {
+    let timer;
+    const tick = () => {
+      setStep((s) => {
+        const next = s + 1;
+        if (next > SW_STEPS + 1) return 0;
+        return next;
+      });
+      const dwell =
+        step === SW_STEPS ? SW_END_PAUSE :
+        step === SW_STEPS + 1 ? SW_RESET_MS :
+        SW_STEP_MS;
+      timer = setTimeout(tick, dwell);
+    };
+    timer = setTimeout(tick, SW_STEP_MS);
+    return () => clearTimeout(timer);
+  }, [step]);
+
+  const inSlide  = step < SW_STEPS;
+  const inHold   = step === SW_STEPS;
+  const inReset  = step === SW_STEPS + 1;
+  const windowAt = inSlide ? step : SW_STEPS - 1;
+  const featuresShown = inReset ? 0 : Math.min(step + 1, SW_STEPS);
+
+  /* Geometry — the SVG / feature row share an x-axis mapping: each step
+     occupies 1/SW_STEPS of the panel width. Window box width = 2/SW_STEPS
+     so it visibly spans more than one stride (K=65 vs stride 16). */
+  const stepFrac = 100 / SW_STEPS;
+  const windowLeftPct = windowAt * stepFrac;
+  const windowWidthPct = stepFrac * 2.2;
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', minHeight: 0 }}>
+      <div style={{ fontFamily: 'var(--font-mono)', fontSize: 16, color: 'var(--ink-mute)', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 6 }}>
+        Sliding the window over raw audio
+      </div>
+
+      <div style={{
+        position: 'relative',
+        border: '1px solid var(--ink)',
+        background: 'var(--paper)',
+        padding: '14px 18px 12px',
+        flex: 1,
+        minHeight: 0,
+        display: 'flex',
+        flexDirection: 'column',
+      }}>
+        {/* Waveform with the sliding window box. */}
+        <div style={{ position: 'relative', height: 110, flex: '0 0 auto' }}>
+          <svg viewBox="0 0 600 110" preserveAspectRatio="none" style={{ width: '100%', height: '100%', display: 'block' }}>
+            <path
+              d="M0,55 Q15,30 30,65 T70,50 Q90,15 110,75 T160,35 Q180,5 200,75 T260,45 Q290,15 320,70 T380,50 Q410,30 440,65 T500,50 Q540,40 600,55"
+              fill="none" stroke="var(--ink)" strokeWidth="1.6"
+            />
+          </svg>
+
+          {/* Sliding window — accent box overlays the waveform. */}
+          <div style={{
+            position: 'absolute',
+            top: -2,
+            bottom: -2,
+            left: `${windowLeftPct}%`,
+            width: `${windowWidthPct}%`,
+            background: 'rgba(217,119,87,0.18)',
+            border: '1.5px solid var(--accent)',
+            transition: `left ${SW_STEP_MS - 100}ms cubic-bezier(0.16, 1, 0.3, 1), opacity 220ms ease`,
+            opacity: inReset ? 0 : 1,
+            pointerEvents: 'none',
+          }}>
+            <div style={{
+              position: 'absolute',
+              top: -22,
+              left: '50%',
+              transform: 'translateX(-50%)',
+              fontFamily: 'var(--font-mono)',
+              fontSize: 11,
+              color: 'var(--accent)',
+              fontWeight: 600,
+              whiteSpace: 'nowrap',
+            }}>K=65</div>
+          </div>
+        </div>
+
+        {/* Connector arrow + extract caption. */}
+        <div style={{
+          height: 18,
+          fontFamily: 'var(--font-mono)',
+          fontSize: 12,
+          color: 'var(--accent)',
+          textAlign: 'center',
+          letterSpacing: '0.08em',
+          textTransform: 'uppercase',
+          marginTop: 4,
+          opacity: inSlide || inHold ? 1 : 0,
+          transition: 'opacity 220ms ease',
+        }}>
+          ↓ extract 16 features
+        </div>
+
+        {/* Feature map — one column per window position, 16 mel-band cells per column. */}
+        <div style={{
+          flex: 1,
+          minHeight: 0,
+          display: 'grid',
+          gridTemplateColumns: `repeat(${SW_STEPS}, 1fr)`,
+          gap: 3,
+          alignItems: 'stretch',
+          marginTop: 4,
+        }}>
+          {Array.from({ length: SW_STEPS }, (_, t) => {
+            const visible = t < featuresShown;
+            const isFresh = inSlide && t === windowAt;
+            return (
+              <div key={t} style={{
+                display: 'flex',
+                flexDirection: 'column',
+                gap: 2,
+                opacity: visible ? 1 : 0,
+                transform: visible
+                  ? (isFresh ? 'scale(1.04)' : 'scale(1)')
+                  : 'scale(0.78) translateY(6px)',
+                transition: `opacity 280ms ease, transform 280ms cubic-bezier(0.16, 1, 0.3, 1)`,
+                transformOrigin: 'top center',
+              }}>
+                {SW_MAGS[t].map((m, b) => (
+                  <div key={b} style={{
+                    flex: 1,
+                    minHeight: 3,
+                    background: isFresh ? 'var(--accent)' : 'var(--ink)',
+                    opacity: 0.18 + 0.78 * m,
+                    transition: 'background 320ms ease',
+                  }} />
+                ))}
+              </div>
+            );
+          })}
+        </div>
+
+        <div style={{
+          fontFamily: 'var(--font-mono)',
+          fontSize: 12,
+          color: 'var(--ink-mute)',
+          marginTop: 8,
+          textAlign: 'center',
+          letterSpacing: '0.04em',
+        }}>
+          K=65 window · stride 16 · 124 frames out · 16 mel bands per frame
         </div>
       </div>
     </div>
