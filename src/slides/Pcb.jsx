@@ -47,17 +47,75 @@ export default function Pcb() {
     <SlideFrame slideStyle={{ paddingRight: 60 }}>
       <div ref={rootRef} style={{
         display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 60,
-        height: '100%', alignItems: 'center', marginTop: 40,
+        height: '100%', alignItems: 'start', paddingTop: 8,
       }}>
-        <div>
+        <div style={{ position: 'relative', height: 720 }}>
           <div className="eyebrow">{c.eyebrow}</div>
-          <h1 className="title" style={{ marginBottom: 30 }}>{c.title}</h1>
-          <p className="body" style={{ marginBottom: 24 }}
-             dangerouslySetInnerHTML={{ __html: c.bodyOneHTML }} />
-          <p className="body" style={{ marginBottom: 30 }}>{c.bodyTwo}</p>
-          <Callout style={{ fontSize: 22, padding: '18px 24px' }}>{c.callout}</Callout>
+          <h1 className="title" style={{ marginBottom: 24 }}>{c.title}</h1>
+
+          {/* Both panes share the same absolute box so the layout never
+              reflows during the crossfade — only opacity + transform change. */}
+          <div style={{ position: 'relative', height: 540 }}>
+            {/* Step 0 — design narrative */}
+            <div style={{
+              position: 'absolute', inset: 0,
+              opacity: step === 0 ? 1 : 0,
+              transform: step === 0 ? 'translateY(0)' : 'translateY(-6px)',
+              transition: `opacity 600ms ${EASE}, transform 600ms ${EASE}`,
+              pointerEvents: step === 0 ? 'auto' : 'none',
+              willChange: 'opacity, transform',
+            }}>
+              <p className="body" style={{ marginBottom: 24 }}
+                 dangerouslySetInnerHTML={{ __html: c.bodyOneHTML }} />
+              <p className="body" style={{ marginBottom: 30 }}>{c.bodyTwo}</p>
+              <Callout style={{ fontSize: 22, padding: '18px 24px' }}>{c.callout}</Callout>
+            </div>
+
+            {/* Step 1 — peripheral list */}
+            <div style={{
+              position: 'absolute', inset: 0,
+              opacity: step === 1 ? 1 : 0,
+              transition: `opacity 600ms ${EASE} 80ms`,
+              pointerEvents: step === 1 ? 'auto' : 'none',
+              willChange: 'opacity',
+            }}>
+              <p className="body" style={{ marginBottom: 24 }}>{c.peripheralsLede}</p>
+              <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
+                {(c.peripherals || []).map((p, i) => (
+                  <li key={p.name} style={{
+                    display: 'flex', alignItems: 'baseline', gap: 16,
+                    padding: '14px 0',
+                    borderTop: i === 0 ? '1px solid var(--line-hairline)' : 'none',
+                    borderBottom: '1px solid var(--line-hairline)',
+                    opacity: step === 1 ? 1 : 0,
+                    transform: step === 1 ? 'translateX(0)' : 'translateX(-10px)',
+                    transition:
+                      `opacity 520ms ${EASE} ${220 + i * 90}ms, ` +
+                      `transform 520ms ${EASE} ${220 + i * 90}ms`,
+                    willChange: 'opacity, transform',
+                  }}>
+                    <span style={{
+                      fontFamily: 'var(--font-mono)', fontSize: 12,
+                      letterSpacing: '0.14em', color: 'var(--color-accent)',
+                      minWidth: 28,
+                    }}>{String(i + 1).padStart(2, '0')}</span>
+                    <span style={{ fontSize: 22, fontWeight: 500, color: 'var(--color-ink)' }}>
+                      {p.name}
+                    </span>
+                    <span style={{
+                      fontSize: 16, color: 'var(--color-ink-mute)',
+                      marginLeft: 'auto', textAlign: 'right',
+                    }}>
+                      {p.detail}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </div>
+
           <div style={{
-            marginTop: 18,
+            marginTop: 24,
             fontFamily: 'var(--font-mono)', fontSize: 13,
             letterSpacing: '0.12em', textTransform: 'uppercase',
             color: 'var(--color-ink-mute)',
@@ -83,20 +141,14 @@ export default function Pcb() {
           }}>
             {step === 0 ? '01 · Design' : '02 · Fabricated'}
           </div>
-          {/* Schematic (design) — sits at scale 2.4 in step 0, then keeps
-              zooming in (and fades out) on the way to step 1, so the design
-              appears to dive into the fabricated photo behind it. */}
+          {/* KiCad layout — fit naturally; cross-fades to fabricated photo. */}
           <img src={designSrc} alt={c.imageAlt}
                style={{
                  position: 'absolute', inset: 0,
                  width: '100%', height: '100%',
                  objectFit: 'contain', objectPosition: 'center',
-                 transform: step === 0 ? 'scale(2.4)' : 'scale(0.6)',
-                 transformOrigin: 'center center',
                  opacity: step === 0 ? 1 : 0,
-                 transition:
-                   `opacity 700ms ${EASE}, ` +
-                   `transform 900ms ${EASE}`,
+                 transition: `opacity 700ms ${EASE}`,
                }} />
           {/* Actual fabricated board + label callouts — emerges from a
               slightly zoomed-in pre-state into its natural scale, in
