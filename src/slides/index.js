@@ -16,6 +16,7 @@ import VsOtherModels from './VsOtherModels.jsx';
 import WhyNnom from './WhyNnom.jsx';
 import OurData from './OurData.jsx';
 import Quantization from './Quantization.jsx';
+import UseCases from './UseCases.jsx';
 import DataGap from './DataGap.jsx';
 import PivotAccelerator from './PivotAccelerator.jsx';
 import AcceleratorArchitecture from './AcceleratorArchitecture.jsx';
@@ -43,6 +44,7 @@ export const slideComponents = [
   WhyNnom,
   OurData,
   Quantization,
+  UseCases,
   DataGap,
   PivotAccelerator,
   AcceleratorArchitecture,
