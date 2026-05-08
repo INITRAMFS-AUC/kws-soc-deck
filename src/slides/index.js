@@ -13,6 +13,7 @@ import PivotModel from './PivotModel.jsx';
 import StandardMFCC from './StandardMFCC.jsx';
 import LiteratureComparison from './LiteratureComparison.jsx';
 import VsOtherModels from './VsOtherModels.jsx';
+import WhyNnom from './WhyNnom.jsx';
 import Quantization from './Quantization.jsx';
 import DataGap from './DataGap.jsx';
 import PivotAccelerator from './PivotAccelerator.jsx';
@@ -37,6 +38,7 @@ export const slideComponents = [
   StandardMFCC,
   LiteratureComparison,
   VsOtherModels,
+  WhyNnom,
   Quantization,
   DataGap,
   PivotAccelerator,

@@ -66,7 +66,7 @@ export default function DataGap() {
   const big = phase === 0;
 
   return (
-    <SlideFrame topLeft="14 · Model">
+    <SlideFrame topLeft="15 · Model">
       <div ref={rootRef} style={{ marginTop: 32 }}>
         <div className="eyebrow">The real-world gap</div>
         <h1 className="title" style={{ marginBottom: 12, maxWidth: 1700 }}>

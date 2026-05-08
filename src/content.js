@@ -399,6 +399,28 @@ export const slides = [
     content: { kind: 'Model' },
   },
 
+  // Why NNoM — bridge from float training to int8-on-chip. ──────────────────
+  {
+    id: 'why-nnom',
+    label: 'Why NNoM',
+    notes: [
+      'Bridge slide. The leaderboard you just saw was a float number. Everything past this slide is int8 — and there is one runtime question to answer first: what executes the network on our chip.',
+      '',
+      'Our SoC is a Hazard3 RV32IMAC running at 36 MHz with 64 KB of SRAM and no FPU. Three constraints: integer-only math, deterministic static memory, and a build that links straight into firmware. NNoM (Neural Network on Microcontroller) is the only embedded inference runtime that satisfies all three without ceremony.',
+      '',
+      'Card 1 — no FPU. Hazard3 has no float unit. Every floating-point op would be a soft-float helper call into libgcc — large, slow, hard to predict cycle-wise. NNoM does everything in int8 weights / int8 activations / int32 accumulators with power-of-2 scales, so requantization is a shift, not a divide. No idiv, no soft-float helpers, no tensor of zeros where libgcc choked.',
+      '',
+      'Card 2 — 64 KB SRAM, no malloc. NNoM declares all tensor buffers at compile time. We can size the static buffer once, link it, and know exactly what fits in our 64 KB SRAM. There is no "tensor arena" to grow at runtime, no fragmentation, no surprise OOM mid-inference. Weights live in XIP flash and are streamed by the cache prefetcher (slide 22).',
+      '',
+      'Card 3 — codegen, not interpreter. The trained Keras model goes through nnom_generate_model and out comes a single weights.h that we link straight into kws_nnom_main.c. Same C source compiles for the host (test harness) and for the SoC (firmware). Bit-identical inference both places — no "works in sim, breaks on chip".',
+      '',
+      'Why NNoM and not CMSIS-NN, TFLite-Micro, X-CUBE-AI? Open source, small enough that we could read every line, no Cortex-M dependencies (we are RISC-V), and we needed to patch the cache prefetcher to know about NNoM\'s exact weight layout — not something a closed runtime would let us do.',
+      '',
+      'Bridge to next slide: NNoM gives us the runtime. We still need to get the trained float weights into NNoM\'s int8 format — that is post-training quantization, KL-divergence calibrated, no QAT, no fine-tune. That is next.',
+    ].join('\n'),
+    content: { kind: 'Model' },
+  },
+
   // Quantization ────────────────────────────────────────────────────────────
   {
     id: 'quantization',
