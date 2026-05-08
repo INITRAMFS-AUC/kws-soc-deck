@@ -95,15 +95,46 @@ export default function Pcb() {
                  opacity: step === 0 ? 1 : 0,
                  transition: `opacity 540ms ${EASE}`,
                }} />
-          {/* Actual fabricated board */}
-          <img src={actualSrc} alt={c.actualImageAlt}
-               style={{
-                 position: 'absolute', inset: 0,
-                 width: '100%', height: '100%',
-                 objectFit: 'cover', objectPosition: 'center',
-                 opacity: step === 1 ? 1 : 0,
-                 transition: `opacity 540ms ${EASE}`,
-               }} />
+          {/* Actual fabricated board + label callouts */}
+          <div style={{
+            position: 'absolute', inset: 0,
+            opacity: step === 1 ? 1 : 0,
+            transition: `opacity 540ms ${EASE}`,
+            pointerEvents: step === 1 ? 'auto' : 'none',
+          }}>
+            <img src={actualSrc} alt={c.actualImageAlt}
+                 style={{
+                   position: 'absolute', inset: 0,
+                   width: '100%', height: '100%',
+                   objectFit: 'cover', objectPosition: 'center',
+                 }} />
+            {/* Connector lines (SVG overlay) */}
+            <svg viewBox="0 0 100 100" preserveAspectRatio="none"
+                 style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', pointerEvents: 'none' }}>
+              {(c.labels || []).map((l, i) => (
+                <g key={i}>
+                  <line x1={l.pill.x} y1={l.pill.y} x2={l.target.x} y2={l.target.y}
+                        stroke="var(--color-accent)" strokeWidth="0.25" />
+                  <circle cx={l.target.x} cy={l.target.y} r="0.7"
+                          fill="var(--color-accent)" />
+                </g>
+              ))}
+            </svg>
+            {/* Pill labels */}
+            {(c.labels || []).map((l, i) => (
+              <div key={i} style={{
+                position: 'absolute',
+                left: `${l.pill.x}%`, top: `${l.pill.y}%`,
+                transform: `translate(${l.pill.x > 50 ? '-100%' : '0'}, -50%)`,
+                background: 'var(--color-ink)', color: 'var(--color-cream)',
+                fontFamily: 'var(--font-mono)', fontSize: 13,
+                letterSpacing: '0.06em', whiteSpace: 'nowrap',
+                padding: '6px 10px',
+                borderLeft: l.pill.x <= 50 ? '3px solid var(--color-accent)' : 'none',
+                borderRight: l.pill.x >  50 ? '3px solid var(--color-accent)' : 'none',
+              }}>{l.text}</div>
+            ))}
+          </div>
         </div>
       </div>
     </SlideFrame>

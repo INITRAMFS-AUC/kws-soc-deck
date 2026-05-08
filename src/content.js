@@ -329,6 +329,16 @@ export const slides = [
       imageAlt: 'KWS-SoC custom PCB schematic',
       actualImageSrc: 'assets/actual_pcb.jpg',
       actualImageAlt: 'Photograph of the fabricated KWS-SoC dev board',
+      // Annotation pins on the fabricated-board photo. Tune target {x,y}
+      // (image-relative %) and pill {x,y} (label position %) to match the
+      // photo. Connector line is drawn from pill anchor to target dot.
+      labels: [
+        { text: 'JTAG debugger',         target: { x: 56, y: 32 }, pill: { x: 36,  y: 15  } },
+        { text: 'INMP441 I²S mic',       target: { x: 50, y: 58 }, pill: { x: 44,  y: 92 } },
+        { text: '2 MB XIP Flash',        target: { x: 40, y: 62 }, pill: { x: 4, y: 80 } },
+        { text: 'IDC interface to FPGA', target: { x: 46, y: 48 }, pill: { x: 26, y: 28  } },
+        { text: 'UART to USB', target: { x: 66, y: 52 }, pill: { x: 96, y: 50  } },
+      ],
     },
   },
 
