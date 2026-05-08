@@ -534,30 +534,59 @@ function SummaryCard({ eyebrow, headline, bigNumber, bigLabel, breakdown, accele
     }}>
       <div style={{ fontFamily: 'var(--font-mono)', fontSize: 16, color: accent ? 'var(--accent)' : 'var(--ink-mute)', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 8, fontWeight: accent ? 600 : 500 }}>{eyebrow}</div>
       <div style={{ fontFamily: 'var(--font-sans)', fontSize: 30, fontWeight: 600, marginBottom: 18 }}>{headline}</div>
-      <div style={{ textAlign: 'center', padding: '18px 16px', background: 'var(--paper)', border: '1px solid rgba(26,26,26,0.18)', marginBottom: 14 }}>
-        <div style={{ fontFamily: 'var(--font-mono)', fontSize: 96, fontWeight: 500, letterSpacing: '-0.03em', lineHeight: 1, color: 'var(--ink)' }}>{bigNumber}</div>
-        <div style={{ fontFamily: 'var(--font-mono)', fontSize: 14, color: 'var(--ink-mute)', textTransform: 'uppercase', letterSpacing: '0.14em', marginTop: 8 }}>{bigLabel}</div>
+
+      {/* Big-number card: takes most of the slack so the card has no
+          empty space below the accelerator row. Grows with flex 2.4. */}
+      <div style={{
+        flex: '2.4 1 0',
+        minHeight: 0,
+        textAlign: 'center',
+        padding: '18px 16px',
+        background: 'var(--paper)',
+        border: '1px solid rgba(26,26,26,0.18)',
+        marginBottom: 14,
+        display: 'flex',
+        flexDirection: 'column',
+        justifyContent: 'center',
+      }}>
+        <div style={{ fontFamily: 'var(--font-mono)', fontSize: 110, fontWeight: 500, letterSpacing: '-0.03em', lineHeight: 1, color: 'var(--ink)' }}>{bigNumber}</div>
+        <div style={{ fontFamily: 'var(--font-mono)', fontSize: 14, color: 'var(--ink-mute)', textTransform: 'uppercase', letterSpacing: '0.14em', marginTop: 12 }}>{bigLabel}</div>
       </div>
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 14 }}>
+
+      {/* Breakdown grid: also flexes a little so cells stretch. */}
+      <div style={{ flex: '1 1 0', minHeight: 0, display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 14 }}>
         {breakdown.map((b, i) => (
-          <div key={i} style={{ padding: '12px 16px', border: '1px solid rgba(26,26,26,0.18)', background: 'var(--paper)', textAlign: 'center' }}>
-            <div style={{ fontFamily: 'var(--font-mono)', fontSize: 36, fontWeight: 500, letterSpacing: '-0.02em', lineHeight: 1 }}>{b.value}</div>
-            <div style={{ fontFamily: 'var(--font-mono)', fontSize: 13, color: 'var(--ink-mute)', textTransform: 'uppercase', marginTop: 5 }}>{b.label}</div>
+          <div key={i} style={{
+            padding: '14px 16px',
+            border: '1px solid rgba(26,26,26,0.18)',
+            background: 'var(--paper)',
+            textAlign: 'center',
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'center',
+          }}>
+            <div style={{ fontFamily: 'var(--font-mono)', fontSize: 38, fontWeight: 500, letterSpacing: '-0.02em', lineHeight: 1 }}>{b.value}</div>
+            <div style={{ fontFamily: 'var(--font-mono)', fontSize: 13, color: 'var(--ink-mute)', textTransform: 'uppercase', marginTop: 6 }}>{b.label}</div>
           </div>
         ))}
       </div>
 
-      {/* Accelerator row — the punchline of the comparison. */}
+      {/* Accelerator row — also flexes so its boxes grow to absorb any
+          remaining slack and the card has no dead space at the bottom. */}
       {accelerator && (
-        <div style={{ display: 'grid', gridTemplateColumns: `repeat(${accelerator.length}, 1fr)`, gap: 10, marginBottom: 12 }}>
+        <div style={{ flex: '1 1 0', minHeight: 0, display: 'grid', gridTemplateColumns: `repeat(${accelerator.length}, 1fr)`, gap: 10, marginBottom: 12 }}>
           {accelerator.map((a, i) => {
             const a_accent = a.accent;
             return (
               <div key={i} style={{
-                padding: '12px 14px',
+                padding: '14px 16px',
                 border: a_accent ? '2px solid var(--accent)' : '1.5px solid #c44',
                 background: a_accent ? 'rgba(217,119,87,0.10)' : 'rgba(204,68,68,0.06)',
                 textAlign: 'center',
+                display: 'flex',
+                flexDirection: 'column',
+                justifyContent: 'center',
+                gap: 6,
               }}>
                 <div style={{
                   fontFamily: 'var(--font-mono)',
@@ -566,7 +595,6 @@ function SummaryCard({ eyebrow, headline, bigNumber, bigLabel, breakdown, accele
                   color: a_accent ? 'var(--accent)' : '#c44',
                   textTransform: 'uppercase',
                   letterSpacing: '0.08em',
-                  marginBottom: 4,
                 }}>{a.label}</div>
                 <div style={{
                   fontFamily: 'var(--font-sans)',
@@ -580,7 +608,6 @@ function SummaryCard({ eyebrow, headline, bigNumber, bigLabel, breakdown, accele
         </div>
       )}
 
-      <div style={{ flex: 1 }} />
       <div style={{ fontFamily: 'var(--font-mono)', fontSize: 13, color: 'var(--ink-mute)', textAlign: 'center' }}>{footer}</div>
     </div>
   );
