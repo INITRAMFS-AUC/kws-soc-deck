@@ -110,12 +110,13 @@ function CpuPane({ s }) {
           marginLeft: 'auto',
           fontFamily: MONO, fontSize: 13, letterSpacing: '0.14em',
           textTransform: 'uppercase',
-          color: s.cpuPC >= 0 && !s.cpuDone ? RED : MUTE,
+          color: s.cpuDone ? COOL : s.cpuPC >= 0 ? RED : MUTE,
           display: 'flex', alignItems: 'center', gap: 8,
         }}>
           <span style={{
             width: 10, height: 10, borderRadius: '50%',
-            background: s.cpuPC >= 0 && !s.cpuDone ? RED : 'var(--color-bg-deep)',
+            background: s.cpuDone ? COOL :
+                        s.cpuPC >= 0 ? RED : 'var(--color-bg-deep)',
             animation: s.cpuPC >= 0 && !s.cpuDone
               ? 'xip-status-blink 500ms steps(2, end) infinite' : 'none',
           }} />
@@ -458,7 +459,7 @@ export default function RegisterMap() {
               <span style={{
                 fontFamily: MONO, fontSize: 12, letterSpacing: '0.14em',
                 textTransform: 'uppercase', color: MUTE, minWidth: 110,
-              }}>step {step + 1} / {TOTAL}</span>
+              }}>step {step + 1} / {RUN_STEPS.length}</span>
               <span style={{
                 fontFamily: MONO, fontSize: 18, fontWeight: 600, color: INK,
               }}>{s.cap}</span>

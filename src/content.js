@@ -201,7 +201,7 @@ export const slides = [
           constraint: {
             tag: 'Constraint · 01',
             head: 'RV32IMAC, no FPU',
-            body: 'Hazard3 core at 36 MHz. All math integer-only — int8 / int32.',
+            body: 'Hazard3 core at < 50 MHz (36 MHz), while still meeting < 30 MHz. All math integer-only — int8 / int32.',
           },
         },
         {
