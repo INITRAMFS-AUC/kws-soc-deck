@@ -360,42 +360,11 @@ export const slides = [
     content: { kind: 'Model' },
   },
 
-  // Architecture Detail ──────────────────────────────────────────────────────
-  {
-    id: 'architecture-detail',
-    label: 'Architecture Detail',
-    notes: 'The architecture in detail. 8000 int8 samples in. Conv1D mel front-end with 16 filters, kernel 65, stride 16. Four DS-CNN blocks. Global average pool. Dense head, eleven classes out.',
-    content: {
-      kind: 'Model',
-      eyebrow: 'Layer by layer',
-      title: 'Mel-compact architecture',
-      headers: [
-        { label: 'Layer',          width: 340 },
-        { label: 'Shape · Params', width: 560 },
-        { label: 'Purpose' },
-      ],
-      rows: [
-        [{ cls: 'name', html: 'Input' },                        { html: '8000 × 1 int8' },                                            { cls: 'desc', html: '1 second of audio @ 8 kHz' }],
-        [{ cls: 'name', html: 'Conv1D mel' },                   { html: '16 filters · K=65 · s=16 · BN · ReLU → MaxPool 4×' },        { cls: 'desc', html: 'Learnable bandpass front-end' }],
-        [{ cls: 'name', html: 'Conv block ×4' },                { html: '36 ch · K=3 · BN · ReLU · MaxPool (4×, 2×, —, —)' },          { cls: 'desc', html: 'Feature extraction' }],
-        [{ cls: 'name', html: 'Global Avg Pool' },              { html: '—' },                                                          { cls: 'desc', html: 'Spatial aggregation' }],
-        [{ cls: 'name', html: 'Dense 36 → 16 · ReLU' },         { html: 'L2 = 1e-4' },                                                  { cls: 'desc', html: 'Classification head' }],
-        [{ cls: 'name', html: 'Dense 16 → 11 · Softmax' },      { html: 'L2 = 1e-4' },                                                  { cls: 'desc', html: '11-class logits → output' }],
-      ],
-      stats: [
-        { value: '16.2 KB',     label: 'Flash footprint',  size: 56 },
-        { value: '20.1 KB',     label: 'NNoM static buf',  size: 56 },
-        { value: '0.97 M',      label: 'Total MACs',       size: 56 },
-        { value: '0.30 / 1e-4', label: 'Dropout · L2',     size: 56 },
-      ],
-    },
-  },
-
-  // Literature Comparison ───────────────────────────────────────────────────
+  // Bridge — closest related work (sinc / raw-waveform). ─────────────────────
   {
     id: 'lit-comparison',
     label: 'vs Literature',
-    notes: 'How this model is different. Most published KWS networks — DS-CNN, MobileNet-derived — are 2D convs over a fixed log-mel spectrogram. We stay on the waveform, learn the front-end, keep the body simple, and quantise it INT8 for NNoM. Closest published work: SincNet (Ravanelli 2018) uses learnable sinc filters but at full resolution then pools. LEAF (Google 2021) uses Gabor filters with learnable pooling — heavier and not cleanly INT8-quantisable. Our stride-16 fused filter saves 16× compute up front.',
+    notes: 'Bridge slide. The standard-KWS comparison (DS-CNN, MobileNet on log-mel spectrograms) is already covered by slide 11. Here we sit next to the LEARNABLE-FRONT-END family on raw audio: SincNet (Ravanelli 2018) — sinc bandpass filters at full resolution, no stride fusion, no INT8 path. LEAF (Zeghidour Google 2021) — Gabor filters + learnable per-channel pooling, float-only. M5/M11 (Dai 2017) — pure 1D conv stack on raw audio, ~558K to ~1.79M params. We fuse stride 16 into the sinc kernel for 16× compute saving, ~16K params total, INT8 throughout. Next slide compares us against the general KWS leaderboard on metrics.',
     content: { kind: 'Model' },
   },
 
@@ -403,26 +372,8 @@ export const slides = [
   {
     id: 'vs-models',
     label: 'vs Other Models',
-    notes: '90% accuracy at a fraction of the parameter count. Google Speech Commands benchmark. DS-CNN small at 94.4% with 38K params and 5.4M MACs. TC-ResNet8 at 96.6% with 66K params. MatchboxNet at 97.5% with 140K params. This work: 90.0% with ~16K params and 0.97M MACs. 8.8× fewer params than MatchboxNet, 4.1× fewer than TC-ResNet8, running on a 36 MHz RV32IMAC.',
+    notes: '93% accuracy at a fraction of the parameter count. Google Speech Commands benchmark, ordered descending by accuracy: MatchboxNet 97.5% (~140K params, 7.4M MACs), TC-ResNet8 96.6% (~66K, 6.0M), DS-CNN-small 94.4% (~38K, 5.4M), This work 93.0% (~16K, 0.97M). We sit immediately under DS-CNN — our closest accuracy neighbour. Bars animate on slide entry, staggered top-down. Banbury TinyConv removed: it sat far below in accuracy and added clutter without sharpening the comparison. Callouts: vs MatchboxNet 8.8× fewer params; vs DS-CNN 2.4× fewer params + 5.6× fewer MACs at -1.4 pts accuracy.',
     content: { kind: 'Model' },
-  },
-
-  // Training Closed Loop ─────────────────────────────────────────────────────
-  {
-    id: 'training',
-    label: 'Training Closed Loop',
-    notes: 'Closed-loop training. The model is trained on what the firmware will give it. Dtype-aware augmentation — same script trains float32, int16, int8, with noise calibrated per dtype. NNoM export gives us a weights.h linked into the harness. One harness, two targets — same C source on host and on SoC.',
-    content: {
-      kind: 'Model',
-      eyebrow: 'Closed-loop training',
-      title: 'Trained on what the firmware will give it.',
-      pillars: [
-        { head: '01 · Dtype-aware aug', lede: 'float32 · int16 · int8', bodyHTML: 'Same script trains all three. Random gain (30 %), time-shift (40 %), additive noise calibrated per dtype.' },
-        { head: '02 · NNoM export',     lede: 'Keras → weights.h',      bodyHTML: '<span class="mono">nnom_generate_model</span> → linked into <span class="mono">kws_nnom_main.c</span> → cross-compiled for RV32IMAC.' },
-        { head: '03 · One harness',     lede: 'Two targets',            bodyHTML: 'Same C source on host and on SoC. Identical inference results, different execution environments.' },
-      ],
-      footer: "If the firmware does a thing, the trainer simulates it. That's how we avoid the sim-to-real gap most KWS projects hit.",
-    },
   },
 
   // Quantization ────────────────────────────────────────────────────────────

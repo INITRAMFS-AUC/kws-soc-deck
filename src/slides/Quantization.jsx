@@ -36,7 +36,7 @@ const accuracyBars = [
 
 export default function Quantization() {
   return (
-    <SlideFrame topLeft="16 · Model">
+    <SlideFrame topLeft="14 · Model">
       <div style={{ marginTop: 36 }}>
         <div className="eyebrow">From float32 to int8</div>
         <h1 className="title" style={{ marginBottom: 12 }}>Post-training quantization, KL-divergence calibrated.</h1>

@@ -12,11 +12,9 @@ import I2sDatapath from './I2sDatapath.jsx';
 import Pcb from './Pcb.jsx';
 import PivotModel from './PivotModel.jsx';
 import StandardMFCC from './StandardMFCC.jsx';
-import ArchitectureDetail from './ArchitectureDetail.jsx';
 import LiteratureComparison from './LiteratureComparison.jsx';
 import VsOtherModels from './VsOtherModels.jsx';
 import Quantization from './Quantization.jsx';
-import TrainingClosedLoop from './TrainingClosedLoop.jsx';
 import DataGap from './DataGap.jsx';
 import PivotAccelerator from './PivotAccelerator.jsx';
 import AcceleratorArchitecture from './AcceleratorArchitecture.jsx';
@@ -39,10 +37,8 @@ export const slideComponents = [
   I2sDatapath,
   PivotModel,
   StandardMFCC,
-  ArchitectureDetail,
   LiteratureComparison,
   VsOtherModels,
-  TrainingClosedLoop,
   Quantization,
   DataGap,
   PivotAccelerator,
