@@ -364,7 +364,19 @@ export const slides = [
   {
     id: 'lit-comparison',
     label: 'vs Literature',
-    notes: 'Bridge slide. The standard-KWS comparison (DS-CNN, MobileNet on log-mel spectrograms) is already covered by slide 11. Here we sit next to the LEARNABLE-FRONT-END family on raw audio: SincNet (Ravanelli 2018) — sinc bandpass filters at full resolution, no stride fusion, no INT8 path. LEAF (Zeghidour Google 2021) — Gabor filters + learnable per-channel pooling, float-only. M5/M11 (Dai 2017) — pure 1D conv stack on raw audio, ~558K to ~1.79M params. We fuse stride 16 into the sinc kernel for 16× compute saving, ~16K params total, INT8 throughout. Next slide compares us against the general KWS leaderboard on metrics.',
+    notes: [
+      'Bridge slide — big numbers only on screen. The detail belongs in the talk.',
+      '',
+      'The standard-KWS comparison (DS-CNN, MobileNet on log-mel spectrograms) is already covered by slide 11. Here we narrow in on the LEARNABLE-FRONT-END family on raw audio — three closely related papers, then ours.',
+      '',
+      'SincNet (Ravanelli & Bengio, 2018). Sinc bandpass filters as the first conv layer; only two learnable cutoffs per filter. Built for speaker ID, runs at full waveform resolution then pools downstream. ~22 M total parameters in the standard config. Float throughout, no stride fusion, no INT8 deployment story.',
+      '',
+      'LEAF (Zeghidour et al., Google, 2021). Gabor filters with learnable centre/bandwidth, plus a fully learnable per-channel pooling layer (PCEN-style). Aimed at general audio understanding. ~80 K front-end parameters alone. Heavier compute and float-only — the learnable pooling is not cleanly INT8-quantisable.',
+      '',
+      'M5 / M11 (Dai et al., 2017). Pure 1D conv stack on raw audio — no fixed front-end at all. The model learns from scratch with K=80 first-layer kernels and 5–11 conv blocks. ~558 K parameters for M5, ~1.79 M for M11. No INT8 deployment story.',
+      '',
+      'Ours. Stride 16 fused into the sinc kernel — one op gives both the bandpass and the 16× downsample. Plain MaxPool, plain BN, NNoM-quantisable INT8 end-to-end. ~16 K total parameters — ~35× smaller than M5, two orders of magnitude smaller than SincNet. Built for a 36 MHz RV32IMAC. Next slide: how we score against the general KWS leaderboard.',
+    ].join('\n'),
     content: { kind: 'Model' },
   },
 
