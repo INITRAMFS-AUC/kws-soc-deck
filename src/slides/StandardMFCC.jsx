@@ -257,7 +257,11 @@ export default function StandardMFCC() {
                 { value: '~1.6 M', label: 'MFCC preproc · CPU' },
                 { value: '~5.4 M', label: 'DS-CNN · network' },
               ]}
-              footer="Zhang et al., 2017 · 94.4% on Speech Commands"
+              accelerator={[
+                { label: 'MFCC accelerator', sub: 'separate DSP block needed for the front-end' },
+                { label: 'DS-CNN accelerator', sub: 'separate NN engine needed for the body' },
+              ]}
+              footer="Zhang et al., 2017 · 94.4 % on Speech Commands"
             />
           </FadeView>
         </Box>
@@ -285,6 +289,9 @@ export default function StandardMFCC() {
               breakdown={[
                 { value: '~516 K', label: 'conv1d_mel' },
                 { value: '~451 K', label: '3 conv blocks' },
+              ]}
+              accelerator={[
+                { label: '★ One Conv1D accelerator', sub: 'front-end and body run end-to-end on the same unit', accent: true },
               ]}
               footer="all int8 · one acceleratable datapath"
               accent
@@ -511,8 +518,10 @@ function MfccPipelineContent({ rowIdx }) {
   );
 }
 
-/* ───────── P1 side-by-side summary cards. */
-function SummaryCard({ eyebrow, headline, bigNumber, bigLabel, breakdown, footer, accent }) {
+/* ───────── P1 side-by-side summary cards. The accelerator row at the
+   bottom is the visual contrast: standard stack needs two separate
+   accelerators (one per stage), ours runs end-to-end on one. */
+function SummaryCard({ eyebrow, headline, bigNumber, bigLabel, breakdown, accelerator, footer, accent }) {
   return (
     <div style={{
       height: '100%',
@@ -525,18 +534,52 @@ function SummaryCard({ eyebrow, headline, bigNumber, bigLabel, breakdown, footer
     }}>
       <div style={{ fontFamily: 'var(--font-mono)', fontSize: 16, color: accent ? 'var(--accent)' : 'var(--ink-mute)', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 8, fontWeight: accent ? 600 : 500 }}>{eyebrow}</div>
       <div style={{ fontFamily: 'var(--font-sans)', fontSize: 30, fontWeight: 600, marginBottom: 18 }}>{headline}</div>
-      <div style={{ textAlign: 'center', padding: '20px 16px', background: 'var(--paper)', border: '1px solid rgba(26,26,26,0.18)', marginBottom: 14 }}>
-        <div style={{ fontFamily: 'var(--font-mono)', fontSize: 110, fontWeight: 500, letterSpacing: '-0.03em', lineHeight: 1, color: 'var(--ink)' }}>{bigNumber}</div>
+      <div style={{ textAlign: 'center', padding: '18px 16px', background: 'var(--paper)', border: '1px solid rgba(26,26,26,0.18)', marginBottom: 14 }}>
+        <div style={{ fontFamily: 'var(--font-mono)', fontSize: 96, fontWeight: 500, letterSpacing: '-0.03em', lineHeight: 1, color: 'var(--ink)' }}>{bigNumber}</div>
         <div style={{ fontFamily: 'var(--font-mono)', fontSize: 14, color: 'var(--ink-mute)', textTransform: 'uppercase', letterSpacing: '0.14em', marginTop: 8 }}>{bigLabel}</div>
       </div>
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 12 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 14 }}>
         {breakdown.map((b, i) => (
           <div key={i} style={{ padding: '12px 16px', border: '1px solid rgba(26,26,26,0.18)', background: 'var(--paper)', textAlign: 'center' }}>
-            <div style={{ fontFamily: 'var(--font-mono)', fontSize: 38, fontWeight: 500, letterSpacing: '-0.02em', lineHeight: 1 }}>{b.value}</div>
+            <div style={{ fontFamily: 'var(--font-mono)', fontSize: 36, fontWeight: 500, letterSpacing: '-0.02em', lineHeight: 1 }}>{b.value}</div>
             <div style={{ fontFamily: 'var(--font-mono)', fontSize: 13, color: 'var(--ink-mute)', textTransform: 'uppercase', marginTop: 5 }}>{b.label}</div>
           </div>
         ))}
       </div>
+
+      {/* Accelerator row — the punchline of the comparison. */}
+      {accelerator && (
+        <div style={{ display: 'grid', gridTemplateColumns: `repeat(${accelerator.length}, 1fr)`, gap: 10, marginBottom: 12 }}>
+          {accelerator.map((a, i) => {
+            const a_accent = a.accent;
+            return (
+              <div key={i} style={{
+                padding: '12px 14px',
+                border: a_accent ? '2px solid var(--accent)' : '1.5px solid #c44',
+                background: a_accent ? 'rgba(217,119,87,0.10)' : 'rgba(204,68,68,0.06)',
+                textAlign: 'center',
+              }}>
+                <div style={{
+                  fontFamily: 'var(--font-mono)',
+                  fontSize: 14,
+                  fontWeight: 700,
+                  color: a_accent ? 'var(--accent)' : '#c44',
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.08em',
+                  marginBottom: 4,
+                }}>{a.label}</div>
+                <div style={{
+                  fontFamily: 'var(--font-sans)',
+                  fontSize: 16,
+                  color: 'var(--ink)',
+                  lineHeight: 1.35,
+                }}>{a.sub}</div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
       <div style={{ flex: 1 }} />
       <div style={{ fontFamily: 'var(--font-mono)', fontSize: 13, color: 'var(--ink-mute)', textAlign: 'center' }}>{footer}</div>
     </div>
@@ -550,14 +593,17 @@ function FrontEndCompact() {
     <div style={{ height: '100%', border: '2px solid var(--accent)', background: 'rgba(217,119,87,0.10)', padding: '18px 20px', display: 'flex', flexDirection: 'column', boxSizing: 'border-box' }}>
       <div style={{ fontFamily: 'var(--font-mono)', fontSize: 14, color: 'var(--accent)', textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 600 }}>Front-end</div>
       <div style={{ fontFamily: 'var(--font-sans)', fontSize: 26, fontWeight: 600, margin: '4px 0 12px' }}>conv1d_mel</div>
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '10px 14px', marginBottom: 12 }}>
+
+      {/* Image area — flex:1 + minHeight:0 so the 2x2 SVG grid actually
+          fills whatever vertical space is left after the heading and footer. */}
+      <div style={{ flex: 1, minHeight: 0, display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gridTemplateRows: 'repeat(2, 1fr)', gap: '10px 14px', marginBottom: 14 }}>
         {paths.map((d, i) => (
-          <svg key={i} viewBox="0 0 100 44" style={{ width: '100%', height: 38 }}>
-            <path d={d} fill="none" stroke="var(--accent)" strokeWidth="1.6" />
+          <svg key={i} viewBox="0 0 100 44" preserveAspectRatio="none" style={{ width: '100%', height: '100%', display: 'block' }}>
+            <path d={d} fill="none" stroke="var(--accent)" strokeWidth="1.6" vectorEffect="non-scaling-stroke" />
           </svg>
         ))}
       </div>
-      <div style={{ flex: 1 }} />
+
       <div style={{ fontFamily: 'var(--font-mono)', fontSize: 15, color: 'var(--ink)', lineHeight: 1.55 }}>
         <div>16 learnable mel</div>
         <div>K=65 · stride 16</div>
@@ -575,18 +621,19 @@ function FrontEndCompact() {
 function FrontEndExpanded() {
   return (
     <div style={{ height: '100%', border: '2px solid var(--accent)', background: 'rgba(217,119,87,0.06)', padding: '16px 22px', display: 'flex', flexDirection: 'column', boxSizing: 'border-box' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 10 }}>
-        <div style={{ fontFamily: 'var(--font-mono)', fontSize: 14, color: 'var(--accent)', textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 600 }}>Front-end · zoom · learnable mel filterbank</div>
-        <div style={{ fontFamily: 'var(--font-mono)', fontSize: 14, color: 'var(--ink-mute)' }}>conv1d_mel · K=65 · 1 056 params · ~516 K MACs (53 %)</div>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 12 }}>
+        <div style={{ fontFamily: 'var(--font-mono)', fontSize: 18, color: 'var(--accent)', textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 600 }}>Front-end · zoom · learnable mel filterbank</div>
+        <div style={{ fontFamily: 'var(--font-mono)', fontSize: 17, color: 'var(--ink-mute)' }}>conv1d_mel · K=65 · 1 056 params · ~516 K MACs (53 %)</div>
       </div>
 
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1.35fr', gap: 22, alignItems: 'stretch', flex: 1, minHeight: 0 }}>
         {/* Left — animated sliding-window over the raw waveform. */}
         <SlidingWindowViz />
 
+
         {/* Right — 2x2 big-number cards: stride · pool · combined downsample · params/MACs. */}
         <div style={{ display: 'flex', flexDirection: 'column', minHeight: 0 }}>
-          <div style={{ fontFamily: 'var(--font-mono)', fontSize: 16, color: 'var(--ink-mute)', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 6 }}>
+          <div style={{ fontFamily: 'var(--font-mono)', fontSize: 19, color: 'var(--ink-mute)', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 8 }}>
             What stride and pool buy us
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gridTemplateRows: '1fr 1fr', gap: 14, flex: 1, minHeight: 0 }}>
@@ -730,14 +777,15 @@ function SlidingWindowViz() {
 
         {/* Connector arrow + extract caption. */}
         <div style={{
-          height: 18,
+          height: 22,
           fontFamily: 'var(--font-mono)',
-          fontSize: 12,
+          fontSize: 14,
           color: 'var(--accent)',
           textAlign: 'center',
           letterSpacing: '0.08em',
           textTransform: 'uppercase',
-          marginTop: 4,
+          marginTop: 6,
+          fontWeight: 600,
           opacity: inSlide || inHold ? 1 : 0,
           transition: 'opacity 220ms ease',
         }}>
@@ -785,9 +833,9 @@ function SlidingWindowViz() {
 
         <div style={{
           fontFamily: 'var(--font-mono)',
-          fontSize: 12,
+          fontSize: 14,
           color: 'var(--ink-mute)',
-          marginTop: 8,
+          marginTop: 10,
           textAlign: 'center',
           letterSpacing: '0.04em',
         }}>
@@ -803,15 +851,15 @@ function BigNumCard({ big, label, body, accent }) {
     <div style={{
       border: accent ? '1px solid var(--accent)' : '1px solid var(--ink)',
       background: 'var(--paper)',
-      padding: '14px 18px',
+      padding: '18px 22px',
       display: 'flex',
       flexDirection: 'column',
-      gap: 4,
+      gap: 6,
       minHeight: 0,
     }}>
       <div style={{
         fontFamily: 'var(--font-mono)',
-        fontSize: 44,
+        fontSize: 52,
         fontWeight: 500,
         letterSpacing: '-0.03em',
         lineHeight: 1.05,
@@ -819,7 +867,7 @@ function BigNumCard({ big, label, body, accent }) {
       }}>{big}</div>
       <div style={{
         fontFamily: 'var(--font-mono)',
-        fontSize: 12,
+        fontSize: 14,
         color: 'var(--ink-mute)',
         textTransform: 'uppercase',
         letterSpacing: '0.08em',
@@ -827,9 +875,9 @@ function BigNumCard({ big, label, body, accent }) {
       }}>{label}</div>
       <div style={{
         fontFamily: 'var(--font-sans)',
-        fontSize: 16,
+        fontSize: 18,
         color: 'var(--ink)',
-        lineHeight: 1.35,
+        lineHeight: 1.4,
       }}>{body}</div>
     </div>
   );
@@ -841,23 +889,25 @@ function BodyCompact() {
     <div style={{ height: '100%', border: '1px solid var(--ink)', background: 'var(--paper)', padding: '18px 20px', display: 'flex', flexDirection: 'column', boxSizing: 'border-box' }}>
       <div style={{ fontFamily: 'var(--font-mono)', fontSize: 14, color: 'var(--ink-mute)', textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 600 }}>Body</div>
       <div style={{ fontFamily: 'var(--font-sans)', fontSize: 26, fontWeight: 600, margin: '4px 0 12px' }}>3 × Conv1D</div>
-      <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-around', height: 110, marginBottom: 12 }}>
+
+      {/* Image area — fills the vertical space between title and stats. */}
+      <div style={{ flex: 1, minHeight: 0, display: 'flex', alignItems: 'flex-end', justifyContent: 'space-around', marginBottom: 14, paddingBottom: 4 }}>
         {[
-          { w: 64, label: '31 × 36' },
-          { w: 32, label: '15 × 36' },
-          { w: 32, label: '15 × 36' },
+          { w: 96, hPct: 100, label: '31 × 36' },
+          { w: 48, hPct: 60,  label: '15 × 36' },
+          { w: 48, hPct: 60,  label: '15 × 36' },
         ].map((b, i) => (
-          <div key={i} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6 }}>
-            <div style={{ position: 'relative', width: b.w, height: 95 }}>
-              <div style={{ position: 'absolute', inset: 0, background: 'var(--ink)', opacity: 0.12, transform: 'translate(5px,-5px)' }} />
-              <div style={{ position: 'absolute', inset: 0, background: 'var(--ink)', opacity: 0.25, transform: 'translate(2.5px,-2.5px)' }} />
+          <div key={i} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8, height: '100%', justifyContent: 'flex-end' }}>
+            <div style={{ position: 'relative', width: b.w, height: `${b.hPct}%`, maxHeight: '88%' }}>
+              <div style={{ position: 'absolute', inset: 0, background: 'var(--ink)', opacity: 0.12, transform: 'translate(7px,-7px)' }} />
+              <div style={{ position: 'absolute', inset: 0, background: 'var(--ink)', opacity: 0.25, transform: 'translate(3.5px,-3.5px)' }} />
               <div style={{ position: 'absolute', inset: 0, background: 'var(--ink)' }} />
             </div>
-            <div style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--ink-mute)' }}>{b.label}</div>
+            <div style={{ fontFamily: 'var(--font-mono)', fontSize: 12, color: 'var(--ink-mute)' }}>{b.label}</div>
           </div>
         ))}
       </div>
-      <div style={{ flex: 1 }} />
+
       <div style={{ fontFamily: 'var(--font-mono)', fontSize: 15, color: 'var(--ink)', lineHeight: 1.55 }}>
         <div>36 channels · K=3</div>
         <div>BN · ReLU · pool</div>
@@ -914,26 +964,29 @@ function BodyExpanded() {
 
 /* ───────── Head compact card (overview phases). */
 function HeadCompact() {
+  const bars = [
+    { label: 'yes',   w: '92%', accent: true },
+    { label: 'no',    w: '6%' },
+    { label: 'go',    w: '2%' },
+    { label: 'left',  w: '1%' },
+    { label: '...',   w: '0.5%' },
+  ];
   return (
     <div style={{ height: '100%', border: '1px solid var(--ink)', background: 'var(--paper)', padding: '18px 20px', display: 'flex', flexDirection: 'column', boxSizing: 'border-box' }}>
       <div style={{ fontFamily: 'var(--font-mono)', fontSize: 14, color: 'var(--ink-mute)', textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 600 }}>Head</div>
       <div style={{ fontFamily: 'var(--font-sans)', fontSize: 26, fontWeight: 600, margin: '4px 0 12px' }}>GAP → Dense → Softmax</div>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 5, marginBottom: 12 }}>
-        {[
-          { label: 'yes',   w: '92%', accent: true },
-          { label: 'no',    w: '6%' },
-          { label: 'go',    w: '2%' },
-          { label: 'left',  w: '1%' },
-          { label: '...',   w: '0.5%' },
-        ].map((b, i) => (
-          <div key={i} style={{ display: 'grid', gridTemplateColumns: '52px 1fr 32px', gap: 8, alignItems: 'center', fontFamily: 'var(--font-mono)', fontSize: 13 }}>
+
+      {/* Image area — fills the vertical space; bars stretch to fill height. */}
+      <div style={{ flex: 1, minHeight: 0, display: 'grid', gridTemplateRows: `repeat(${bars.length}, 1fr)`, gap: 6, marginBottom: 14 }}>
+        {bars.map((b, i) => (
+          <div key={i} style={{ display: 'grid', gridTemplateColumns: '60px 1fr 38px', gap: 10, alignItems: 'center', fontFamily: 'var(--font-mono)', fontSize: 15 }}>
             <span style={{ color: b.accent ? 'var(--accent)' : 'var(--ink-mute)', fontWeight: b.accent ? 600 : 400 }}>{b.label}</span>
-            <div style={{ height: 8, background: b.accent ? 'var(--accent)' : 'var(--ink)', opacity: b.accent ? 1 : 0.2, width: b.w }} />
+            <div style={{ height: '60%', maxHeight: 24, background: b.accent ? 'var(--accent)' : 'var(--ink)', opacity: b.accent ? 1 : 0.2, width: b.w }} />
             <span style={{ color: b.accent ? 'var(--accent)' : 'var(--ink-mute)', textAlign: 'right' }}>{b.accent ? '.92' : ''}</span>
           </div>
         ))}
       </div>
-      <div style={{ flex: 1 }} />
+
       <div style={{ fontFamily: 'var(--font-mono)', fontSize: 15, color: 'var(--ink)', lineHeight: 1.55 }}>
         <div>Dense 16 · ReLU</div>
         <div>Softmax → 11 logits</div>
