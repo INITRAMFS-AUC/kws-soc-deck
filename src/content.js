@@ -378,7 +378,7 @@ export const slides = [
       '',
       'P2 — Our model takes over. Three component cards: Front-end · Body · Head. Each card carries its share of the MAC budget (~516 K · 53 % / ~451 K · 47 % / ~656 · <0.1 %). Structural overview before we zoom into each one.',
       '',
-      'P3 — Front-end zoom. The Conv1D mel front-end rendered as 16 sinc-bandpass kernel waveforms, plus the sliding window viz: 8 000 samples in, 496 frames out, 124 after 4× pool. K=65, stride 16, 1 056 params. ~516 K MACs — 53 % of the total. This is the layer the accelerator targets.',
+      'P3 — Front-end zoom. The Conv1D mel front-end rendered as 16 learnable mel-band filter waveforms, plus the sliding window viz: 8 000 samples in, 496 frames out, 124 after 4× pool. K=65, stride 16, 1 056 params. ~516 K MACs — 53 % of the total. This is the layer the accelerator targets.',
       '',
       'P4 — Back to the three-component overview. Brief re-orient before the next zoom.',
       '',
@@ -388,12 +388,12 @@ export const slides = [
       '',
       'P7 — Head zoom. GAP collapses the time axis (15×36 → 36). Dense 16 with ReLU + dropout p=0.3 (L2 = 1e-4). Softmax to 11 classes: yes, no, up, down, left, right, on, off, stop, go, _unknown_. Argmax → keyword. Whole head is ~16 K params total but only ~656 MACs (<0.1 %).',
       '',
-      'Bridge to next slide: with our model defined, time to place it against the literature. Closest related work — sinc-based and raw-waveform classifiers — is next.',
+      'Bridge to next slide: with our model defined, time to place it against the literature. Closest related work — learnable-front-end and raw-waveform classifiers — is next.',
     ].join('\n'),
     content: { kind: 'Model' },
   },
 
-  // Bridge — closest related work (sinc / raw-waveform). ─────────────────────
+  // Bridge — closest related work (learnable front-end / raw-waveform). ─────
   {
     id: 'lit-comparison',
     label: 'vs Literature',
@@ -406,9 +406,9 @@ export const slides = [
       '',
       'LEAF (Zeghidour et al., Google, 2021). Gabor filters with learnable centre and bandwidth, plus a fully learnable per-channel pooling layer (PCEN-style). Aimed at general audio understanding. ~80 K front-end parameters alone. Heavier compute and float-only — the learnable pooling is not cleanly INT8-quantisable, which kills it for our chip.',
       '',
-      'M5 / M11 (Dai et al., 2017). Pure 1D conv stack on raw audio — no fixed front-end at all, the model learns the whole thing from scratch. K=80 first-layer kernels, 5–11 conv blocks. ~558 K parameters for M5, ~1.79 M for M11. No INT8 deployment story. We give the same family a strong inductive bias (sinc init) and end up two orders of magnitude smaller.',
+      'M5 / M11 (Dai et al., 2017). Pure 1D conv stack on raw audio — no fixed front-end at all, the model learns the whole thing from scratch. K=80 first-layer kernels, 5–11 conv blocks. ~558 K parameters for M5, ~1.79 M for M11. No INT8 deployment story. We give the same family a strong inductive bias (mel-band initialization) and end up two orders of magnitude smaller.',
       '',
-      'Ours (the orange strip at the bottom). Stride 16 fused into the sinc kernel — one op gives both the bandpass AND the 16× downsample, hence the "16× compute saving up front" claim. Plain MaxPool, plain BN, NNoM-quantisable INT8 end-to-end. ~16 K total parameters — ~35× smaller than M5, three orders of magnitude smaller than SincNet. Built for a 36 MHz RV32IMAC.',
+      'Ours (the orange strip at the bottom). Stride 16 fused into the mel filterbank kernel — one op gives both the bandpass AND the 16× downsample, hence the "16× compute saving up front" claim. Plain MaxPool, plain BN, NNoM-quantisable INT8 end-to-end. ~16 K total parameters — ~35× smaller than M5, three orders of magnitude smaller than SincNet. Built for a 36 MHz RV32IMAC.',
       '',
       'Bridge to next slide: enough qualitative comparison. Next: how we score against the general KWS leaderboard quantitatively — accuracy, params, MACs.',
     ].join('\n'),

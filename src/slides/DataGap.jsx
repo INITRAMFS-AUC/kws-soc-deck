@@ -29,15 +29,20 @@ export default function DataGap() {
   const [active, setActive] = useState(false);
   const [phase, setPhase]   = useState(0);
 
-  /* Slide-active detection — drives the bar animation. */
+  /* Slide-active detection — drives the bar animation. We only set active
+     to TRUE; once the bars have animated in we never reset them to 0,
+     because deck-stage can re-fire slidechange in ways that would
+     otherwise make the bars vanish mid-presentation. */
   useEffect(() => {
     const onSlideChange = (e) => {
       const mySection = rootRef.current?.closest('section');
       if (!mySection) return;
       const becameActive = e.detail.slide === mySection;
       const cameFromNext = e.detail.previousIndex === e.detail.index + 1;
-      setActive(becameActive);
-      if (becameActive) setPhase(cameFromNext ? MAX_PHASE : 0);
+      if (becameActive) {
+        setActive(true);
+        setPhase(cameFromNext ? MAX_PHASE : 0);
+      }
     };
     document.addEventListener('slidechange', onSlideChange);
     return () => document.removeEventListener('slidechange', onSlideChange);
@@ -207,6 +212,14 @@ function BarColumn({ label, pct, value, active, delay, colorOk, colorBad, colorA
   const valueFont = big ? 56 : 28;
   const labelFont = big ? 19 : 14;
 
+  /* Pixel-based fill height — percentage heights are fine when the parent
+     stays the same size, but here the parent height H changes between P0
+     (320 px) and P1+ (130 px). Computing the target height in pixels lets
+     CSS transition both the container H and the fill height in lockstep
+     without the percentage-vs-container weirdness that made the bars look
+     like they disappeared during the shrink. */
+  const fillHeight = active ? Math.round((H * pct) / 100) : 0;
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: big ? 10 : 6, flex: 1, maxWidth: 240 }}>
       <div style={{
@@ -223,11 +236,12 @@ function BarColumn({ label, pct, value, active, delay, colorOk, colorBad, colorA
         height: H,
         position: 'relative',
         background: 'rgba(26,26,26,0.06)',
+        overflow: 'hidden',
         transition: `width ${SIZE_MS}ms ${BAR_EASE}, height ${SIZE_MS}ms ${BAR_EASE}`,
       }}>
         <div style={{
           position: 'absolute', bottom: 0, left: 0, width: '100%',
-          height: active ? `${pct}%` : '0%',
+          height: fillHeight,
           background: fill,
           transition: `height ${BAR_DUR_MS}ms ${BAR_EASE} ${delay}ms`,
         }} />
@@ -278,20 +292,20 @@ function PhaseLayer({ active, children }) {
 /* ── A fix specimen card (peak norm / fine-tune). */
 function FixCard({ num, title, body, code, codeAccent }) {
   return (
-    <div style={{ border: '1px solid var(--ink)', padding: '14px 20px', background: 'var(--paper)' }}>
-      <div style={{ fontFamily: 'var(--font-mono)', fontSize: 15, color: 'var(--ink-mute)', letterSpacing: '0.08em', textTransform: 'uppercase', fontWeight: 600, marginBottom: 6 }}>
+    <div style={{ border: '1px solid var(--ink)', padding: '22px 28px', background: 'var(--paper)' }}>
+      <div style={{ fontFamily: 'var(--font-mono)', fontSize: 17, color: 'var(--ink-mute)', letterSpacing: '0.08em', textTransform: 'uppercase', fontWeight: 600, marginBottom: 10 }}>
         Fix {num} · {title}
       </div>
-      <div style={{ fontFamily: 'var(--font-sans)', fontSize: 19, color: 'var(--ink)', lineHeight: 1.4 }}>
+      <div style={{ fontFamily: 'var(--font-sans)', fontSize: 22, color: 'var(--ink)', lineHeight: 1.45 }}>
         {body}
       </div>
       <div style={{
-        marginTop: 8,
+        marginTop: 12,
         fontFamily: 'var(--font-mono)',
-        fontSize: 17,
+        fontSize: 19,
         color: codeAccent ? 'var(--accent)' : 'var(--ink)',
         background: codeAccent ? 'rgba(217,119,87,0.08)' : 'rgba(26,26,26,0.05)',
-        padding: '6px 10px',
+        padding: '8px 12px',
       }}>
         {code}
       </div>
@@ -300,15 +314,16 @@ function FixCard({ num, title, body, code, codeAccent }) {
 }
 
 /* ── Phase-2 box: text on the left, a real measured INMP441 frequency-response
-   chart on the right (image lives in public/assets). */
+   chart on the right (image lives in public/assets). Image height is capped
+   so the box doesn't clip into the slide footer. */
 function FrequencyResponseBox() {
   return (
     <div style={{
       border: '2px solid var(--accent)',
       background: '#fff7f2',
-      padding: '16px 22px',
+      padding: '16px 24px',
       display: 'grid',
-      gridTemplateColumns: '1fr 340px',
+      gridTemplateColumns: '1fr 280px',
       gap: 28,
       alignItems: 'center',
     }}>
@@ -316,19 +331,19 @@ function FrequencyResponseBox() {
         <div style={{ fontFamily: 'var(--font-mono)', fontSize: 15, color: 'var(--accent)', letterSpacing: '0.08em', textTransform: 'uppercase', fontWeight: 600, marginBottom: 6 }}>
           ★ Frequency response · INMP441
         </div>
-        <div style={{ fontFamily: 'var(--font-sans)', fontSize: 26, fontWeight: 600, color: 'var(--ink)', marginBottom: 8 }}>
+        <div style={{ fontFamily: 'var(--font-sans)', fontSize: 26, fontWeight: 600, color: 'var(--ink)', marginBottom: 6 }}>
           Our mic is flat across the 8 kHz band.
         </div>
         <div style={{ fontFamily: 'var(--font-sans)', fontSize: 18, color: 'var(--ink)', lineHeight: 1.4 }}>
-          We checked the datasheet. Flat to ±2 dB from 100 Hz to ~10 kHz — well past our 4 kHz Nyquist. No spectral distortion at 8 kHz; the two fixes above patch a level shift, not a frequency-dependent one.
+          From the datasheet — flat to ±2 dB from 100 Hz past our 4 kHz Nyquist. No spectral distortion at 8 kHz; the two fixes above patch a level shift, not a frequency-dependent one.
         </div>
       </div>
 
-      <div style={{ background: 'var(--paper)', border: '1px solid var(--ink)', padding: '8px 12px' }}>
+      <div style={{ background: 'var(--paper)', border: '1px solid var(--ink)', padding: '6px 8px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
         <img
           src={`${import.meta.env.BASE_URL}assets/inmp441-frequency-response.png`}
           alt="Measured INMP441 frequency response — flat to ±2 dB from 100 Hz to ~10 kHz"
-          style={{ width: '100%', maxHeight: 220, height: 'auto', objectFit: 'contain', display: 'block' }}
+          style={{ width: '100%', maxHeight: 180, height: 'auto', objectFit: 'contain', display: 'block' }}
         />
       </div>
     </div>

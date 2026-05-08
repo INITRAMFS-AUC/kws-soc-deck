@@ -117,6 +117,10 @@ export default function StandardMFCC() {
   const rootRef = useRef(null);
   const [phase, setPhase]     = useState(0);
   const [stopIdx, setStopIdx] = useState(0);
+  /* Bumped on every becameActive — used as a useEffect dep so the packet
+     cycle restarts from raw PCM (stop 0) every time the slide is opened,
+     not from wherever it happened to be when the user last left. */
+  const [cycleKey, setCycleKey] = useState(0);
 
   /* Phase navigation. */
   useEffect(() => {
@@ -145,13 +149,18 @@ export default function StandardMFCC() {
       if (!mySection) return;
       const becameActive = e.detail.slide === mySection;
       const cameFromNext = e.detail.previousIndex === e.detail.index + 1;
-      if (becameActive) setPhase(cameFromNext ? MAX_PHASE : 0);
+      if (becameActive) {
+        setPhase(cameFromNext ? MAX_PHASE : 0);
+        setStopIdx(0);
+        setCycleKey(k => k + 1);
+      }
     };
     document.addEventListener('slidechange', onSlideChange);
     return () => document.removeEventListener('slidechange', onSlideChange);
   }, []);
 
-  /* Packet cycle — only runs in P0. */
+  /* Packet cycle — only runs in P0. cycleKey is in deps so re-entering
+     the slide always restarts the walk from stop 0 (raw PCM). */
   useEffect(() => {
     if (phase !== 0) return;
     let timer = null;
@@ -166,7 +175,7 @@ export default function StandardMFCC() {
     };
     tick();
     return () => { cancelled = true; clearTimeout(timer); };
-  }, [phase]);
+  }, [phase, cycleKey]);
 
   const cur = STOPS[stopIdx];
 
@@ -183,8 +192,8 @@ export default function StandardMFCC() {
     };
     if (phase === 3) return {
       eyebrow: '★ Mel Compact · Front-end zoom',
-      title:   'Learnable sinc filterbank — the front-end is a Conv1D.',
-      sub:     '16 sinc-bandpass kernels · K=65 · stride 16 · 1 056 params · ~516 K MACs (53 % of total).',
+      title:   'Learnable mel filterbank — the front-end is a Conv1D.',
+      sub:     '16 learnable mel filters · K=65 · stride 16 · 1 056 params · ~516 K MACs (53 % of total).',
     };
     if (phase === 5) return {
       eyebrow: '★ Mel Compact · Body zoom',
@@ -550,7 +559,7 @@ function FrontEndCompact() {
       </div>
       <div style={{ flex: 1 }} />
       <div style={{ fontFamily: 'var(--font-mono)', fontSize: 15, color: 'var(--ink)', lineHeight: 1.55 }}>
-        <div>16 sinc-bandpass</div>
+        <div>16 learnable mel</div>
         <div>K=65 · stride 16</div>
         <div>1 056 params</div>
       </div>
@@ -633,7 +642,7 @@ function FrontEndExpanded() {
               </div>
             </div>
             <div style={{ marginTop: 6, fontFamily: 'var(--font-mono)', fontSize: 13, color: 'var(--ink-mute)' }}>
-              h_i(n) = [sinc(2 f_h n) − sinc(2 f_l n)] · hamming(n) — kernels initialized as bandpass, then adapt freely.
+              Bandpass kernels initialized at mel-spaced cutoffs (50 Hz – 4 kHz), Hamming-windowed, then adapt freely during training.
             </div>
           </div>
         </div>

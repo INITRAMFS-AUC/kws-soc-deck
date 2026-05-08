@@ -76,7 +76,7 @@ export default function LiteratureComparison() {
       }}>
         <div>
           <div style={{ fontFamily: 'var(--font-mono)', fontSize: 14, color: 'rgba(255,255,255,0.85)', letterSpacing: '0.1em', textTransform: 'uppercase', fontWeight: 600, marginBottom: 4 }}>★ Ours · Mel Compact</div>
-          <div style={{ fontFamily: 'var(--font-sans)', fontSize: 32, fontWeight: 600 }}>Stride-fused sinc</div>
+          <div style={{ fontFamily: 'var(--font-sans)', fontSize: 32, fontWeight: 600 }}>Stride-fused mel filterbank</div>
         </div>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, auto)', gap: 36, justifyContent: 'center' }}>
           {[

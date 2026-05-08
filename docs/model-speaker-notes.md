@@ -34,7 +34,7 @@ Head. Each card carries its share of the MAC budget (~516 K · 53 % / ~451 K
 · 47 % / ~656 · <0.1 %). Structural overview before we zoom into each one.
 
 **P3 — Front-end zoom.** The Conv1D mel front-end rendered as 16
-sinc-bandpass kernel waveforms, plus the sliding window viz: 8 000 samples
+learnable mel-band filter waveforms, plus the sliding window viz: 8 000 samples
 in, 496 frames out, 124 after 4× pool. K=65, stride 16, 1 056 params.
 ~516 K MACs — 53 % of the total. **This is the layer the accelerator
 targets.**
@@ -55,12 +55,12 @@ down, left, right, on, off, stop, go, _unknown_*. Argmax → keyword. Whole
 head is ~16 K params total but only ~656 MACs (<0.1 %).
 
 **Bridge to next slide:** with our model defined, time to place it against
-the literature. Closest related work — sinc-based and raw-waveform
+the literature. Closest related work — learnable-front-end and raw-waveform
 classifiers — is next.
 
 ---
 
-## Slide 11 · vs Literature (sinc / raw-waveform papers)
+## Slide 11 · vs Literature (learnable front-end / raw-waveform papers)
 
 Bridge slide — big numbers on screen, prose in the talk. Don't re-read the
 cards; explain what each paper does and what we change.
@@ -87,9 +87,9 @@ not cleanly INT8-quantisable, which kills it for our chip.
 front-end at all, the model learns the whole thing from scratch. K=80
 first-layer kernels, 5–11 conv blocks. ~558 K parameters for M5, ~1.79 M
 for M11. No INT8 deployment story. We give the same family a strong
-inductive bias (sinc init) and end up two orders of magnitude smaller.
+inductive bias (mel-band initialization) and end up two orders of magnitude smaller.
 
-**Ours (the orange strip at the bottom).** Stride 16 fused into the sinc
+**Ours (the orange strip at the bottom).** Stride 16 fused into the mel filterbank
 kernel — one op gives both the bandpass *and* the 16× downsample, hence the
 "16× compute saving up front" claim. Plain MaxPool, plain BN,
 NNoM-quantisable INT8 end-to-end. ~16 K total parameters — ~35× smaller
