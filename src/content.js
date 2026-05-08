@@ -635,6 +635,50 @@ export const slides = [
     },
   },
 
+  // Verification ─────────────────────────────────────────────────────────────
+  {
+    id: 'verification',
+    label: 'Verification',
+    notes: 'How we know it works. Five layers of testing. Per-module: SystemVerilog testbench on the RTL side, MCU-side firmware unit tests on the C side. Per-workflow: blocks wired together and exercised end-to-end. Per-model: audio vectors compiled into a synthetic I²S SD line from hex files, clocked into the RX peripheral, model output checked against ground-truth labels. FPGA-in-loop: known clips injected into the deployed bitstream, UART output captured and diffed against expected labels. Bit-exact: layer activations from the Spike emulator compared layer-by-layer against post-synthesis Verilator simulation — must agree bit-for-bit, every layer, every clip.',
+    content: {
+      kind: 'Verification',
+      eyebrow: 'How we know it works',
+      title: 'Five layers of verification — module to bit-exact post-synth.',
+      stages: [
+        {
+          tag: '01 · Per-module',
+          head: 'Testbench + firmware unit test',
+          flow: ['RTL block', 'SV testbench', 'firmware unit', '✓'],
+          caption: 'Every peripheral verified in isolation. SystemVerilog TBs on the RTL; MCU-side unit tests on the firmware.',
+        },
+        {
+          tag: '02 · Per-workflow',
+          head: 'End-to-end integration',
+          flow: ['I²S RX', 'DMA', 'ping-pong', 'Conv1D', '✓'],
+          caption: 'Blocks wired together and exercised with a known stimulus. Catches the seams between modules.',
+        },
+        {
+          tag: '03 · Per-model',
+          head: 'I²S replay from hex',
+          flow: ['.hex audio', 'SD-line gen', 'I²S RX', 'model', 'label'],
+          caption: 'Audio vectors compiled into a synthetic I²S SD line and clocked into the RX peripheral. Model output checked against ground-truth labels.',
+        },
+        {
+          tag: '04 · FPGA-in-loop',
+          head: 'Hardware-in-the-loop',
+          flow: ['audio in', 'SD line', 'FPGA bitstream', 'UART out', 'diff'],
+          caption: 'Known clips injected into the deployed FPGA. UART output captured and diffed against expected labels — system tested as a whole.',
+        },
+        {
+          tag: '05 · Bit-exact',
+          head: 'Spike ≡ Verilator post-synth',
+          flow: ['Spike emulator', 'Verilator post-synth', 'layer-by-layer diff'],
+          caption: 'Layer activations from the Spike golden model compared against post-synthesis Verilator simulation. Bit-for-bit agreement, every layer, every clip — 100 % exact.',
+        },
+      ],
+    },
+  },
+
   // Optimization Journey ─────────────────────────────────────────────────────
   {
     id: 'optimization-journey',

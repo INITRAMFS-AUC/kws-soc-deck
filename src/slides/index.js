@@ -22,6 +22,7 @@ import RegisterMap from './RegisterMap.jsx';
 import OptimizationJourney from './OptimizationJourney.jsx';
 import XipCache from './XipCache.jsx';
 import XipPrefetch from './XipPrefetch.jsx';
+import Verification from './Verification.jsx';
 import Empowerment from './Empowerment.jsx';
 import WhatWeBuilt from './WhatWeBuilt.jsx';
 
@@ -46,6 +47,7 @@ export const slideComponents = [
   RegisterMap,
   XipCache,
   XipPrefetch,
+  Verification,
   OptimizationJourney,
   Empowerment,
   WhatWeBuilt,
