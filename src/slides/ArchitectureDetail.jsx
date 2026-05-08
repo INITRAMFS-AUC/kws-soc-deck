@@ -61,7 +61,7 @@ const stats = [
 
 export default function ArchitectureDetail() {
   return (
-    <SlideFrame topLeft="14 · Model">
+    <SlideFrame topLeft="12 · Model">
       <div style={{ marginTop: 40 }}>
         <div className="eyebrow">Mel-compact architecture</div>
         <h1 className="title" style={{ marginBottom: 40 }}>Layer-by-layer breakdown.</h1>

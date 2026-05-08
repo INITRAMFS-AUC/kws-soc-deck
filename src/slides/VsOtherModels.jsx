@@ -80,7 +80,7 @@ function AccBar({ pct, accent, highlight }) {
 
 export default function VsOtherModels() {
   return (
-    <SlideFrame topLeft="16 · Model">
+    <SlideFrame topLeft="14 · Model">
       <div style={{ marginTop: 36 }}>
         <div className="eyebrow">Where we land · accuracy vs parameters</div>
         <h1 className="title" style={{ marginBottom: 12 }}>90 % accuracy at a fraction of the parameter count.</h1>

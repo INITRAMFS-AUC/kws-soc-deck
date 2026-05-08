@@ -40,7 +40,7 @@ const comparisonRows = [
 
 export default function LiteratureComparison() {
   return (
-    <SlideFrame topLeft="15 · Model">
+    <SlideFrame topLeft="13 · Model">
       <div style={{ marginTop: 36 }}>
         <div className="eyebrow">How this model is different</div>
         <h1 className="title" style={{ marginBottom: 12 }}>Standard KWS, axis by axis — and where we diverge.</h1>

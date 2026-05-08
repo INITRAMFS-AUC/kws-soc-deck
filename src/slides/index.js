@@ -12,8 +12,6 @@ import I2sDatapath from './I2sDatapath.jsx';
 import Pcb from './Pcb.jsx';
 import PivotModel from './PivotModel.jsx';
 import StandardMFCC from './StandardMFCC.jsx';
-import Conv1DMelFrontEnd from './Conv1DMelFrontEnd.jsx';
-import ConvBodyClassifier from './ConvBodyClassifier.jsx';
 import ArchitectureDetail from './ArchitectureDetail.jsx';
 import LiteratureComparison from './LiteratureComparison.jsx';
 import VsOtherModels from './VsOtherModels.jsx';
@@ -41,8 +39,6 @@ export const slideComponents = [
   I2sDatapath,
   PivotModel,
   StandardMFCC,
-  Conv1DMelFrontEnd,
-  ConvBodyClassifier,
   ArchitectureDetail,
   LiteratureComparison,
   VsOtherModels,

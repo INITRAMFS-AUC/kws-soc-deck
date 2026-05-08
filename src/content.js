@@ -352,27 +352,11 @@ export const slides = [
     },
   },
 
-  // Standard MFCC ───────────────────────────────────────────────────────────
+  // Standard MFCC vs Our Model — five-phase walk on a single slide. ─────────
   {
     id: 'standard-mfcc',
     label: 'Standard MFCC vs Our Model',
-    notes: 'Three-phase narrative on one slide. Phase 1: the industry baseline — Zhang et al., Hello Edge, 2017. Six MFCC steps (framing, FFT, power, Mel filterbank, log, DCT-II) at ~1.6 M ops, plus a DS-CNN body at ~5.4 M MACs. The data packet animation walks through Input → MFCC → DS-CNN to show the data flow. Phase 2: side-by-side comparison — MFCC pipeline shifts left, our 4-stage Conv1D model appears on the right. Phase 3: our model takes over the slide — front-end and body share one acceleratable datapath, total 0.97 M MACs, all int8. The share-of-MACs bar appears at the bottom and is the source for the FLIP-morph into slide 12 (Conv1D mel detail).',
-    content: { kind: 'Model' },
-  },
-
-  // Conv1D Mel Front-End ─────────────────────────────────────────────────────
-  {
-    id: 'conv1d-mel',
-    label: 'Conv1D Mel Front-End',
-    notes: 'The learnable sinc filterbank in detail. 16 sinc-bandpass kernels, Hamming-windowed, mel-initialized 50 Hz to 4 kHz. K=65, stride 16 — a 2 ms frame shift fused into the filter. 8000 samples in, 496 frames out, 124 after the 4× pool. 1056 parameters total. This layer alone is 78% of total MACs — by design, it becomes the accelerator target.',
-    content: { kind: 'Model' },
-  },
-
-  // Conv Body + Classifier ───────────────────────────────────────────────────
-  {
-    id: 'conv-body',
-    label: 'Conv Body + Head',
-    notes: 'Three plain 1D conv blocks, then collapse. No depthwise-separable, no 2D — plain Conv1D, BN, ReLU, MaxPool throughout. Block 1 at 31×36, pool 4×. Block 2 at 15×36, pool 2×. Block 3 at 15×36, double conv no pool. Global average pool collapses to 36 channels, dense 16 with ReLU and dropout 0.3, then softmax over 11 classes (yes, no, up, down, left, right, on, off, stop, go, _unknown_).',
+    notes: 'Five-phase walk on one slide. P0: the industry baseline (Zhang et al., Hello Edge, 2017) — six MFCC steps at ~1.6 M ops feeding a DS-CNN body at ~5.4 M MACs. A walking data packet shows the dataflow. P1: side-by-side summary cards — ~7 M ops vs. 0.97 M MACs. P2: our model takes over with three components (Front-end · Body · Head). P3: zoom into the Front-end — 16 sinc-bandpass kernels, K=65, stride 16, 1 056 params, ~516 K MACs (53 % of total), the layer the accelerator targets. P4: zoom into the Body+Head — three plain Conv1D blocks (31×36, 15×36, 15×36), GAP → Dense 16 → Softmax 11 (yes, no, up, down, left, right, on, off, stop, go, _unknown_). Slides 12 and 13 used to host the front-end and body zooms; they are now intra-slide phases so the visual continuity is real (the Front-end / Body card grows into its detail view).',
     content: { kind: 'Model' },
   },
 
