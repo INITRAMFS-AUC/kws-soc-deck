@@ -1,41 +1,46 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import SlideFrame from '../components/SlideFrame.jsx';
-import MacShareBar from '../components/MacShareBar.jsx';
 
 /* ─────────────────────────────────────────────────────────────────────────────
- * Combined slide 11.
+ * Combined slide 11 — three intra-slide phases stepped with ArrowRight.
  *
- * Three intra-slide phases (advanced with ArrowRight, regressed with
- * ArrowLeft, same trick as VoiceEverywhere's `reveal`):
- *   P0 — 3-panel MFCC pipeline. A "data packet" walks: Input (Raw PCM) →
- *        each of the 6 MFCC step rows individually → DS-CNN (Predict).
- *   P1 — Two big summary cards side-by-side. Standard MFCC + DS-CNN total
- *        (~7 M ops) vs Our Model unified pipeline (0.97 M MACs).
- *   P2 — Standard card slides off; Our Model expands to full slide width
- *        with three big components (Front-end / Body / Head) and the
- *        share-of-MACs bar at the bottom (FLIP source for slide 12).
+ *  P0 — Three boxes (Input · MFCC · DS-CNN) at full width. A "data packet"
+ *       walks: Input centred → each of the 6 MFCC step rows in turn →
+ *       DS-CNN centred → off-stage → loop.
+ *
+ *  P1 — Input + DS-CNN slide off left/right. The MFCC box translates to
+ *       the slide's left half and its content cross-fades from the 6-step
+ *       pipeline to a big-numbers summary card. The "Our model" card
+ *       slides in from the right at the same scale.
+ *
+ *  P2 — The MFCC summary slides off the left edge. The Our-model card
+ *       expands to fill the slide and its content cross-fades from the
+ *       summary to three big component cards (Front-end / Body / Head).
+ *       The Front-end and Body cards carry data-flip-source attributes
+ *       so the next two slides can morph out of them.
  * ───────────────────────────────────────────────────────────────────────── */
 
-const PHASE_FADE_MS = 520;
-const PHASE_EASE = 'cubic-bezier(0.4, 0, 0.2, 1)';
+const PHASE_MOTION_MS = 820;
+const PHASE_FADE_MS   = 520;
+const PHASE_EASE      = 'cubic-bezier(0.16, 1, 0.3, 1)';
 
 /* Packet timing (P0 only). */
-const DWELL_MS = 1300;          // how long the packet sits at each stop
-const OFFSTAGE_MS = 600;         // gap at end of cycle before looping
-const PACKET_GLIDE_MS = 320;     // smooth slide between MFCC step rows
-const PACKET_FADE_MS = 280;
+const DWELL_MS         = 1300;
+const OFFSTAGE_MS      = 600;
+const PACKET_GLIDE_MS  = 320;
+const PACKET_FADE_MS   = 280;
 
-/* ── 9 stops · 0=Input, 1–6=MFCC steps, 7=DS-CNN, 8=offstage gap ── */
+/* ── 9 packet stops · 0=Input, 1–6=MFCC steps, 7=DS-CNN, 8=offstage gap ── */
 const STOPS = [
-  { kind: 'input',  label: 'PCM',     shape: '[8000, 1]',  detail: 'int8 · 8 kHz' },          // 0
-  { kind: 'mfcc',   row: 0, label: 'Frame',   shape: '100 × 200',  detail: '25 ms / 10 ms' }, // 1
-  { kind: 'mfcc',   row: 1, label: 'FFT',     shape: '[100, 257]', detail: '~460 K mults' },  // 2
-  { kind: 'mfcc',   row: 2, label: 'Power',   shape: '[100, 257]', detail: '~26 K ops' },     // 3
-  { kind: 'mfcc',   row: 3, label: 'Mel',     shape: '[100, 40]',  detail: '~1.0 M MACs' },   // 4
-  { kind: 'mfcc',   row: 4, label: 'log',     shape: '[100, 40]',  detail: '~4 K ops' },      // 5
-  { kind: 'mfcc',   row: 5, label: 'DCT-II',  shape: '[100, 13]',  detail: '~130 K ops' },    // 6
-  { kind: 'cnn',    label: 'Predict', shape: '11 logits',  detail: 'argmax → keyword' },      // 7
-  { kind: 'gap' }, // 8
+  { kind: 'input',  label: 'PCM',     shape: '[8000, 1]',  detail: 'int8 · 8 kHz' },
+  { kind: 'mfcc', row: 0, label: 'Frame',   shape: '100 × 200',  detail: '25 ms / 10 ms' },
+  { kind: 'mfcc', row: 1, label: 'FFT',     shape: '[100, 257]', detail: '~460 K mults' },
+  { kind: 'mfcc', row: 2, label: 'Power',   shape: '[100, 257]', detail: '~26 K ops' },
+  { kind: 'mfcc', row: 3, label: 'Mel',     shape: '[100, 40]',  detail: '~1.0 M MACs' },
+  { kind: 'mfcc', row: 4, label: 'log',     shape: '[100, 40]',  detail: '~4 K ops' },
+  { kind: 'mfcc', row: 5, label: 'DCT-II',  shape: '[100, 13]',  detail: '~130 K ops' },
+  { kind: 'cnn',  label: 'Predict', shape: '11 logits',  detail: 'argmax → keyword' },
+  { kind: 'gap' },
 ];
 
 const MFCC_ROWS = [
@@ -47,13 +52,36 @@ const MFCC_ROWS = [
   ['DCT-II',                 '→ MFCC features',   '~130 K ops'],
 ];
 
+/* Geometry — content area is 1720 px wide; these percentages place the P0
+   panels and the P1/P2 boxes. Tuned so each panel reads at a comfortable
+   size and the arrows have room. */
+const GEO = {
+  P0_INPUT_LEFT:  '0%',
+  P0_INPUT_W:     '22%',
+  P0_MFCC_LEFT:   '24%',
+  P0_MFCC_W:      '46%',
+  P0_CNN_LEFT:    '72%',
+  P0_CNN_W:       '28%',
+  P0_ARROW_L:     '22%',  // arrow between Input and MFCC
+  P0_ARROW_R:     '70%',  // arrow between MFCC and CNN
+
+  P1_LEFT_LEFT:   '0%',
+  P1_LEFT_W:      '49%',
+  P1_RIGHT_LEFT:  '51%',
+  P1_RIGHT_W:     '49%',
+
+  P2_FULL_LEFT:   '0%',
+  P2_FULL_W:      '100%',
+};
+
+const TR_BOX = `left ${PHASE_MOTION_MS}ms ${PHASE_EASE}, width ${PHASE_MOTION_MS}ms ${PHASE_EASE}, transform ${PHASE_MOTION_MS}ms ${PHASE_EASE}, opacity ${PHASE_FADE_MS}ms ease`;
+
 export default function StandardMFCC() {
   const rootRef = useRef(null);
-  const [phase, setPhase] = useState(0);
+  const [phase, setPhase]   = useState(0);
   const [stopIdx, setStopIdx] = useState(0);
 
-  /* Phase navigation. Intercept Arrow keys only when our intra-slide steps
-     still have somewhere to go; otherwise fall through to the deck-stage. */
+  /* Phase navigation. */
   useEffect(() => {
     const onKey = (e) => {
       if (e.metaKey || e.ctrlKey || e.altKey) return;
@@ -73,7 +101,7 @@ export default function StandardMFCC() {
     return () => window.removeEventListener('keydown', onKey, true);
   }, [phase]);
 
-  /* Reset phase on slidechange. Forward from prev → P0; back from next → P2. */
+  /* Reset phase on slidechange. Forward → P0; back from next → P2. */
   useEffect(() => {
     const onSlideChange = (e) => {
       const mySection = rootRef.current?.closest('section');
@@ -114,30 +142,91 @@ export default function StandardMFCC() {
         <h1 className="title" style={{ fontSize: 48, marginBottom: 8 }}>
           {phase === 0 && 'Standard KWS: fixed MFCC front-end feeds the network.'}
           {phase === 1 && 'Side by side: MFCC + DS-CNN  vs.  unified Conv1D model.'}
-          {phase === 2 && 'One unified pipeline — front-end is the model.'}
+          {phase === 2 && 'One unified pipeline — three components.'}
         </h1>
         <p className="subtitle" style={{ fontSize: 28, maxWidth: 1700, marginBottom: 18 }}>
           {phase === 0 && 'The dominant approach on Google Speech Commands — Zhang et al., 2017. Two stages, ~7 M ops total.'}
           {phase === 1 && 'Their two-stage system: ~7 M ops. Our unified pipeline: 0.97 M MACs.'}
-          {phase === 2 && '0.97 M MACs total, all int8, one acceleratable datapath. Three main components.'}
+          {phase === 2 && '0.97 M MACs total, all int8, one acceleratable datapath.'}
         </p>
       </div>
 
-      {/* Stage area — three phase layouts stacked, opacity-toggled. */}
+      {/* Stage — absolutely-positioned boxes that physically move per phase. */}
       <div style={{ position: 'relative', flex: 1 }}>
-        <PhaseLayer active={phase === 0}>
-          <P0Pipeline cur={cur} />
-        </PhaseLayer>
-        <PhaseLayer active={phase === 1}>
-          <P1Compare />
-        </PhaseLayer>
-        <PhaseLayer active={phase === 2}>
-          <P2Expanded />
-        </PhaseLayer>
+
+        {/* ── Input panel (P0 only) ── */}
+        <Box style={{
+          left: GEO.P0_INPUT_LEFT,
+          width: GEO.P0_INPUT_W,
+          opacity: phase === 0 ? 1 : 0,
+          transform: phase === 0 ? 'translateX(0)' : 'translateX(-30%)',
+          transition: TR_BOX,
+          pointerEvents: phase === 0 ? 'auto' : 'none',
+        }}>
+          <InputContent active={cur.kind === 'input' ? cur : null} />
+        </Box>
+
+        {/* Arrow between Input and MFCC (P0 only). */}
+        <Arrow style={{ left: GEO.P0_ARROW_L, opacity: phase === 0 ? 1 : 0 }} />
+
+        {/* ── MFCC panel: shared element across P0 + P1, slides off in P2 ── */}
+        <Box style={{
+          left: phase === 0 ? GEO.P0_MFCC_LEFT : GEO.P1_LEFT_LEFT,
+          width: phase === 0 ? GEO.P0_MFCC_W  : GEO.P1_LEFT_W,
+          transform: phase === 2 ? 'translateX(-115%)' : 'translateX(0)',
+          opacity: phase === 2 ? 0 : 1,
+          transition: TR_BOX,
+          pointerEvents: phase === 2 ? 'none' : 'auto',
+        }}>
+          {/* P0 view — 6-step pipeline with packet animation */}
+          <FadeView active={phase === 0}>
+            <MfccPipelineContent
+              rowIdx={cur.kind === 'mfcc' ? cur.row : null}
+              data={cur.kind === 'mfcc' ? cur : null}
+            />
+          </FadeView>
+          {/* P1 view — summary card */}
+          <FadeView active={phase === 1}>
+            <MfccSummaryContent />
+          </FadeView>
+        </Box>
+
+        {/* Arrow between MFCC and CNN (P0 only). */}
+        <Arrow style={{ left: GEO.P0_ARROW_R, opacity: phase === 0 ? 1 : 0 }} />
+
+        {/* ── DS-CNN panel (P0 only) ── */}
+        <Box style={{
+          left: GEO.P0_CNN_LEFT,
+          width: GEO.P0_CNN_W,
+          opacity: phase === 0 ? 1 : 0,
+          transform: phase === 0 ? 'translateX(0)' : 'translateX(30%)',
+          transition: TR_BOX,
+          pointerEvents: phase === 0 ? 'auto' : 'none',
+        }}>
+          <CnnContent active={cur.kind === 'cnn' ? cur : null} />
+        </Box>
+
+        {/* ── Our-model panel: shared across P1 + P2 ── */}
+        <Box style={{
+          left:  phase === 2 ? GEO.P2_FULL_LEFT : GEO.P1_RIGHT_LEFT,
+          width: phase === 2 ? GEO.P2_FULL_W    : GEO.P1_RIGHT_W,
+          transform: phase === 0 ? 'translateX(115%)' : 'translateX(0)',
+          opacity: phase === 0 ? 0 : 1,
+          transition: TR_BOX,
+          pointerEvents: phase === 0 ? 'none' : 'auto',
+        }}>
+          {/* P1 view — summary card */}
+          <FadeView active={phase === 1}>
+            <OurSummaryContent />
+          </FadeView>
+          {/* P2 view — 3 component cards */}
+          <FadeView active={phase === 2}>
+            <OurExpandedContent />
+          </FadeView>
+        </Box>
       </div>
 
-      {/* Citation footer — visible only in P0 and P1; in P2 the share bar
-          replaces it. */}
+      {/* Citation footer (P0 + P1 only). */}
       <div style={{
         marginTop: 12,
         padding: '10px 14px',
@@ -157,16 +246,29 @@ export default function StandardMFCC() {
   );
 }
 
-/* ───────── Phase layer wrapper. All three stack in the same area; only the
-   active one is visible and interactive. ───────── */
+/* ── Outer wrapper for an absolutely-positioned box. ── */
+function Box({ style, children }) {
+  return (
+    <div style={{
+      position: 'absolute',
+      top: 0, bottom: 0,
+      willChange: 'left, width, transform, opacity',
+      ...style,
+    }}>
+      {children}
+    </div>
+  );
+}
 
-function PhaseLayer({ active, children }) {
+/* ── Crossfade view — all FadeView siblings stack at inset:0; only the
+   active one is visible. Used inside the MFCC + Our-model boxes. ── */
+function FadeView({ active, children }) {
   return (
     <div style={{
       position: 'absolute',
       inset: 0,
       opacity: active ? 1 : 0,
-      transition: `opacity ${PHASE_FADE_MS}ms ${PHASE_EASE}`,
+      transition: `opacity ${PHASE_FADE_MS}ms ease`,
       pointerEvents: active ? 'auto' : 'none',
       display: 'flex',
       flexDirection: 'column',
@@ -176,91 +278,77 @@ function PhaseLayer({ active, children }) {
   );
 }
 
-/* ─────────────────────────── P0 — 3-panel pipeline ───────────────────────── */
-
-function P0Pipeline({ cur }) {
-  const inputActive = cur.kind === 'input' ? cur : null;
-  const cnnActive   = cur.kind === 'cnn'   ? cur : null;
-  const mfccRow     = cur.kind === 'mfcc'  ? cur.row : null;
-  const mfccData    = cur.kind === 'mfcc'  ? cur : null;
-
+/* ── Arrow between P0 panels. Absolutely positioned at the panel boundaries. ── */
+function Arrow({ style }) {
   return (
     <div style={{
-      display: 'grid',
-      gridTemplateColumns: '0.75fr 40px 1.6fr 40px 0.95fr',
-      alignItems: 'stretch',
-      gap: 0,
-      flex: 1,
-    }}>
-      <InputPanel data={inputActive} />
-      <Arrow />
-      <MfccPanel rowIdx={mfccRow} data={mfccData} />
-      <Arrow />
-      <CnnPanel data={cnnActive} />
-    </div>
+      position: 'absolute',
+      top: '50%',
+      transform: 'translateY(-50%)',
+      width: '2%',
+      textAlign: 'center',
+      fontFamily: 'var(--font-mono)',
+      fontSize: 30,
+      color: 'var(--ink-mute)',
+      transition: 'opacity 400ms ease',
+      pointerEvents: 'none',
+      ...style,
+    }}>→</div>
   );
 }
 
-function Arrow() {
+/* ───────── Input panel — packet centred over content. ───────── */
+function InputContent({ active }) {
   return (
-    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'var(--font-mono)', fontSize: 30, color: 'var(--ink-mute)' }}>→</div>
-  );
-}
-
-/* ── Input panel — packet centered card-style. ── */
-function InputPanel({ data }) {
-  return (
-    <div style={{ position: 'relative', border: '1px solid var(--ink)', padding: '24px 26px', background: 'var(--paper)' }}>
-      <div style={{ fontFamily: 'var(--font-mono)', fontSize: 16, color: 'var(--ink-mute)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 12 }}>Input</div>
-      <div style={{ fontFamily: 'var(--font-sans)', fontSize: 32, fontWeight: 600, marginBottom: 14 }}>Raw PCM</div>
-      <svg viewBox="0 0 160 50" style={{ width: '100%', height: 60, display: 'block', marginBottom: 16 }}>
+    <div style={{ position: 'relative', height: '100%', border: '1px solid var(--ink)', padding: '20px 22px', background: 'var(--paper)', boxSizing: 'border-box' }}>
+      <div style={{ fontFamily: 'var(--font-mono)', fontSize: 16, color: 'var(--ink-mute)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 10 }}>Input</div>
+      <div style={{ fontFamily: 'var(--font-sans)', fontSize: 30, fontWeight: 600, marginBottom: 14 }}>Raw PCM</div>
+      <svg viewBox="0 0 160 50" style={{ width: '100%', height: 60, display: 'block', marginBottom: 14 }}>
         <path d="M0,25 Q5,12 10,28 T22,24 Q28,14 34,32 T46,22 Q52,8 58,30 T72,24 Q78,16 84,28 T96,22 Q104,10 110,30 T124,24 Q130,14 136,28 T148,22 Q154,18 160,25"
           fill="none" stroke="var(--ink)" strokeWidth="1.5" />
       </svg>
-      <div style={{ fontFamily: 'var(--font-mono)', fontSize: 18, color: 'var(--ink-mute)', lineHeight: 1.7 }}>
+      <div style={{ fontFamily: 'var(--font-mono)', fontSize: 17, color: 'var(--ink-mute)', lineHeight: 1.7 }}>
         <div>8 000 samples</div>
         <div>8 kHz · 1 s window</div>
-        <div>int8 · zero pre-emph</div>
       </div>
-      <CenterPacket data={data} />
+      <CenterPacket data={active} />
     </div>
   );
 }
 
-/* ── DS-CNN panel — packet centered card-style. ── */
-function CnnPanel({ data }) {
+/* ───────── DS-CNN panel — text trimmed so it fits cleanly under the
+   centred prediction packet. ───────── */
+function CnnContent({ active }) {
   return (
-    <div style={{ position: 'relative', border: '2px solid var(--ink)', padding: '24px 26px', background: 'var(--paper)' }}>
-      <div style={{ fontFamily: 'var(--font-mono)', fontSize: 16, color: 'var(--ink-mute)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 12 }}>Stage 2 · Network</div>
-      <div style={{ fontFamily: 'var(--font-sans)', fontSize: 32, fontWeight: 600, marginBottom: 14 }}>DS-CNN</div>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 7, marginBottom: 16 }}>
+    <div style={{ position: 'relative', height: '100%', border: '2px solid var(--ink)', padding: '20px 22px', background: 'var(--paper)', boxSizing: 'border-box' }}>
+      <div style={{ fontFamily: 'var(--font-mono)', fontSize: 16, color: 'var(--ink-mute)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 10 }}>Stage 2 · Network</div>
+      <div style={{ fontFamily: 'var(--font-sans)', fontSize: 30, fontWeight: 600, marginBottom: 12 }}>DS-CNN</div>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginBottom: 14 }}>
         {[100, 78, 60, 46].map((w, i) => (
-          <div key={i} style={{ width: `${w}%`, height: 18, background: 'var(--ink)' }} />
+          <div key={i} style={{ width: `${w}%`, height: 14, background: 'var(--ink)' }} />
         ))}
       </div>
-      <div style={{ fontFamily: 'var(--font-mono)', fontSize: 18, color: 'var(--ink-mute)', lineHeight: 1.6 }}>
-        <div>Learned weights</div>
-        <div>2-D depthwise-sep</div>
+      <div style={{ fontFamily: 'var(--font-mono)', fontSize: 17, color: 'var(--ink-mute)', lineHeight: 1.7 }}>
+        <div>Learned 2-D conv</div>
         <div>over Mel features</div>
       </div>
-      <CenterPacket data={data} />
+      <CenterPacket data={active} />
     </div>
   );
 }
 
-/* ── MFCC panel — packet snaps to active row, glides between rows. ── */
-function MfccPanel({ rowIdx, data }) {
+/* ───────── MFCC panel content for P0 — 6-step pipeline + walking packet. ───────── */
+function MfccPipelineContent({ rowIdx, data }) {
   const rowRefs = useRef([]);
   const [rowMetrics, setRowMetrics] = useState(MFCC_ROWS.map(() => null));
-  /* Hold the last visible row index so the packet keeps its position while
-     fading out (no awkward slide-to-zero on exit). Updates only when a new
-     row becomes active. */
-  const [renderedRow, setRenderedRow] = useState(null);
+  const [renderedRow,  setRenderedRow]  = useState(null);
   const [renderedData, setRenderedData] = useState(null);
 
+  /* Re-measure each render — the box width changes on phase transitions
+     so cached offsets would go stale. */
   useLayoutEffect(() => {
     setRowMetrics(rowRefs.current.map(el => el ? { top: el.offsetTop, height: el.offsetHeight } : null));
-  }, []);
+  });
 
   useEffect(() => {
     if (rowIdx !== null) {
@@ -270,14 +358,14 @@ function MfccPanel({ rowIdx, data }) {
   }, [rowIdx, data]);
 
   const visible = rowIdx !== null;
-  const metric = renderedRow !== null ? rowMetrics[renderedRow] : null;
+  const metric  = renderedRow !== null ? rowMetrics[renderedRow] : null;
 
   return (
-    <div style={{ position: 'relative', border: '1px solid var(--ink)', padding: '24px 26px', background: 'rgba(26,26,26,0.04)' }}>
-      <div style={{ fontFamily: 'var(--font-mono)', fontSize: 16, color: 'var(--ink-mute)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 10 }}>
+    <div style={{ position: 'relative', height: '100%', border: '1px solid var(--ink)', padding: '20px 22px', background: 'rgba(26,26,26,0.04)', boxSizing: 'border-box' }}>
+      <div style={{ fontFamily: 'var(--font-mono)', fontSize: 16, color: 'var(--ink-mute)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 8 }}>
         Stage 1 · Fixed front-end
       </div>
-      <div style={{ fontFamily: 'var(--font-sans)', fontSize: 32, fontWeight: 600, marginBottom: 16 }}>MFCC</div>
+      <div style={{ fontFamily: 'var(--font-sans)', fontSize: 30, fontWeight: 600, marginBottom: 14 }}>MFCC</div>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
         {MFCC_ROWS.map(([a, b, c], i) => (
           <div key={i} ref={el => (rowRefs.current[i] = el)} style={{
@@ -294,12 +382,11 @@ function MfccPanel({ rowIdx, data }) {
         ))}
       </div>
 
-      {/* Row-shaped packet that slides between active rows. */}
       <div style={{
         position: 'absolute',
-        left: 26,
-        right: 26,
-        top: metric ? metric.top : 0,
+        left: 22,
+        right: 22,
+        top: metric ? metric.top + 20 : 0,    /* +20 = padding-top of parent */
         height: metric ? metric.height : 0,
         opacity: visible && metric ? 1 : 0,
         transition: `top ${PACKET_GLIDE_MS}ms ${PHASE_EASE}, opacity ${PACKET_FADE_MS}ms ${PHASE_EASE}`,
@@ -315,32 +402,9 @@ function MfccPanel({ rowIdx, data }) {
       }}>
         {renderedData && (
           <>
-            <span style={{
-              fontFamily: 'var(--font-mono)',
-              fontSize: 12,
-              letterSpacing: '0.14em',
-              textTransform: 'uppercase',
-              color: 'var(--accent)',
-              fontWeight: 600,
-              minWidth: 80,
-            }}>
-              {renderedData.label}
-            </span>
-            <span style={{
-              fontFamily: 'var(--font-mono)',
-              fontSize: 16,
-              fontWeight: 500,
-              flex: 1,
-            }}>
-              {renderedData.shape}
-            </span>
-            <span style={{
-              fontFamily: 'var(--font-mono)',
-              fontSize: 13,
-              color: 'rgba(244,241,234,0.65)',
-            }}>
-              {renderedData.detail}
-            </span>
+            <span style={{ fontFamily: 'var(--font-mono)', fontSize: 12, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--accent)', fontWeight: 600, minWidth: 80 }}>{renderedData.label}</span>
+            <span style={{ fontFamily: 'var(--font-mono)', fontSize: 16, fontWeight: 500, flex: 1 }}>{renderedData.shape}</span>
+            <span style={{ fontFamily: 'var(--font-mono)', fontSize: 13, color: 'rgba(244,241,234,0.65)' }}>{renderedData.detail}</span>
           </>
         )}
       </div>
@@ -348,121 +412,58 @@ function MfccPanel({ rowIdx, data }) {
   );
 }
 
-/* Card-style packet centered inside its parent (Input / DS-CNN). */
-function CenterPacket({ data }) {
-  const visible = !!data;
+/* ───────── MFCC summary content for P1 — big numbers. ───────── */
+function MfccSummaryContent() {
   return (
-    <div style={{
-      position: 'absolute',
-      left: '50%',
-      top: '50%',
-      transform: visible ? 'translate(-50%, -50%) scale(1)' : 'translate(-50%, -45%) scale(0.92)',
-      opacity: visible ? 1 : 0,
-      transition: `opacity 480ms ${PHASE_EASE}, transform 480ms ${PHASE_EASE}`,
-      pointerEvents: 'none',
-      zIndex: 4,
-      minWidth: 240,
-      padding: '14px 20px',
-      background: 'var(--ink)',
-      color: '#f4f1ea',
-      boxShadow: '0 14px 36px rgba(0,0,0,0.28)',
-      display: 'flex',
-      flexDirection: 'column',
-      alignItems: 'flex-start',
-      gap: 6,
-    }}>
-      <span style={{ fontFamily: 'var(--font-mono)', fontSize: 12, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--accent)', fontWeight: 600 }}>
-        {data?.label || ' '}
-      </span>
-      <span style={{ fontFamily: 'var(--font-mono)', fontSize: 26, fontWeight: 500, letterSpacing: '-0.01em' }}>
-        {data?.shape || ' '}
-      </span>
-      <span style={{ fontFamily: 'var(--font-mono)', fontSize: 13, color: 'rgba(244,241,234,0.6)' }}>
-        {data?.detail || ' '}
-      </span>
-    </div>
+    <SummaryCard
+      eyebrow="Standard approach · two stages"
+      headline="MFCC + DS-CNN"
+      bigNumber="~7.0 M"
+      bigLabel="total system ops"
+      breakdown={[
+        { value: '~1.6 M', label: 'MFCC preproc · CPU' },
+        { value: '~5.4 M', label: 'DS-CNN · network' },
+      ]}
+      footer="Zhang et al., 2017 · 94.4% on Speech Commands"
+    />
   );
 }
 
-/* ──────────────────────── P1 — two big summary cards ──────────────────────── */
-
-function P1Compare() {
+/* ───────── Our-model summary for P1 — mirrors MFCC summary at same scale. ───────── */
+function OurSummaryContent() {
   return (
-    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 24, flex: 1 }}>
-      <SummaryCard
-        eyebrow="Standard approach · two stages"
-        headline="MFCC + DS-CNN"
-        bigNumber="~7.0 M"
-        bigLabel="total system ops"
-        breakdown={[
-          { value: '~1.6 M', label: 'MFCC preproc · CPU' },
-          { value: '~5.4 M', label: 'DS-CNN · network' },
-        ]}
-        footer="Zhang et al., 2017 · 94.4% on Speech Commands"
-      />
-      <SummaryCard
-        eyebrow="★ Our model · unified pipeline"
-        headline="Conv1D → CNN"
-        bigNumber="0.97 M"
-        bigLabel="total system MACs"
-        breakdown={[
-          { value: '~516 K', label: 'conv1d_mel' },
-          { value: '~451 K', label: '3 conv blocks' },
-        ]}
-        footer="all int8 · one acceleratable datapath"
-        accent
-      />
-    </div>
+    <SummaryCard
+      eyebrow="★ Our model · unified pipeline"
+      headline="Conv1D → CNN"
+      bigNumber="0.97 M"
+      bigLabel="total system MACs"
+      breakdown={[
+        { value: '~516 K', label: 'conv1d_mel' },
+        { value: '~451 K', label: '3 conv blocks' },
+      ]}
+      footer="all int8 · one acceleratable datapath"
+      accent
+    />
   );
 }
 
 function SummaryCard({ eyebrow, headline, bigNumber, bigLabel, breakdown, footer, accent }) {
   return (
     <div style={{
+      height: '100%',
       border: accent ? '2px solid var(--accent)' : '1px solid var(--ink)',
       background: accent ? '#fff7f2' : 'rgba(26,26,26,0.04)',
       padding: '24px 28px',
       display: 'flex',
       flexDirection: 'column',
+      boxSizing: 'border-box',
     }}>
-      <div style={{
-        fontFamily: 'var(--font-mono)',
-        fontSize: 16,
-        color: accent ? 'var(--accent)' : 'var(--ink-mute)',
-        letterSpacing: '0.08em',
-        textTransform: 'uppercase',
-        marginBottom: 8,
-        fontWeight: accent ? 600 : 500,
-      }}>{eyebrow}</div>
+      <div style={{ fontFamily: 'var(--font-mono)', fontSize: 16, color: accent ? 'var(--accent)' : 'var(--ink-mute)', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 8, fontWeight: accent ? 600 : 500 }}>{eyebrow}</div>
       <div style={{ fontFamily: 'var(--font-sans)', fontSize: 32, fontWeight: 600, marginBottom: 22 }}>{headline}</div>
-
-      {/* Big total */}
-      <div style={{
-        textAlign: 'center',
-        padding: '24px 16px',
-        background: 'var(--paper)',
-        border: '1px solid rgba(26,26,26,0.18)',
-        marginBottom: 16,
-      }}>
-        <div style={{
-          fontFamily: 'var(--font-mono)',
-          fontSize: 120,
-          fontWeight: 500,
-          letterSpacing: '-0.03em',
-          lineHeight: 1,
-          color: 'var(--ink)',
-        }}>{bigNumber}</div>
-        <div style={{
-          fontFamily: 'var(--font-mono)',
-          fontSize: 14,
-          color: 'var(--ink-mute)',
-          textTransform: 'uppercase',
-          letterSpacing: '0.14em',
-          marginTop: 10,
-        }}>{bigLabel}</div>
+      <div style={{ textAlign: 'center', padding: '24px 16px', background: 'var(--paper)', border: '1px solid rgba(26,26,26,0.18)', marginBottom: 16 }}>
+        <div style={{ fontFamily: 'var(--font-mono)', fontSize: 120, fontWeight: 500, letterSpacing: '-0.03em', lineHeight: 1, color: 'var(--ink)' }}>{bigNumber}</div>
+        <div style={{ fontFamily: 'var(--font-mono)', fontSize: 14, color: 'var(--ink-mute)', textTransform: 'uppercase', letterSpacing: '0.14em', marginTop: 10 }}>{bigLabel}</div>
       </div>
-
-      {/* Two-cell breakdown */}
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 14 }}>
         {breakdown.map((b, i) => (
           <div key={i} style={{ padding: '14px 16px', border: '1px solid rgba(26,26,26,0.18)', background: 'var(--paper)', textAlign: 'center' }}>
@@ -471,33 +472,25 @@ function SummaryCard({ eyebrow, headline, bigNumber, bigLabel, breakdown, footer
           </div>
         ))}
       </div>
-
       <div style={{ flex: 1 }} />
-
-      {/* Footer */}
-      <div style={{
-        fontFamily: 'var(--font-mono)',
-        fontSize: 13,
-        color: 'var(--ink-mute)',
-        textAlign: 'center',
-      }}>
-        {footer}
-      </div>
+      <div style={{ fontFamily: 'var(--font-mono)', fontSize: 13, color: 'var(--ink-mute)', textAlign: 'center' }}>{footer}</div>
     </div>
   );
 }
 
-/* ──────────────── P2 — Our Model expanded · 3 main components ──────────────── */
-
-function P2Expanded() {
+/* ───────── Our-model expanded for P2 — 3 big component cards. The
+   Front-end and Body cards expose data-flip-source so slides 12 and 13
+   can FLIP-morph their main content out of these boxes. ───────── */
+function OurExpandedContent() {
   return (
     <div style={{
-      flex: 1,
+      height: '100%',
       border: '2px solid var(--accent)',
       background: '#fff7f2',
       padding: '24px 28px',
       display: 'flex',
       flexDirection: 'column',
+      boxSizing: 'border-box',
     }}>
       <div style={{ fontFamily: 'var(--font-mono)', fontSize: 16, color: 'var(--accent)', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 8, fontWeight: 600 }}>
         ★ Our model · unified pipeline
@@ -506,30 +499,18 @@ function P2Expanded() {
         Conv1D learns the spectral front-end · 0.97 M MACs total
       </div>
 
-      {/* Three components in equal-width cards. */}
       <div style={{
         display: 'grid',
         gridTemplateColumns: '1fr 32px 1fr 32px 1fr',
         alignItems: 'stretch',
         gap: 0,
         flex: 1,
-        marginBottom: 16,
       }}>
         <FrontEndCard />
         <BigArrow />
         <BodyCard />
         <BigArrow />
         <HeadCard />
-      </div>
-
-      {/* FLIP source for slide 12. */}
-      <div data-shared-bar="mac-share">
-        <MacShareBar
-          focus="balanced"
-          inline
-          label="Share of total MACs · 0.97 M"
-          annotate="next slide breaks down the front-end · then the body + head"
-        />
       </div>
     </div>
   );
@@ -541,10 +522,8 @@ function BigArrow() {
   );
 }
 
-/* Component 1 · Front-end — sinc kernel sketches + stats. */
+/* Component 1 — Front-end (FLIP source for slide 12). */
 function FrontEndCard() {
-  // Re-use the kernel-sketch math from Conv1DMelFrontEnd.jsx — only 4 of them
-  // for the small overview tile.
   const paths = Array.from({ length: 4 }, (_, i) => {
     const freq = 1 + i * 1.4;
     const amp  = 14 - i * 0.5;
@@ -558,10 +537,9 @@ function FrontEndCard() {
     return d.trim();
   });
   return (
-    <div style={{ border: '2px solid var(--accent)', background: 'rgba(217,119,87,0.10)', padding: '20px 22px', display: 'flex', flexDirection: 'column' }}>
+    <div data-flip-source="frontend" style={{ border: '2px solid var(--accent)', background: 'rgba(217,119,87,0.10)', padding: '20px 22px', display: 'flex', flexDirection: 'column' }}>
       <div style={{ fontFamily: 'var(--font-mono)', fontSize: 14, color: 'var(--accent)', textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 600 }}>Front-end</div>
       <div style={{ fontFamily: 'var(--font-sans)', fontSize: 28, fontWeight: 600, margin: '6px 0 14px' }}>conv1d_mel</div>
-
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '10px 14px', marginBottom: 14 }}>
         {paths.map((d, i) => (
           <svg key={i} viewBox="0 0 100 44" style={{ width: '100%', height: 40 }}>
@@ -569,37 +547,25 @@ function FrontEndCard() {
           </svg>
         ))}
       </div>
-
       <div style={{ flex: 1 }} />
-
       <div style={{ fontFamily: 'var(--font-mono)', fontSize: 16, color: 'var(--ink)', lineHeight: 1.55 }}>
         <div>16 sinc-bandpass</div>
         <div>K=65 · stride 16</div>
         <div>1 056 params</div>
       </div>
-      <div style={{
-        marginTop: 12,
-        padding: '10px 12px',
-        background: 'var(--accent)',
-        color: '#fff',
-        fontFamily: 'var(--font-mono)',
-        fontSize: 18,
-        fontWeight: 600,
-        textAlign: 'center',
-      }}>
+      <div style={{ marginTop: 12, padding: '10px 12px', background: 'var(--accent)', color: '#fff', fontFamily: 'var(--font-mono)', fontSize: 18, fontWeight: 600, textAlign: 'center' }}>
         ~516 K MACs · 53 %
       </div>
     </div>
   );
 }
 
-/* Component 2 · Body — 3D-stacked block sketch + stats. */
+/* Component 2 — Body (FLIP source for slide 13). */
 function BodyCard() {
   return (
-    <div style={{ border: '1px solid var(--ink)', background: 'var(--paper)', padding: '20px 22px', display: 'flex', flexDirection: 'column' }}>
+    <div data-flip-source="body" style={{ border: '1px solid var(--ink)', background: 'var(--paper)', padding: '20px 22px', display: 'flex', flexDirection: 'column' }}>
       <div style={{ fontFamily: 'var(--font-mono)', fontSize: 14, color: 'var(--ink-mute)', textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 600 }}>Body</div>
       <div style={{ fontFamily: 'var(--font-sans)', fontSize: 28, fontWeight: 600, margin: '6px 0 14px' }}>3 × Conv1D</div>
-
       <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-around', height: 130, marginBottom: 14 }}>
         {[
           { w: 70, label: '31 × 36' },
@@ -616,37 +582,25 @@ function BodyCard() {
           </div>
         ))}
       </div>
-
       <div style={{ flex: 1 }} />
-
       <div style={{ fontFamily: 'var(--font-mono)', fontSize: 16, color: 'var(--ink)', lineHeight: 1.55 }}>
         <div>36 channels · K=3</div>
         <div>BN · ReLU · pool</div>
         <div>~16 K params</div>
       </div>
-      <div style={{
-        marginTop: 12,
-        padding: '10px 12px',
-        background: 'var(--ink)',
-        color: '#f4f1ea',
-        fontFamily: 'var(--font-mono)',
-        fontSize: 18,
-        fontWeight: 600,
-        textAlign: 'center',
-      }}>
+      <div style={{ marginTop: 12, padding: '10px 12px', background: 'var(--ink)', color: '#f4f1ea', fontFamily: 'var(--font-mono)', fontSize: 18, fontWeight: 600, textAlign: 'center' }}>
         ~451 K MACs · 47 %
       </div>
     </div>
   );
 }
 
-/* Component 3 · Head — softmax bar sketch + stats. */
+/* Component 3 — Head. */
 function HeadCard() {
   return (
     <div style={{ border: '1px solid var(--ink)', background: 'var(--paper)', padding: '20px 22px', display: 'flex', flexDirection: 'column' }}>
       <div style={{ fontFamily: 'var(--font-mono)', fontSize: 14, color: 'var(--ink-mute)', textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 600 }}>Head</div>
       <div style={{ fontFamily: 'var(--font-sans)', fontSize: 28, fontWeight: 600, margin: '6px 0 14px' }}>GAP → Dense → Softmax</div>
-
       <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginBottom: 14 }}>
         {[
           { label: 'yes',   w: '92%', accent: true },
@@ -662,26 +616,45 @@ function HeadCard() {
           </div>
         ))}
       </div>
-
       <div style={{ flex: 1 }} />
-
       <div style={{ fontFamily: 'var(--font-mono)', fontSize: 16, color: 'var(--ink)', lineHeight: 1.55 }}>
         <div>Dense 16 · ReLU</div>
         <div>Softmax → 11 logits</div>
         <div>~16 K params total</div>
       </div>
-      <div style={{
-        marginTop: 12,
-        padding: '10px 12px',
-        background: 'var(--ink)',
-        color: '#f4f1ea',
-        fontFamily: 'var(--font-mono)',
-        fontSize: 18,
-        fontWeight: 600,
-        textAlign: 'center',
-      }}>
+      <div style={{ marginTop: 12, padding: '10px 12px', background: 'var(--ink)', color: '#f4f1ea', fontFamily: 'var(--font-mono)', fontSize: 18, fontWeight: 600, textAlign: 'center' }}>
         ~656 MACs · &lt;0.1 %
       </div>
+    </div>
+  );
+}
+
+/* Card-style packet centered inside Input / DS-CNN. */
+function CenterPacket({ data }) {
+  const visible = !!data;
+  return (
+    <div style={{
+      position: 'absolute',
+      left: '50%',
+      top: '50%',
+      transform: visible ? 'translate(-50%, -50%) scale(1)' : 'translate(-50%, -45%) scale(0.92)',
+      opacity: visible ? 1 : 0,
+      transition: `opacity 480ms ${PHASE_EASE}, transform 480ms ${PHASE_EASE}`,
+      pointerEvents: 'none',
+      zIndex: 4,
+      minWidth: 220,
+      padding: '14px 20px',
+      background: 'var(--ink)',
+      color: '#f4f1ea',
+      boxShadow: '0 14px 36px rgba(0,0,0,0.28)',
+      display: 'flex',
+      flexDirection: 'column',
+      alignItems: 'flex-start',
+      gap: 6,
+    }}>
+      <span style={{ fontFamily: 'var(--font-mono)', fontSize: 12, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--accent)', fontWeight: 600 }}>{data?.label || ' '}</span>
+      <span style={{ fontFamily: 'var(--font-mono)', fontSize: 24, fontWeight: 500, letterSpacing: '-0.01em' }}>{data?.shape || ' '}</span>
+      <span style={{ fontFamily: 'var(--font-mono)', fontSize: 13, color: 'rgba(244,241,234,0.6)' }}>{data?.detail || ' '}</span>
     </div>
   );
 }
