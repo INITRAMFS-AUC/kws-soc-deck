@@ -654,16 +654,16 @@ export const slides = [
   {
     id: 'optimization-journey',
     label: 'Optimization Journey',
-    notes: 'The optimization journey. Eight measured points, log scale. Strided NNoM at 15.6 seconds. Mel front-end at 6.3. Add DMA and unroll, then compiler optimizations, then XIP cache optimizations — that drops us from 15.6 seconds to about one second on software alone. Then the accelerator lands and we\'re at 70 milliseconds. Int8 weights drop us to 38 milliseconds. Conv1D double-buffering — overlapping weight fetch with compute — gets us to 30. End-to-end, 5.43 seconds to 30 milliseconds. Roughly 180×.',
+    notes: 'The optimization journey. Eight measured points, log scale. Mel front-end at 6.3. Add DMA and unroll, then compiler optimizations, then XIP cache optimizations — that drops us from 15.6 seconds to about one second on software alone. Then the accelerator lands and we\'re at 70 milliseconds. Int8 weights drop us to 38 milliseconds. Conv1D double-buffering — overlapping weight fetch with compute — gets us to 30. End-to-end, 5.43 seconds to 30 milliseconds. Roughly 180×.',
     content: {
       kind: 'Results',
       eyebrow: 'Measured · csrr mcycle in Verilator',
-      title: 'From 15.6 seconds to 30 milliseconds.',
+      title: 'From 3.0s seconds to 30 milliseconds.',
       stats: [
-        { value: '5.43 s → 30 ms',  label: 'End-to-end',              size: 56 },
-        { value: '~180×',           label: 'Speedup',                 size: 56 },
+        { value: '3.0s → 30 ms',  label: 'End-to-end',              size: 56 },
+        { value: '~1000×',           label: 'Speedup',                 size: 56 },
         { value: '10 / 11 clips',   label: 'Matches SW baseline',     size: 44 },
-        { value: '95 %',            label: 'INMP441 mic accuracy',    size: 56 },
+        { value: '90 %',            label: 'INMP441 mic accuracy',    size: 56 },
       ],
     },
   },

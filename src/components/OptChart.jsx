@@ -2,14 +2,11 @@ import { useEffect, useRef, useState } from 'react';
 import { useTweaks, TweaksPanel, TweakSection, TweakRadio, TweakToggle } from './tweaks/index.js';
 
 const STEPS = [
-  { id: 1, sec: 15.6,    label: ['Strided', 'NNoM'],            display: '15.6 s' },
-  { id: 2, sec: 6.3,     label: ['Mel', 'front-end'],            display: '6.3 s' },
-  { id: 3, sec: 3.6,     label: ['+ DMA', '+ unroll'],           display: '3.6 s' },
-  { id: 4, sec: 3.0,     label: ['+ compiler', 'opts'],          display: '3.0 s' },
-  { id: 5, sec: 1.139,   label: ['+ XIP cache', 'opts'],         display: '1.14 s' },
-  { id: 6, sec: 0.0694,  label: ['+ Conv1D', 'accel'],           display: '69 ms' },
-  { id: 7, sec: 0.0383,  label: ['+ int8', 'weights'],           display: '38 ms' },
-  { id: 8, sec: 0.0303,  label: ['+ double', 'buffering'],       display: '30 ms' },
+  { id: 1, sec: 3.0,     label: ['+ DMA', 'opts'],          display: '3.0 s' },
+  { id: 2, sec: 1.139,   label: ['+ XIP cache', 'opts'],         display: '1.14 s' },
+  { id: 3, sec: 0.0694,  label: ['+ Conv1D', 'accel'],           display: '69 ms' },
+  { id: 4, sec: 0.0383,  label: ['+ int8', 'weights'],           display: '38 ms' },
+  { id: 5, sec: 0.0303,  label: ['+ double', 'buffering'],       display: '30 ms' },
 ];
 
 const DEFAULT_TWEAKS = { scale: 'linear', showFill: true, showBaseline: true };
@@ -22,18 +19,32 @@ function Chart({ tw }) {
 
   const xs = STEPS.map((_, i) => x0 + ((i + 0.5) * (x1 - x0)) / STEPS.length);
 
+  // Linear-scale max is driven by the first (largest) measurement so the
+  // baseline sits near the top of the plot regardless of what the user
+  // edits STEPS[0].sec to.
+  const linearMax = Math.max(STEPS[0].sec * 1.08, 0.5);
+
   const yFor = (sec) => {
     if (tw.scale === 'log') {
       const lmin = -2, lmax = 2;
       const t01 = (Math.log10(sec) - lmin) / (lmax - lmin);
       return y1 - t01 * plotH;
     }
-    return y1 - (sec / 16) * plotH;
+    return y1 - (sec / linearMax) * plotH;
+  };
+
+  // Pick a sensible grid step for the linear scale — ~4 ticks fit cleanly.
+  const niceTicks = (max) => {
+    if (max >= 12) return [16, 12, 8, 4, 0];
+    if (max >= 6)  return [8,  6,  4, 2, 0];
+    if (max >= 3)  return [3,  2,  1, 0];
+    if (max >= 1)  return [1,  0.5, 0];
+    return [max, max / 2, 0];
   };
 
   const grids = tw.scale === 'log'
     ? [{ v: 100, l: '100 s' }, { v: 10, l: '10 s' }, { v: 1, l: '1 s' }, { v: 0.1, l: '100 ms' }, { v: 0.01, l: '10 ms' }]
-    : [{ v: 16, l: '16 s' }, { v: 12, l: '12 s' }, { v: 8, l: '8 s' }, { v: 4, l: '4 s' }, { v: 0, l: '0 s' }];
+    : niceTicks(linearMax).map((v) => ({ v, l: `${v} s` }));
 
   const ys = STEPS.map((s) => yFor(s.sec));
   const linePoints = xs.map((x, i) => `${x},${ys[i]}`).join(' ');
@@ -61,7 +72,9 @@ function Chart({ tw }) {
         {tw.showBaseline && tw.scale === 'linear' && (
           <g>
             <line x1={x0} y1={ys[0]} x2={x1} y2={ys[0]} stroke="oklch(0.45 0.13 255)" strokeWidth="1" strokeDasharray="6 6" opacity="0.5" />
-            <text x={x1 - 10} y={ys[0] - 8} textAnchor="end" fontFamily="'JetBrains Mono', monospace" fontSize="13" fill="oklch(0.45 0.13 255)">SW baseline · 15.6 s</text>
+            <text x={x1 - 10} y={ys[0] - 8} textAnchor="end" fontFamily="'JetBrains Mono', monospace" fontSize="13" fill="oklch(0.45 0.13 255)">
+              SW baseline · {STEPS[0].display}
+            </text>
           </g>
         )}
         <polyline points={linePoints} fill="none" stroke="oklch(0.55 0.15 38)" strokeWidth="2.5" strokeOpacity="0.7" />
@@ -90,7 +103,16 @@ function Chart({ tw }) {
           );
         })}
       </svg>
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(8, 1fr)', gap: 6, marginTop: 4, paddingLeft: 64 }}>
+      {/* Legend cells centred under each chart x-position. We mirror the
+          SVG's x-margins (x0 and W-x1, % of viewBox width) as side padding
+          so `repeat(N, 1fr)` lines up with the data points exactly. */}
+      <div style={{
+        display: 'grid',
+        gridTemplateColumns: `repeat(${STEPS.length}, 1fr)`,
+        gap: 0, marginTop: 4,
+        paddingLeft:  `${(x0 / W) * 100}%`,
+        paddingRight: `${((W - x1) / W) * 100}%`,
+      }}>
         {STEPS.map((s, i) => {
           const last = i === STEPS.length - 1;
           return (
