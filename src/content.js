@@ -342,7 +342,7 @@ export const slides = [
   {
     id: 'the-model',
     label: 'The Model',
-    notes: "Mel-aware Conv1D, directly on the waveform. We don't use a fixed MFCC front-end because a fixed front-end is preprocessing the accelerator can't touch. Our learnable Conv1D learns the spectral decomposition itself — and becomes hardware-friendly because it's just a tensor operation. The first Conv1D layer dominates compute. That's by design — it becomes the accelerator target.",
+    notes: "Mel-aware Conv1D directly on the waveform. Rather than a separate MFCC stage, we use a learnable Conv1D that performs spectral decomposition as part of the model itself. The result is a single unified pipeline — one datatype, one compute path. The first Conv1D layer dominates MACs at 53%. That's by design: it becomes the accelerator target.",
     content: {
       kind: 'Model',
       eyebrow: 'build_mel_compact()',
@@ -359,11 +359,19 @@ export const slides = [
     },
   },
 
+  // Standard MFCC ───────────────────────────────────────────────────────────
+  {
+    id: 'standard-mfcc',
+    label: 'Standard MFCC Pipeline',
+    notes: 'This is the industry baseline — a well-established pipeline from Zhang et al., Hello Edge, 2017. Six steps: framing, FFT, power spectrum, Mel filterbank, log compression, DCT-II. Together they cost around 1.6 M ops of preprocessing before the network even starts. This pipeline is proven and widely used. On platforms with a dedicated DSP or MFCC accelerator it runs in parallel. On our bare RISC-V core, both stages share the same CPU.',
+    content: { kind: 'Model' },
+  },
+
   // No MFCC ─────────────────────────────────────────────────────────────────
   {
     id: 'no-mfcc',
-    label: 'No MFCC',
-    notes: 'We ditched MFCC. Standard KWS papers report network MACs and call it done. The MFCC pipeline running underneath them is doing more arithmetic than the network — and it\'s float, and it\'s not accelerable. Our pipeline skips all of that: raw int8 PCM straight into a learnable Conv1D. 0.97 M MACs total, all int8, 100% accelerable.',
+    label: 'Unified Pipeline',
+    notes: 'Our design decision: skip the MFCC stage entirely. A learnable Conv1D replaces it, merging front-end and body into one pipeline. The total system cost is 0.97 M MACs — no separate preprocessing stage. Zhang et al. DS-CNN-S runs at 5.4 M network MACs plus ~1.6 M MFCC preprocessing, ~7 M total. We achieve 90% accuracy at 0.97 M total — front-end cost included.',
     content: { kind: 'Model' },
   },
 
