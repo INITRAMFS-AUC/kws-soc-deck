@@ -58,30 +58,25 @@ export const slides = [
       bodyHTML: 'Phones. Earbuds. Smart speakers. Cars. Appliances. Behind every one of those interfaces is a tiny always-on classifier called <span style="color: var(--accent); font-weight: 500;">keyword spotting</span> — and it has to run within milliwatts, on kilobytes of memory, every second of every day.',
       market: {
         stats: [
-          { label: 'Revenue, 2023',       value: '$23.9 B' },
-          { label: 'Forecast, 2030',      value: '$92.4 B' },
-          { label: 'CAGR, 2024 – 2030',   value: '21.3%'   },
+          { label: 'Market size, 2024',   value: '$24.6 B' },
+          { label: 'Forecast, 2030',      value: '$69.8 B' },
+          { label: 'CAGR, 2024 – 2030',   value: '18.7%'   },
         ],
-        chartTitle: 'Global voice user interface market, 2017 – 2030 (US$ M)',
-        // Grand View Research, Voice User Interface Market report
+        chartTitle: 'Global voice user interface market, 2024 – 2030 (US$ M)',
+        // Strategic Market Research, Voice User Interface Market report
+        // Published Apr 2026. Source gives 2024 base year and 2030 forecast;
+        // intermediate forecast bars are interpolated to the stated endpoint.
         series: [
-          { y: 2017, v:  6900 },
-          { y: 2018, v:  9000 },
-          { y: 2019, v: 11000 },
-          { y: 2020, v: 13500 },
-          { y: 2021, v: 16200 },
-          { y: 2022, v: 19500 },
-          { y: 2023, v: 23941 },
-          { y: 2024, v: 29000 },
-          { y: 2025, v: 35000 },
-          { y: 2026, v: 42500 },
-          { y: 2027, v: 51500 },
-          { y: 2028, v: 62500 },
-          { y: 2029, v: 76000 },
-          { y: 2030, v: 92410 },
+          { y: 2024, v: 24600 },
+          { y: 2025, v: 29270 },
+          { y: 2026, v: 34826 },
+          { y: 2027, v: 41438 },
+          { y: 2028, v: 49304 },
+          { y: 2029, v: 58664 },
+          { y: 2030, v: 69800 },
         ],
-        sourceLabel: 'Source · Grand View Research, Voice User Interface Market Report',
-        sourceUrl: 'https://www.grandviewresearch.com/industry-analysis/voice-user-interface-market-report',
+        sourceLabel: 'Source · Strategic Market Research, Voice User Interface Market Report, Apr 2026',
+        sourceUrl: 'https://www.strategicmarketresearch.com/market-report/voice-user-interface-market',
       },
       // Intra-slide step between "are everywhere." and "Market Cap" — same
       // slide, second pane: smart-watch + "Start Timer." over a top-down track.
