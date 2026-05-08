@@ -384,7 +384,18 @@ export const slides = [
   {
     id: 'vs-models',
     label: 'vs Other Models',
-    notes: '90% accuracy at a fraction of the parameter count. Google Speech Commands benchmark, ordered descending by accuracy: MatchboxNet 97.5% (~140K params, 7.4M MACs), TC-ResNet8 96.6% (~66K, 6.0M), DS-CNN-small 94.4% (~38K, 5.4M), This work 90.0% (~16K, 0.97M). We sit immediately under DS-CNN — our closest accuracy neighbour. Bars animate on slide entry, staggered top-down. Banbury TinyConv removed: it sat far below in accuracy and added clutter without sharpening the comparison. Callouts: vs MatchboxNet 8.8× fewer params; vs DS-CNN 2.4× fewer params + 5.6× fewer MACs at -4.4 pts accuracy.',
+    notes: [
+      '93.5 % float on Google Speech Commands at a fraction of the parameter count. Numbers in descending accuracy order so Mel Compact lands directly under DS-CNN, our closest neighbour.',
+      '',
+      'MatchboxNet · Majumdar 2020 — 97.5 % · ~140 K params · 7.4 M MACs.',
+      'TC-ResNet8 · Choi 2019 — 96.6 % · ~66 K params · 6.0 M MACs.',
+      'DS-CNN small · Zhang 2018 — 94.4 % · ~38 K params · 5.4 M MACs.',
+      'Mel Compact · ours — 93.5 % · ~16 K params · 0.97 M MACs (float baseline).',
+      '',
+      'Bars animate on slide entry, staggered top-down (140 ms per row, plus ~60 ms gap between accuracy/params/MACs columns within each row). Banbury TinyConv was removed — it sat far below in accuracy and added clutter without sharpening the comparison.',
+      '',
+      'Callouts: vs MatchboxNet 8.8× fewer params, 7.6× fewer MACs at −4.0 pts accuracy. vs DS-CNN small 2.4× fewer params, 5.6× fewer MACs at −0.9 pts accuracy. The DS-CNN delta is what to dwell on — under one accuracy point for under half the parameters.',
+    ].join('\n'),
     content: { kind: 'Model' },
   },
 
@@ -392,7 +403,15 @@ export const slides = [
   {
     id: 'quantization',
     label: 'Quantization',
-    notes: 'Post-training quantization, KL-divergence calibrated. No QAT, no fine-tune. Train in float, calibrate on a held-out batch of 1024 samples, ship int8. KLD threshold search picks the clip threshold that minimises D_KL between the float histogram and the requantised histogram — preserving the shape of the distribution rather than the extremes. float32 reference: 92.4%. int8 min-max PTQ: 86.1%. int8 KLD-calibrated: 90.0%. The 2.4 point drop is the price of int8 silicon with no FP unit.',
+    notes: [
+      'Post-training quantization, KL-divergence calibrated. 11 classes — same Mel Compact head we just walked through. No QAT, no fine-tune. Train float32, calibrate on a held-out batch of 1024 samples, ship int8.',
+      '',
+      'KLD threshold search: for each tensor, sweep candidate clip thresholds and pick the one that minimises D_KL between the float histogram and the requantised histogram — preserving the shape of the distribution rather than the extremes. Min-max calibration is the naive baseline: pick min and max as the int8 endpoints, which one fat outlier can hijack.',
+      '',
+      'GSC test top-1 numbers: float32 baseline 93.5 %. Naive int8 min-max 84.0 %. KLD-calibrated int8 90.0 %. KLD recovers ~6 pts vs naive min-max for free. Net float→int8 drop is 3.5 pts — that is the price of running on int8 silicon with no FP unit.',
+      '',
+      'The 90 % int8 KLD number is the same one the deployed model gets on the INMP441 mic — see next slide.',
+    ].join('\n'),
     content: { kind: 'Model' },
   },
 
@@ -400,7 +419,15 @@ export const slides = [
   {
     id: 'data-gap',
     label: 'Data Gap',
-    notes: 'Studio audio is not real audio. A model trained only on Google Speech Commands and dropped onto our INMP441 shows meaningful accuracy degradation. The fix had two parts: we collected real INMP441 data through our own PCB and fine-tuned on it, and we added peak normalization — every clip scaled so the loudest sample reaches 75 percent of int16 full scale, then right-shifted by 8 in firmware to land in a known int8 range. 80.7 percent on Google Speech Commands becomes 95 percent on real mic data.',
+    notes: [
+      'Three-phase reveal. Every accuracy on this slide is int8 — the deployed model — so the audience never confuses these numbers with the float baseline on the leaderboard slide.',
+      '',
+      'P0 (default view): top two panels only. Bars animate left→right. Before: GSC int8 = 90 %, INMP441 int8 = 62 %. The deployed int8 model loses 28 pts when we drop it onto a real INMP441 — distribution shift the model never saw on GSC. After: GSC int8 = 90 %, INMP441 int8 = 90 %. Same int8 weights, just calibrated to the new audio source. Zero degradation between domains.',
+      '',
+      'P1 (press →): two fix specimen cards fade up at the bottom. Fix 01 — peak normalization: divide every waveform by its peak absolute value before training and on device. Removes microphone gain variation. Free, no extra params, no extra ops. Fix 02 — domain fine-tuning: record ~50 utterances per class with the INMP441 through our own PCB, mix 10 % into the training set, three fine-tune epochs on the blended corpus. Int8 accuracy recovers to GSC baseline.',
+      '',
+      'P2 (press → again): the two fix cards cross-fade out and one wide box takes their place. We measured the INMP441\'s frequency response — flat to ±1.5 dB from 100 Hz to 4 kHz. At an 8 kHz sample rate there is no spectral distortion to fix; the two cards above patch a level shift, not a frequency-dependent one. The deeper reason the gap closes so cleanly is hardware choice — the mic is well-behaved across our band — and the fixes are mostly correcting for level, not spectrum.',
+    ].join('\n'),
     content: {
       kind: 'Model',
       eyebrow: 'Studio audio is not real audio',

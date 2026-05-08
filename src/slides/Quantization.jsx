@@ -29,8 +29,8 @@ const ptqSteps = [
 ];
 
 const accuracyBars = [
-  { label: 'float32', value: '92.4 %', pct: 92.4, accent: false, dim: false },
-  { label: 'int8 min-max', value: '86.1 %', pct: 86.1, accent: false, dim: true },
+  { label: 'float32', value: '93.5 %', pct: 93.5, accent: false, dim: false },
+  { label: 'int8 min-max', value: '84.0 %', pct: 84.0, accent: false, dim: true },
   { label: 'int8 KLD', value: '90.0 %', pct: 90.0, accent: true, dim: false },
 ];
 
@@ -88,7 +88,7 @@ export default function Quantization() {
 
           {/* Accuracy bars */}
           <div style={{ border: '1px solid var(--ink)', background: 'var(--paper)', padding: '22px 26px' }}>
-            <div style={{ fontFamily: 'var(--font-mono)', fontSize: 18, color: 'var(--ink-mute)', textTransform: 'uppercase', marginBottom: 16 }}>Top-1 accuracy · 5-class</div>
+            <div style={{ fontFamily: 'var(--font-mono)', fontSize: 18, color: 'var(--ink-mute)', textTransform: 'uppercase', marginBottom: 16 }}>Top-1 accuracy · 11-class · GSC test</div>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
               {accuracyBars.map((bar) => (
@@ -109,7 +109,7 @@ export default function Quantization() {
             </div>
 
             <div style={{ marginTop: 18, paddingTop: 14, borderTop: '1px solid rgba(26,26,26,0.1)', fontFamily: 'var(--font-mono)', fontSize: 18, color: 'var(--ink-mute)' }}>
-              float → int8 drop <span style={{ color: 'var(--accent)', fontWeight: 600 }}>−2.4 pts</span>
+              float → int8 drop <span style={{ color: 'var(--accent)', fontWeight: 600 }}>−3.5 pts</span>
             </div>
           </div>
 
@@ -117,7 +117,7 @@ export default function Quantization() {
           <div style={{ background: 'var(--ink)', color: '#f4f1ea', padding: '18px 24px' }}>
             <div style={{ fontFamily: 'var(--font-mono)', fontSize: 16, color: 'var(--accent)', textTransform: 'uppercase', fontWeight: 600, marginBottom: 6 }}>The takeaway</div>
             <div style={{ fontFamily: 'var(--font-sans)', fontSize: 22, lineHeight: 1.4 }}>
-              2.4 pts is the price of running on int8 silicon with no FP unit. KLD recovers ~4 pts vs naive min-max for free.
+              3.5 pts is the price of running on int8 silicon with no FP unit. KLD recovers ~6 pts vs naive min-max for free.
             </div>
           </div>
         </div>
