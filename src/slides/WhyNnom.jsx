@@ -2,30 +2,33 @@ import SlideFrame from '../components/SlideFrame.jsx';
 
 /* ─────────────────────────────────────────────────────────────────────────────
  * Slide 13 — bridge from "Mel Compact at 93.5 % float" (slide 12 leaderboard)
- * to "post-training quantization, KL-divergence calibrated" (slide 14). The
- * audience needs to know what runtime is going to execute the int8 model on
- * our SoC, and why that runtime is NNoM. Three constraints, three cards;
- * verbose detail in speaker notes.
+ * to "post-training quantization, KL-divergence calibrated" (slide 14).
+ *
+ * The slide has two beats: a definition of NNoM up top (so the audience
+ * knows what the runtime IS before we say why we picked it), then three
+ * cards naming the three properties that make it the right fit for our
+ * chip — power-of-2 INT8, a ping-pong static activation buffer, and Keras
+ * codegen instead of an interpreter. Verbose detail in speaker notes.
  * ───────────────────────────────────────────────────────────────────────── */
 
 const CARDS = [
   {
-    eyebrow: 'Hazard3 has no float unit',
-    big:    'INT8 only',
-    bigLabel: 'weights · activations · scales',
-    claim:  'Power-of-2 scales fold to a shift — no idiv, no soft-float helpers from libgcc.',
+    eyebrow: 'Layer-wise INT8 · power-of-2 scales',
+    big:    'shift',
+    bigLabel: 'not divide',
+    claim:  'INT8 weights, INT32 accumulators, scales restricted to powers of two — requantize is a bit-shift, not an idiv. No soft-float helpers from libgcc, no FPU needed.',
   },
   {
-    eyebrow: '64 KB SRAM, no malloc',
-    big:    '64 KB',
-    bigLabel: 'fits NNoM\'s static buffer',
-    claim:  'Tensors declared at compile time. No tensor arena to size, no fragmentation in 64 KB.',
+    eyebrow: 'Ping-pong activation buffer',
+    big:    '0 malloc',
+    bigLabel: 'static, sized at compile time',
+    claim:  'NNoM ping-pongs activations between two static buffers sized for the worst layer. No C runtime, no tensor-arena to grow — what links is what runs.',
   },
   {
-    eyebrow: 'Keras → weights.h → firmware',
-    big:    'weights.h',
-    bigLabel: 'linked into firmware',
-    claim:  'nnom_generate_model emits C. Same bytes run on host harness and on SoC, bit-identical.',
+    eyebrow: 'Keras → C with one Python call',
+    big:    '1 line',
+    bigLabel: 'nnom_generate_model(model)',
+    claim:  'Trained Keras model → weights.h, linked straight into firmware. Onboard pre-compiled — zero interpreter loss at runtime.',
   },
 ];
 
@@ -33,10 +36,10 @@ export default function WhyNnom() {
   return (
     <SlideFrame topLeft="13 · Model">
       <div style={{ marginTop: 36 }}>
-        <div className="eyebrow">Float in training · int8 on the chip</div>
-        <h1 className="title" style={{ marginBottom: 10 }}>We need an int8 runtime that fits the chip we built.</h1>
-        <p className="subtitle" style={{ maxWidth: 1700, marginBottom: 38 }}>
-          Hazard3 RV32IMAC · 36 MHz · 64 KB SRAM · no FPU. NNoM is the only embedded runtime that satisfies all three without ceremony.
+        <div className="eyebrow">NNoM · int8 inference runtime for MCUs</div>
+        <h1 className="title" style={{ marginBottom: 10 }}>A lightweight neural-network library built for microcontrollers.</h1>
+        <p className="subtitle" style={{ maxWidth: 1700, marginBottom: 32 }}>
+          <strong>NNoM (Neural Network on Microcontroller)</strong> is a high-level inference library that turns a trained Keras model into bare-metal C. No interpreter, no malloc, no C runtime. Layer-wise INT8 quantization throughout — built for the chip we built (Hazard3 RV32IMAC · 36 MHz · 64 KB SRAM · no FPU).
         </p>
       </div>
 
