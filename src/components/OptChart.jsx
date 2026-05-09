@@ -5,7 +5,7 @@ const STEPS = [
   { id: 1, sec: 3.0,     label: ['+ DMA', 'opts'],          display: '3.0 s' },
   { id: 2, sec: 1.139,   label: ['+ XIP cache', 'opts'],         display: '1.14 s' },
   { id: 3, sec: 0.0694,  label: ['+ Conv1D', 'accel'],           display: '69 ms' },
-  { id: 4, sec: 0.0383,  label: ['+ int8', 'weights'],           display: '38 ms' },
+  { id: 4, sec: 0.0383,  label: ['+ int8', 'packing'],           display: '38 ms' },
   { id: 5, sec: 0.0303,  label: ['+ double', 'buffering'],       display: '30 ms' },
 ];
 
