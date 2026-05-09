@@ -1038,55 +1038,75 @@ function HeadExpanded() {
       <div style={{ display: 'flex', alignItems: 'stretch', gap: 0, flex: 1, minHeight: 0 }}>
 
         {/* GAP */}
-        <div style={{ flex: 0.9, border: '1px solid var(--ink)', padding: '12px 14px', background: 'rgba(26,26,26,0.03)', display: 'flex', flexDirection: 'column', minHeight: 0 }}>
-          <div style={{ fontFamily: 'var(--font-sans)', fontSize: 22, fontWeight: 600, marginBottom: 4 }}>Global Avg Pool</div>
-          <div style={{ fontFamily: 'var(--font-mono)', fontSize: 13, color: 'var(--ink-mute)', marginBottom: 12 }}>15 × 36 → 36</div>
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8, flex: 1, justifyContent: 'center', minHeight: 0 }}>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(6, 12px)', gap: 5 }}>
+        <div style={{ flex: 0.9, border: '1px solid var(--ink)', padding: '18px 20px', background: 'rgba(26,26,26,0.03)', display: 'flex', flexDirection: 'column', minHeight: 0 }}>
+          <div style={{ fontFamily: 'var(--font-sans)', fontSize: 28, fontWeight: 600, marginBottom: 6 }}>Global Avg Pool</div>
+          <div style={{ fontFamily: 'var(--font-mono)', fontSize: 16, color: 'var(--ink-mute)', marginBottom: 16 }}>15 × 36 → 36</div>
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 14, flex: 1, justifyContent: 'center', minHeight: 0 }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(6, 22px)', gap: 9 }}>
               {Array.from({ length: 36 }, (_, i) => (
-                <div key={i} style={{ width: 12, height: 12, borderRadius: '50%', background: 'var(--ink)' }} />
+                <div key={i} style={{ width: 22, height: 22, borderRadius: '50%', background: 'var(--ink)' }} />
               ))}
             </div>
-            <div style={{ fontFamily: 'var(--font-mono)', fontSize: 13, color: 'var(--ink-mute)', textAlign: 'center' }}>
+            <div style={{ fontFamily: 'var(--font-mono)', fontSize: 16, color: 'var(--ink-mute)', textAlign: 'center', lineHeight: 1.5 }}>
               36 channels<br />time-axis collapsed
             </div>
           </div>
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'var(--font-mono)', color: 'var(--ink-mute)', fontSize: 26, padding: '0 8px' }}>→</div>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'var(--font-mono)', color: 'var(--ink-mute)', fontSize: 32, padding: '0 10px' }}>→</div>
 
         {/* Dense 16 */}
-        <div style={{ flex: 0.9, border: '1px solid var(--ink)', padding: '12px 14px', background: 'rgba(26,26,26,0.03)', display: 'flex', flexDirection: 'column', minHeight: 0 }}>
-          <div style={{ fontFamily: 'var(--font-sans)', fontSize: 22, fontWeight: 600, marginBottom: 4 }}>Dense 16</div>
-          <div style={{ fontFamily: 'var(--font-mono)', fontSize: 13, color: 'var(--ink-mute)', marginBottom: 12 }}>36 → 16 · ReLU · dropout p=0.3</div>
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8, flex: 1, justifyContent: 'center', minHeight: 0 }}>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(8, 12px)', gap: 5 }}>
+        <div style={{ flex: 0.9, border: '1px solid var(--ink)', padding: '18px 20px', background: 'rgba(26,26,26,0.03)', display: 'flex', flexDirection: 'column', minHeight: 0 }}>
+          <div style={{ fontFamily: 'var(--font-sans)', fontSize: 28, fontWeight: 600, marginBottom: 6 }}>Dense 16</div>
+          <div style={{ fontFamily: 'var(--font-mono)', fontSize: 16, color: 'var(--ink-mute)', marginBottom: 16 }}>36 → 16 · ReLU · dropout p=0.3</div>
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 14, flex: 1, justifyContent: 'center', minHeight: 0 }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(8, 22px)', gridTemplateRows: 'repeat(2, 22px)', gap: 9 }}>
               {Array.from({ length: 16 }, (_, i) => (
-                <div key={i} style={{ width: 12, height: 12, borderRadius: '50%', background: 'var(--accent)' }} />
+                <div key={i} style={{ width: 22, height: 22, borderRadius: '50%', background: 'var(--accent)' }} />
               ))}
             </div>
-            <div style={{ fontFamily: 'var(--font-mono)', fontSize: 13, color: 'var(--ink-mute)', textAlign: 'center' }}>
+            <div style={{ fontFamily: 'var(--font-mono)', fontSize: 16, color: 'var(--ink-mute)', textAlign: 'center', lineHeight: 1.5 }}>
               16 hidden units<br />L2 = 1e-4
             </div>
           </div>
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'var(--font-mono)', color: 'var(--ink-mute)', fontSize: 26, padding: '0 8px' }}>→</div>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'var(--font-mono)', color: 'var(--ink-mute)', fontSize: 32, padding: '0 10px' }}>→</div>
 
         {/* Softmax 11 */}
-        <div style={{ flex: 1.6, border: '1px solid var(--ink)', padding: '12px 16px', background: 'rgba(26,26,26,0.03)', display: 'flex', flexDirection: 'column', minHeight: 0 }}>
-          <div style={{ fontFamily: 'var(--font-sans)', fontSize: 22, fontWeight: 600, marginBottom: 4 }}>Softmax · 11 classes</div>
-          <div style={{ fontFamily: 'var(--font-mono)', fontSize: 13, color: 'var(--ink-mute)', marginBottom: 8 }}>Dense 16 → 11 · L2 = 1e-4</div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 5, fontFamily: 'var(--font-mono)', fontSize: 14, flex: 1, minHeight: 0, justifyContent: 'center' }}>
+        <div style={{ flex: 1.6, border: '1px solid var(--ink)', padding: '18px 22px', background: 'rgba(26,26,26,0.03)', display: 'flex', flexDirection: 'column', minHeight: 0 }}>
+          <div style={{ fontFamily: 'var(--font-sans)', fontSize: 28, fontWeight: 600, marginBottom: 6 }}>Softmax · 11 classes</div>
+          <div style={{ fontFamily: 'var(--font-mono)', fontSize: 16, color: 'var(--ink-mute)', marginBottom: 14 }}>Dense 16 → 11 · L2 = 1e-4</div>
+
+          {/* 11 rows in a fixed-row-height grid so the bars grow with the
+              column. Bar fills 70 % of its row height — visually massive
+              compared to the previous 10 px constant. */}
+          <div style={{
+            display: 'grid',
+            gridTemplateRows: `repeat(${SOFTMAX_CLASSES.length}, 1fr)`,
+            rowGap: 4,
+            fontFamily: 'var(--font-mono)',
+            fontSize: 19,
+            flex: 1,
+            minHeight: 0,
+          }}>
             {SOFTMAX_CLASSES.map((c) => (
-              <div key={c.label} style={{ display: 'grid', gridTemplateColumns: '90px 1fr 36px', gap: 10, alignItems: 'center' }}>
+              <div key={c.label} style={{ display: 'grid', gridTemplateColumns: '110px 1fr 50px', gap: 12, alignItems: 'center' }}>
                 <span style={{ color: c.accent ? 'var(--accent)' : 'var(--ink-mute)', fontWeight: c.accent ? 600 : 400 }}>{c.label}</span>
-                <div style={{ height: 10, background: c.accent ? 'var(--accent)' : 'var(--ink)', opacity: c.accent ? 1 : 0.22, width: c.w, minWidth: 2 }} />
+                <div style={{
+                  height: '70%',
+                  maxHeight: 28,
+                  background: c.accent ? 'var(--accent)' : 'var(--ink)',
+                  opacity: c.accent ? 1 : 0.22,
+                  width: c.w,
+                  minWidth: 2,
+                }} />
                 <span style={{ color: c.accent ? 'var(--accent)' : 'var(--ink-mute)', textAlign: 'right', fontWeight: c.accent ? 600 : 400 }}>{c.prob}</span>
               </div>
             ))}
           </div>
-          <div style={{ fontFamily: 'var(--font-mono)', fontSize: 16, color: 'var(--accent)', marginTop: 8, fontWeight: 600, textAlign: 'center' }}>argmax → "yes"</div>
+
+          <div style={{ fontFamily: 'var(--font-mono)', fontSize: 22, color: 'var(--accent)', marginTop: 14, fontWeight: 600, textAlign: 'center' }}>argmax → "yes"</div>
         </div>
       </div>
     </div>
