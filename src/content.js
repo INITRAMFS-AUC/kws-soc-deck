@@ -816,12 +816,7 @@ export const slides = [
           body: 'Open RTL, open PCB, open firmware. Reproducible from a fresh clone — fab it, flash it, talk to it.',
         },
         {
-          tag: '02 · Research',
-          head: 'Publishing at DSD / SEAA 2025',
-          body: 'Paper accepted to the Euromicro DSD / SEAA 2025 conference — design choices, accelerator results and the open release together in one place.',
-        },
-        {
-          tag: '03 · Toolchain',
+          tag: '02 · Toolchain',
           head: 'Hazard3 · Verilator VPI',
           body: 'A VPI shim on top of the Hazard3 SoC testbench: ~10× faster sim builds and runtime multithreading. Iteration that used to take minutes now takes seconds.',
           stats: [
@@ -830,6 +825,12 @@ export const slides = [
             { value: 'multi-threaded',  label: 'runtime threads' },
           ],
         },
+        {
+          tag: '03 · Research',
+          head: 'Publishing at DSD / SEAA 2026',
+          body: 'Paper accepted to the Euromicro DSD / SEAA 2026 conference — design choices, accelerator results and the open release together in one place.',
+        },
+        
       ],
       callout: 'The deliverable is not just a chip — it is a starting point.',
     },
