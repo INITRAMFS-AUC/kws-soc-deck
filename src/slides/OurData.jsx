@@ -26,7 +26,7 @@ const CARDS = [
 
 export default function OurData() {
   return (
-    <SlideFrame topLeft="15 · Model">
+    <SlideFrame topLeft="14 · Model">
       <div style={{ marginTop: 60 }}>
         <div className="eyebrow">Our dataset</div>
         <h1 className="title" style={{ marginBottom: 16 }}>We recorded <strong style={{ color: 'var(--accent)' }}>4 000 samples</strong> on the real mic.</h1>
