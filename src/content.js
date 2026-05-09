@@ -804,7 +804,7 @@ export const slides = [
   {
     id: 'empowerment',
     label: 'Empowerment',
-    notes: 'Beyond the chip itself. KWS-SoC is built to be picked up by the next student, the next lab, the next community team. Three pillars: a community-deployed SoC anyone can fab, end-to-end documentation that explains every block, and a Verilator VPI we wrote on top of Hazard3 that drops simulation compile times by ~10× and lets the testbench run multithreaded. The toolchain we wished existed when we started.',
+    notes: 'Beyond the chip itself. KWS-SoC is built to be picked up by the next student, the next lab, the next community team. Three pillars: a community-deployed SoC anyone can fab, a research contribution accepted to the Euromicro DSD / SEAA 2025 conference where we publish the full design and results, and a Verilator VPI we wrote on top of Hazard3 that drops simulation compile times by ~10× and lets the testbench run multithreaded. The toolchain we wished existed when we started.',
     content: {
       kind: 'Outcome',
       eyebrow: 'Beyond the chip',
@@ -816,9 +816,9 @@ export const slides = [
           body: 'Open RTL, open PCB, open firmware. Reproducible from a fresh clone — fab it, flash it, talk to it.',
         },
         {
-          tag: '02 · Research here',
-          head: 'Research header here',
-          body: 'Research body here',
+          tag: '02 · Research',
+          head: 'Publishing at DSD / SEAA 2025',
+          body: 'Paper accepted to the Euromicro DSD / SEAA 2025 conference — design choices, accelerator results and the open release together in one place.',
         },
         {
           tag: '03 · Toolchain',
