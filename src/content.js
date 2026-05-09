@@ -40,7 +40,7 @@ export const slides = [
         'Ziad Mohamed',
         'Yousef Mansour',
         'Bavly Remon',
-        'Ahmed Ali Rostom',
+        'Ahmed Rustom Ali',
         'Ahmed Elbarbary',
       ],
     },
